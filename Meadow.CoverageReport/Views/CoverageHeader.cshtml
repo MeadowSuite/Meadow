@@ -1,0 +1,32 @@
+﻿@using Meadow.CoverageReport.Models;
+@using System.Globalization;
+
+@model CoverageStats
+
+<style>
+    .cov-total-percent {
+    }
+
+    .cov-total-desc {
+    }
+
+    .cov-total-counts {
+        margin-right: 30px;
+    }
+</style>
+
+<div>
+
+    <span class="cov-total-percent">@Model.LineCoveragePercent%</span>
+    <span class="cov-total-desc">Lines</span>
+    <span class="cov-total-counts">@Model.LineCoveredCount/@Model.LineCount</span>
+
+    <span class="cov-total-percent">@Model.BranchCoveragePercent%</span>
+    <span class="cov-total-desc">Branches</span>
+    <span class="cov-total-counts">@Model.BranchCoveredCount/@Model.BranchCount</span>
+
+    <span class="cov-total-percent">@Model.FunctionCoveragePercent%</span>
+    <span class="cov-total-desc">Functions</span>
+    <span class="cov-total-counts">@Model.FunctionCoveredCount/@Model.FunctionCount</span>
+
+</div>

@@ -1,0 +1,83 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+<!--<Project Sdk="Microsoft.NET.Sdk" DefaultTargets="Build;Publish;Pack">-->
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--<GeneratePackageOnBuild>true</GeneratePackageOnBuild>-->
+    <!--<PackAsTool>true</PackAsTool>-->
+    <!--<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>-->
+    <!--<RestoreProjectStyle>PackageReference</RestoreProjectStyle>-->
+    <NoPackageAnalysis>true</NoPackageAnalysis>
+    <OutputType>Exe</OutputType>
+    <ToolCommandName>Meadow.SolCodeGen</ToolCommandName>
+    <AssemblyName>Meadow.SolCodeGen</AssemblyName>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.8.2" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.8.2" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.1.0" />
+    <PackageReference Include="SolcLib.Native" Version="0.4.24.31" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Meadow.Contract\Meadow.Contract.csproj" />
+  </ItemGroup>
+
+  <Target Name="AfterBuildDoPublish" AfterTargets="AfterBuild">
+    <Message Importance="High" Text="Running publish after build" />
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish" />
+  </Target>
+
+  <Target Name="AfterPublishDoPack" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
+    <Message Importance="High" Text="Running pack after publish" />
+    <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Pack" />
+  </Target>
+
+  <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
+
+    <Message Importance="High" Text="Setting up package structure" />
+
+    <Message Importance="High" Text="Packing tool dir $(OutputPath)/publish" />
+
+    <!--<ItemGroup>
+      <PackageReference Update="@(PackageReference)" PrivateAssets="All" />
+    </ItemGroup>-->
+
+    <ItemGroup>
+
+      <_PackageFiles Include="$(OutputPath)/publish/**/*">
+        <BuildAction>None</BuildAction>
+        <PackagePath>tools/netcoreapp2.1/any/</PackagePath>
+      </_PackageFiles>
+
+      <_PackageFiles Include="_._">
+        <BuildAction>None</BuildAction>
+        <PackagePath>lib/netstandard2.0/</PackagePath>
+      </_PackageFiles>
+
+      <_PackageFiles Include="Targets/Meadow.SolCodeGen.targets">
+        <BuildAction>None</BuildAction>
+        <PackagePath>build/netstandard2.0/</PackagePath>
+      </_PackageFiles>
+
+      <_PackageFiles Include="Targets/GenerateFromSol.targets">
+        <BuildAction>None</BuildAction>
+        <PackagePath>tools/</PackagePath>
+      </_PackageFiles>
+
+    </ItemGroup>
+    
+  </Target>
+  
+</Project>

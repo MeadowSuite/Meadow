@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <Target Name="CleanGeneratedFiles" BeforeTargets="BeforeClean">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)/GeneratedContracts" />
+  </Target>
+
+  <Target Name="GenerateFromSol" BeforeTargets="BeforeBuild">
+
+    <PropertyGroup>
+      <SolCodeGenFileExe>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Meadow.SolCodeGen/bin/$(Configuration)/netcoreapp2.1/Meadow.SolCodeGen.dll'))</SolCodeGenFileExe>
+      <SolCodeGenBuild>dotnet build "$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Meadow.SolCodeGen'))" -f netcoreapp2.1 -c $(Configuration)</SolCodeGenBuild>
+      <SolSourceDir>"$(MSBuildProjectDirectory)/Contracts"</SolSourceDir>
+      <NamespaceFilter>$(RootNamespace).Contracts</NamespaceFilter>
+      <GenerateArgs>--source $(SolSourceDir) --namespace $(RootNamespace) --generate source</GenerateArgs>
+      <CompileIncludes>@(Compile)</CompileIncludes>
+      <EmbeddedResourceIncludes>@(EmbeddedResource)</EmbeddedResourceIncludes>
+    </PropertyGroup>
+
+    <Message Importance="High" Text="Generating code for solidity files" />
+
+    <Message Importance="High" Text="Running: $(SolCodeGenBuild)" Condition="!Exists('$(SolCodeGenFileExe)')" />
+    <Exec Command="$(SolCodeGenBuild)" Condition="!Exists('$(SolCodeGenFileExe)')" />
+
+    <Message Importance="High" Text="Running: $(SolCodeGenFileExe) $(GenerateArgs)" />
+    <Exec Command="dotnet $(SolCodeGenFileExe) $(GenerateArgs)" LogStandardErrorAsError="true" IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="SolCodeGenExitCode" />
+    </Exec>
+
+    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(CompileIncludes.Contains('GeneratedContracts'))">
+      <Compile Include="$(MSBuildProjectDirectory)/GeneratedContracts/**/*.cs" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(EmbeddedResourceIncludes.Contains('SolcOutputData.sol.resx'))">
+      <EmbeddedResource Include="$(MSBuildProjectDirectory)/GeneratedContracts/SolcOutputData.sol.resx" />
+    </ItemGroup>
+
+  </Target>
+  
+</Project>

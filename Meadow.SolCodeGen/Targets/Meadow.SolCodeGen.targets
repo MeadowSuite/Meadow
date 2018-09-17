@@ -1,0 +1,4 @@
+﻿<!-- SolCodeGen.targets -->
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)/../../tools/GenerateFromSol.targets" />
+</Project>

@@ -1,0 +1,14 @@
+﻿-RLP Encoding might need optimization if items are ordered in a massive array and we only want to deserialize one item instead of the whole array. Might not be necessary.
+-Call data (Data in EVMMessage) can be optimized as it copies memory repetitively when not all memory is needed to be copied if a reference can be passed.
+-ExecutionResult can be null and it's checks for null vs zero size are ugly. Revisit and clean up.
+-Fix up position setting when reading instructions and etc. Maybe pass opcode and not re-read, or abandon the stream in favor of code array and indexes? Position setting more considered, the later, not so much.
+-BigInteger usage can be replaced with a more suitable Int256/UInt256 implementation. Not to be considered until later.
+-Possible not returning of EVM instance in ExecutionResult? Likely not an issue.
+-EVM's Execute + CreateContract maybe to be relocated.
+-RLP to be redone so as to use attributes and etc (at a later time, for now, simple implementation will follow until such a time that MVP (or later) is achieved)
+-GetCodeSegment needs adjusting in places where it checks if null and makes a 0 count byte array. Needs standardization.
+-Revisit EIP86/208
+-ECDSA code should do more checks in public key recovery!
+-IMPORTANT: Revisit node database entry deleting, as two nodes can share a database entry and we can't safely remove a node from the database entry in case another depends on the same data, etc. 
+	-For now deleting trie data from database is unsupported.
+-Lots of ugly blockhash/block grabbing and instant regrabbing in the call overloads in Chain. Rework this.

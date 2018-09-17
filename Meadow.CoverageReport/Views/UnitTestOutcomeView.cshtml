@@ -1,0 +1,80 @@
+﻿@using Meadow.CoverageReport.Models;
+@using System.Globalization;
+
+@model IndexViewModel
+
+<style>
+    #test-outcome {
+    }
+
+        #test-outcome pre {
+            padding: 10px;
+            font-family: "Lucida Console", Monaco, monospace;
+            font-size: 12px;
+        }
+
+    #test-outcome-body {
+        padding-left: 10px;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .test-outcome-group-header {
+        padding-top: 10px;
+    }
+
+    .test-outcome-group-tests {
+        margin-left: 15px;
+    }
+
+    .test-outcome-icon {
+        width: 18px;
+        display: inline-block;
+    }
+
+    .test-outcome-icon-pass {
+        color: rgb(5, 224, 0);
+    }
+
+    .test-outcome-icon-fail {
+        color: rgb(255, 109, 109);
+    }
+
+    .test-outcome-test-name {
+    }
+
+    .test-outcome-duration {
+        color: rgba(0, 0, 0, 0.45);
+        margin-left: 5px;
+    }
+</style>
+
+<div id="test-outcome">
+    <div></div>
+    <div id="test-outcome-body">
+        @if (Model.UnitTestOutcome != null)
+        {
+            foreach (var testGroup in Model.UnitTestOutcome)
+            {
+                <div class="test-outcome-group-header">@testGroup.Key</div>
+                <div class="test-outcome-group-tests">
+                    @foreach (var testOutcome in testGroup.OrderBy(t => t.TestName))
+                    {
+                        <div>
+                            @if (testOutcome.Passed)
+                            {
+                                <span class="test-outcome-icon test-outcome-icon-pass">√</span>
+                            }
+                            else
+                            {
+                                <span class="test-outcome-icon test-outcome-icon-fail">✗</span>
+                            }
+                            <span class="test-outcome-test-name">@testOutcome.TestName</span>
+                            <span class="test-outcome-duration">(@(Math.Round(testOutcome.Duration.TotalSeconds, 2))s)</span>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>

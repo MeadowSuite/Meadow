@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "Meadow.Cli": {
+      "commandName": "Executable",
+      "executablePath": "pwsh",
+      "commandLineArgs": "-NoExit -Command Import-Module $(TargetPath)",
+      "workingDirectory": "$(SolutionDir)/pwsh_testing"
+    },
+    "Host": {
+      "commandName": "Executable",
+      "executablePath": "dotnet",
+      "commandLineArgs": "$(TargetPath)",
+      "workingDirectory": "$(SolutionDir)/pwsh_testing"
+    }
+  }
+}

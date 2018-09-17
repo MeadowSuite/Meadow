@@ -1,0 +1,220 @@
+﻿@using Meadow.CoverageReport.Models;
+@using System.Globalization;
+
+@model SourceFileMap
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.SourceFileName;
+    ViewData["SolidityCompilerVersion"] = Model.SolidityCompilerVersion;
+}
+
+<style>
+
+    .coverage-table {
+        border-collapse: collapse;
+        font-family: "Lucida Console", Monaco, monospace;
+        font-size: 12px;
+        font-style: normal;
+        font-variant: normal;
+        font-weight: 400;
+        line-height: 1.5;
+        tab-size: 4;
+    }
+
+    .row-line-number {
+        width: 10px;
+        text-align: right;
+    }
+
+        .row-line-number > span {
+            padding-right: 3px;
+            color: rgba(0, 0, 0, 0.50);
+        }
+
+    .row-execution-count {
+        width: 10px;
+        text-align: right;
+        background-color: rgba(0, 0, 0, 0.04);
+    }
+
+        .row-execution-count > span {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+    .row-branches {
+        min-width: 25px;
+    }
+
+        .row-branches > span {
+            border-radius: 4px;
+            padding: 0px 3px;
+            text-align: center;
+            width: 12px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+    .branch-state-covered {
+        color: rgb(5, 224, 0);
+    }
+
+    .branch-state-partial {
+        background-color: rgba(0, 0, 0, 0.65);
+        color: #ffed00;
+    }
+
+    .branch-state-uncovered {
+        background-color: rgba(0, 0, 0, 0.80);
+        color: rgb(255, 109, 109);
+        font-weight: bold;
+    }
+
+    .row-source {
+        width: 100%;
+    }
+
+        .row-source span {
+            white-space: pre;
+        }
+
+    .good-execution-count {
+        padding: 0px 3px;
+        background-color: rgba(23, 255, 0, 0.12);
+    }
+
+    .line-uncovered {
+        background-color: rgba(255, 0, 0, 0.10);
+    }
+
+    .line-covered {
+    }
+
+    .line-unreachable {
+        background-color: rgba(254, 255, 0, 0.30)
+    }
+
+    .line-active {
+        background-color: rgba(0, 102, 255, 0.15);
+    }
+</style>
+
+@functions {
+    public string GetLineClass(SourceFileLine line)
+    {
+        if (line.IsActive)
+        {
+            if (line.IsUnreachable)
+            {
+                return "line-unreachable";
+            }
+            if (line.IsCovered)
+            {
+                return "line-covered";
+            }
+            else
+            {
+                return "line-uncovered";
+            }
+        }
+        return string.Empty;
+    }
+
+    public string GetExecutionCount(SourceFileLine line)
+    {
+        if (line.ExecutionCount > 0)
+        {
+            return line.ExecutionCount.ToString(CultureInfo.InvariantCulture) + "×";
+        }
+        return string.Empty;
+    }
+
+    public string GetExecutionCountClass(SourceFileLine line)
+    {
+        if (line.ExecutionCount > 0)
+        {
+            return "good-execution-count";
+        }
+        return string.Empty;
+    }
+    public string GetBranchStateSymbol(BranchCoverageState branchState)
+    {
+        if (branchState == BranchCoverageState.CoveredBoth)
+            return "✓";
+        else if (branchState == BranchCoverageState.CoveredElse)
+            return "I";
+        else if (branchState == BranchCoverageState.CoveredIf)
+            return "E";
+        else if (branchState == BranchCoverageState.CoveredNone)
+            return "⍉";
+        return string.Empty;
+    }
+    public string GetBranchStateClass(BranchCoverageState branchState)
+    {
+        if (branchState == BranchCoverageState.CoveredBoth)
+            return "branch-state-covered";
+        else if (branchState != BranchCoverageState.CoveredNone)
+            return "branch-state-partial";
+        else
+            return "branch-state-uncovered";
+    }
+}
+
+<p>
+    <a href="@Model.IndexHtmlFilePath">index</a> / @Model.SourceFilePath
+</p>
+<hr />
+
+<div>
+    @Html.Partial("CoverageHeader", Model)
+</div>
+
+<hr />
+
+<table class="coverage-table">
+    <tbody>
+        <tr>
+            <td rowspan="0" class="row-line-number">
+                @foreach (var sourceEntry in Model.SourceFileLines)
+                {
+                    <span>@sourceEntry.LineNumber</span><br />
+                }
+            </td>
+            <td rowspan="0" class="row-execution-count">
+                @foreach (var sourceEntry in Model.SourceFileLines)
+                {
+                    if (sourceEntry.IsCovered)
+                    {
+                        <span class="@GetExecutionCountClass(sourceEntry)">@(GetExecutionCount(sourceEntry))</span>
+                    }
+                    else
+                    {
+                        <br />
+                    }
+                }
+            </td>
+            <td rowspan="0" class="row-branches">
+                @foreach (var sourceEntry in Model.SourceFileLines)
+                {
+                    if (sourceEntry.IsBranch)
+                    {
+                        <span class="@GetBranchStateClass(sourceEntry.BranchState)">@GetBranchStateSymbol(sourceEntry.BranchState)</span>
+                    }
+                    else
+                    {
+                        <br />
+                    }
+                }
+            </td>
+            <td rowspan="0" class="row-source">
+                @foreach (var sourceEntry in Model.SourceFileLines)
+                {
+                    <span class="@GetLineClass(sourceEntry)">@sourceEntry.LiteralSourceCodeLine</span><br />
+                }
+            </td>
+        </tr>
+    </tbody>
+</table>

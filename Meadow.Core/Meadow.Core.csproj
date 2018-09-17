@@ -1,0 +1,70 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>$(DefineConstants);ZERO_BYTE_CHECKS</DefineConstants>
+  </PropertyGroup>
+ 
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\WordLists\wordlist_chinese_simplified.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_chinese_traditional.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_english.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_french.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_italian.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_japanese.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_korean.txt" />
+    <EmbeddedResource Include="Resources\WordLists\wordlist_spanish.txt" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Cryptography.KeyDerivation" Version="2.1.1" />
+    <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="2.1.1" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.8.3" />
+    <PackageReference Include="Secp256k1.Net" Version="0.1.48" />
+    <PackageReference Include="SolcNet" Version="1.1.106" />
+    <PackageReference Include="System.Buffers" Version="4.5.0" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.5.1" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Update="EthTypes\IntegerTypes.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>IntegerTypes.cs</LastGenOutput>
+    </None>
+    <None Update="EthTypes\FixedN.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>FixedN.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="EthTypes\FixedN.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>FixedN.tt</DependentUpon>
+    </Compile>
+    <Compile Update="EthTypes\IntegerTypes.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>IntegerTypes.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  
+
+  
+</Project>

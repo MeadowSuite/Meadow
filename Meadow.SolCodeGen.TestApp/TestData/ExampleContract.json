@@ -1,0 +1,427 @@
+﻿[
+  {
+    "type": "function",
+    "name": "myFunc",
+    "inputs": [
+      {
+        "name": "_num",
+        "type": "int256",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [
+      {
+        "name": "isNine",
+        "type": "bool",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "pure",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "overloadedFunc",
+    "inputs": [
+      {
+        "name": "_intParam",
+        "type": "int256",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "constant": false,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeArray2DimFixed",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null,
+        "indexed": null
+      },
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "balances",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeInt256",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "int256",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeArrayDynamic",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeString",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeInt24",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "int24",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeUInt",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "examplePayableFunc",
+    "inputs": [],
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "constant": false,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeBool",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeUInt256",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "tupleTest",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "p1",
+        "type": "int256",
+        "components": null
+      },
+      {
+        "name": "p2",
+        "type": "bool",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "pure",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeUInt8",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeAddress",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "overloadedFunc",
+    "inputs": [
+      {
+        "name": "_stringParam",
+        "type": "string",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "constant": false,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeByteArrayDynamic",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes1",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeInt",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "int256",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeArrayFixed",
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "function",
+    "name": "typeBytes",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bytes",
+        "components": null
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "constant": true,
+    "anonymous": null
+  },
+  {
+    "type": "constructor",
+    "name": null,
+    "inputs": [
+      {
+        "name": "_name",
+        "type": "string",
+        "components": null,
+        "indexed": null
+      }
+    ],
+    "outputs": null,
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "constant": null,
+    "anonymous": null
+  },
+  {
+    "type": "fallback",
+    "name": null,
+    "inputs": null,
+    "outputs": null,
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "constant": null,
+    "anonymous": null
+  },
+  {
+    "type": "event",
+    "name": "TestEvent",
+    "inputs": [
+      {
+        "name": "_addr",
+        "type": "address",
+        "components": null,
+        "indexed": true
+      },
+      {
+        "name": "_id",
+        "type": "uint64",
+        "components": null,
+        "indexed": true
+      },
+      {
+        "name": "_val",
+        "type": "uint256",
+        "components": null,
+        "indexed": false
+      }
+    ],
+    "outputs": null,
+    "payable": null,
+    "stateMutability": null,
+    "constant": null,
+    "anonymous": false
+  }
+]

@@ -1,0 +1,47 @@
+﻿<!-- GenerateFromSol.targets -->
+<Project>
+  <PropertyGroup>
+    <SolCodeGenFileExe>dotnet "$(MSBuildThisFileDirectory)/netcoreapp2.1/any/Meadow.SolCodeGen.dll"</SolCodeGenFileExe>
+    <SolSourceDir>"$(MSBuildProjectDirectory)/Contracts"</SolSourceDir>
+    <GeneratedFilesDir>$(MSBuildProjectDirectory)/GeneratedContracts</GeneratedFilesDir>
+    <NamespaceFilter>$(RootNamespace).Contracts</NamespaceFilter>
+  </PropertyGroup>
+
+  <Target Name="CleanGeneratedFiles" BeforeTargets="BeforeClean">
+    <Message Importance="High" Text="Cleaning generated contract directory: $(GeneratedFilesDir)" />
+    <RemoveDir Directories="$(GeneratedFilesDir)" />
+  </Target>
+
+  <Target Name="GenerateFromSol" BeforeTargets="BeforeBuild">
+
+    <XmlPeek Condition="Exists('app.config')" XmlInputPath="app.config" Query="configuration/appSettings/add[@key='SolcVersion']/@value">
+      <Output TaskParameter="Result" ItemName="AppConfigSolcVersion" />
+    </XmlPeek>
+
+    <XmlPeek Condition="Exists('app.config')" XmlInputPath="app.config" Query="configuration/appSettings/add[@key='SolcOptimizer']/@value">
+      <Output TaskParameter="Result" ItemName="AppConfigSolcOptimizer" />
+    </XmlPeek>
+
+    <PropertyGroup>
+      <GenerateArgs>--source $(SolSourceDir) --namespace $(RootNamespace) --generate source --legacysolc "$(SolcNetLegacyDirectory)" --solcversion "@(AppConfigSolcVersion)" --solcoptimizer "@(AppConfigSolcOptimizer)"</GenerateArgs>
+      <CompileIncludes>@(Compile)</CompileIncludes>
+      <EmbeddedResourceIncludes>@(EmbeddedResource)</EmbeddedResourceIncludes>
+    </PropertyGroup>
+
+    <Message Importance="High" Text="Generating code for solidity files" />
+    <Message Importance="High" Text="Running: $(SolCodeGenFileExe) $(GenerateArgs)" />
+
+    <Exec Command="$(SolCodeGenFileExe) $(GenerateArgs)" LogStandardErrorAsError="true" IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="SolCodeGenExitCode" />
+    </Exec>
+
+    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(CompileIncludes.Contains('GeneratedContracts'))">
+      <Compile Include="$(GeneratedFilesDir)/**/*.cs" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(EmbeddedResourceIncludes.Contains('SolcOutputData.sol.resx'))">
+      <EmbeddedResource Include="$(GeneratedFilesDir)/SolcOutputData.sol.resx" />
+    </ItemGroup>
+
+  </Target>
+</Project>

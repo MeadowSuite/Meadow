@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.msbuild" Version="2.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="5.4.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.8.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="1.3.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Meadow.SolCodeGen\Meadow.SolCodeGen.csproj" />
+    <ProjectReference Include="..\Meadow.UnitTestTemplate\Meadow.UnitTestTemplate.csproj" />
+  </ItemGroup>
+
+  <Target Name="CleanGeneratedFiles" BeforeTargets="BeforeClean">
+    <RemoveDir Directories="$(MSBuildProjectDirectory)/GeneratedContracts" />
+  </Target>
+
+  <Import Project="..\SolCodeGen.targets" />
+
+</Project>

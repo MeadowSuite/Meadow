@@ -1,0 +1,96 @@
+﻿@using Meadow.CoverageReport.Models;
+@using System.Globalization;
+
+@model IndexViewModel
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Coverage";
+    ViewData["SolidityCompilerVersion"] = Model.SolidityCompilerVersion;
+}
+
+@Html.Partial("TableSort")
+
+<style>
+
+    #source-list-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        #source-list-table th {
+            text-align: left;
+        }
+
+        #source-list-table thead th {
+            padding: 7px;
+            font-weight: normal;
+        }
+
+        #source-list-table tbody {
+            font-family: "Lucida Console", Monaco, monospace;
+            font-size: 12px;
+            font-style: normal;
+            font-variant: normal;
+            font-weight: 400;
+            line-height: 1.5;
+            tab-size: 4;
+        }
+
+            #source-list-table tbody td {
+                border: 1px solid #c2c2c2;
+                padding: 7px;
+            }
+
+    .cell-coverage-counts {
+        text-align: right;
+    }
+
+    .cell-coverage-percent {
+        text-align: right;
+    }
+</style>
+
+<div>
+    @Html.Partial("CoverageHeader", Model)
+</div>
+
+<hr />
+
+<table id="source-list-table">
+    <thead>
+        <tr>
+            <th>File</th>
+            <th>Lines</th>
+            <th>&nbsp;</th>
+            <th>Branches</th>
+            <th>&nbsp;</th>
+            <th>Functions</th>
+            <th>&nbsp;</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var entry in Model.SourceFileMaps)
+        {
+            <tr>
+                <td><a href="pages/@(entry.SourceFilePath).html">@entry.SourceFilePath</a></td>
+                <td class="cell-coverage-counts">@entry.LineCoveredCount/@entry.LineCount</td>
+                <td class="cell-coverage-percent">@entry.LineCoveragePercent%</td>
+                <td class="cell-coverage-counts">@entry.BranchCoveredCount/@entry.BranchCount</td>
+                <td class="cell-coverage-percent">@entry.BranchCoveragePercent%</td>
+                <td class="cell-coverage-counts">@entry.FunctionCoveredCount/@entry.FunctionCount</td>
+                <td class="cell-coverage-percent">@entry.FunctionCoveragePercent%</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+<hr />
+
+@Html.Partial("UnitTestOutcomeView", Model)
+
+
+<script>
+    new Tablesort(document.getElementById('source-list-table'));
+</script>

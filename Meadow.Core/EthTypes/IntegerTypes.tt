@@ -1,0 +1,127 @@
+﻿<#@ template language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+
+<#   /* Disable for now since these are unused */ return ""; #>
+
+using System;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+
+namespace Meadow.Core.EthTypes
+{
+
+<#    for (var i = 24; i < 256; i += 8) {
+        if (i == 32 || i == 64) continue; #>
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct UInt<#=i#> : IEquatable<UInt<#=i#>>, IComparable<UInt<#=i#>>
+    {
+        public const int SIZE = <#=i / 8#>;
+        public static BigInteger MaxValue = BigInteger.Pow(2, SIZE * 8);
+
+        readonly byte <#=string.Join(", ", Enumerable.Range(1, i / 8).Select(p => "P" + p))#>;
+
+        public static implicit operator BigInteger(UInt<#=i#> v) => new BigInteger(v.GetSpan().ToArray());
+        public static implicit operator UInt<#=i#>(BigInteger v) => FromBigInteger(v);
+        public static implicit operator UInt<#=i#>(byte v) => FromBigInteger(new BigInteger(v));
+        public static implicit operator UInt<#=i#>(sbyte v) => FromBigInteger(new BigInteger(v));
+        public static implicit operator UInt<#=i#>(uint v) => FromBigInteger(new BigInteger(v));
+        public static implicit operator UInt<#=i#>(int v) => FromBigInteger(new BigInteger(v));
+        public static implicit operator UInt<#=i#>(ulong v) => FromBigInteger(new BigInteger(v));
+        public static implicit operator UInt<#=i#>(long v) => FromBigInteger(new BigInteger(v));
+
+        public static explicit operator byte(UInt<#=i#> v) => (byte)v.ToBigInteger();
+        public static explicit operator sbyte(UInt<#=i#> v) => (sbyte)v.ToBigInteger();
+        public static explicit operator short(UInt<#=i#> v) => (short)v.ToBigInteger();
+        public static explicit operator ushort(UInt<#=i#> v) => (ushort)v.ToBigInteger();
+        public static explicit operator uint(UInt<#=i#> v) => (uint)v.ToBigInteger();
+        public static explicit operator int(UInt<#=i#> v) => (int)v.ToBigInteger();
+        public static explicit operator ulong(UInt<#=i#> v) => (ulong)v.ToBigInteger();
+        public static explicit operator long(UInt<#=i#> v) => (long)v.ToBigInteger();
+
+        public static UInt<#=i#> operator %(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Remainder(a, b);
+        public static UInt<#=i#> operator +(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Add(a, b);
+        public static UInt<#=i#> operator -(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Min(a, b);
+        public static UInt<#=i#> operator *(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Multiply(a, b);
+        public static UInt<#=i#> operator /(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Divide(a, b);
+        public static UInt<#=i#> operator |(UInt<#=i#> a, UInt<#=i#> b) => a.ToBigInteger() | b.ToBigInteger();
+        public static UInt<#=i#> operator &(UInt<#=i#> a, UInt<#=i#> b) => a.ToBigInteger() & b.ToBigInteger();
+        public static UInt<#=i#> operator ^(UInt<#=i#> a, UInt<#=i#> b) => a.ToBigInteger() ^ b.ToBigInteger();
+        public static UInt<#=i#> operator >>(UInt<#=i#> a, int shift) => a.ToBigInteger() >> shift;
+        public static UInt<#=i#> operator <<(UInt<#=i#> a, int shift) => a.ToBigInteger() << shift;
+
+        public static bool operator ==(UInt<#=i#> a, UInt<#=i#> b) => a.Equals(b);
+        public static bool operator !=(UInt<#=i#> a, UInt<#=i#> b) => !a.Equals(b);
+        public static bool operator >(UInt<#=i#> a, UInt<#=i#> b) => a.CompareTo(b) > 0;
+        public static bool operator <(UInt<#=i#> a, UInt<#=i#> b) => a.CompareTo(b) < 0;
+
+        public BigInteger ToBigInteger()
+        {
+            Span<byte> bytes = stackalloc byte[SIZE + 1];
+            GetSpan().CopyTo(bytes);
+            return new BigInteger(bytes.ToArray());
+        }
+
+        public static UInt<#=i#> FromBigInteger(BigInteger bigInt)
+        {
+            if (bigInt < 0)
+            {
+                throw new OverflowException();
+            }
+            else if (bigInt > MaxValue)
+            {
+                throw new OverflowException();
+            }
+            var arr = bigInt.ToByteArray();
+            if (arr.Length < SIZE)
+            {
+                Array.Resize(ref arr, SIZE);
+            }
+            return MemoryMarshal.Read<UInt<#=i#>>(arr);
+        }
+
+        public unsafe ReadOnlySpan<byte> GetSpan()
+        {
+            var thisPtr = Unsafe.AsPointer(ref Unsafe.AsRef(this));
+            var thisSpan = new ReadOnlySpan<byte>(thisPtr, SIZE);
+            return thisSpan;
+        }
+
+        public bool Equals(UInt<#=i#> other)
+        {
+            return GetSpan().SequenceEqual(other.GetSpan());
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is UInt<#=i#> other ? Equals(other) : false;
+        }
+
+        public int CompareTo(UInt<#=i#> other)
+        {
+            return GetSpan().SequenceCompareTo(other.GetSpan());
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 0;
+            var arr = GetSpan();
+            for (int i = 0; i < arr.Length; i++)
+                hash ^= arr[i].GetHashCode();
+            return hash;
+        }
+        
+        public override string ToString()
+        {
+            return ToBigInteger().ToString();
+        }
+
+    }
+
+<# } #>
+
+}

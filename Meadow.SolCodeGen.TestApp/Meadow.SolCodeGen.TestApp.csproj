@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <!--
+  <PropertyGroup>
+    <RestoreSources>$(RestoreSources);../Meadow.SolCodeGen/bin/Debug/package;https://api.nuget.org/v3/index.json</RestoreSources>
+  </PropertyGroup>
+  -->
+
+  <Target Name="UpdateGen">
+    <Exec Command="dotnet add package -s $(MSBuildProjectDirectory)/../Meadow.SolCodeGen/bin/Debug Meadow.SolCodeGen" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="SolcNet.Legacy" Version="0.1.12" />
+  </ItemGroup>
+
+
+</Project>
