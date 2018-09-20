@@ -46,7 +46,9 @@ namespace Meadow.JsonRpc.Client
 
     public delegate Task<Exception> JsonRpcErrorFormatterDelegate(IJsonRpcClient client, JsonRpcError rpcError);
 
-    public interface IJsonRpcClient : IRpcControllerMinimal, IRpcController
+    public delegate Task JsonRpcExecutionAnalysisDelegate(IJsonRpcClient client);
+
+    public interface IJsonRpcClientExtensions
     {
         Task<(JsonRpcError Error, byte[] Result)> TryCall(CallParams callParams, DefaultBlockParameter blockParameter);
         Task<(JsonRpcError Error, Hash Result)> TrySendTransaction(TransactionParams transactionParams);
@@ -57,7 +59,10 @@ namespace Meadow.JsonRpc.Client
         /// </summary>
         bool CheckBadTransactionStatus { get; set; }
 
-        JsonRpcErrorFormatterDelegate ErrorFormatter { get; }
+        /// <summary>
+        /// Delegate to format an RPC error that results from a Transaction or Call (including contract deployment transactions).
+        /// </summary>
+        JsonRpcErrorFormatterDelegate ErrorFormatter { get; set; }
 
         /// <summary>
         /// If set, all SendTransaction calls will invoke this delegate and inssue a sendRawTransaction RPC call.
@@ -69,6 +74,11 @@ namespace Meadow.JsonRpc.Client
         /// a result is returned.
         /// </summary>
         TimeSpan TransactionReceiptPollInterval { get; set; }
+    }
+
+    public interface IJsonRpcClient : IRpcControllerMinimal, IRpcController, IJsonRpcClientExtensions
+    {
+
     }
 
     /*
@@ -104,7 +114,7 @@ namespace Meadow.JsonRpc.Client
 
     public delegate Task<byte[]> RawTransactionSignerDelegate(IJsonRpcClient rpcClient, TransactionParams transactionParams);
 
-    public class JsonRpcClient : DynamicObject, IRpcControllerMinimal
+    public class JsonRpcClient : DynamicObject, IRpcControllerMinimal, IJsonRpcClientExtensions
     {
         readonly Uri _serverUri;
 
@@ -114,21 +124,19 @@ namespace Meadow.JsonRpc.Client
         long _defaultGasPrice;
         IJsonRpcClient _thisInterface;
 
-        /// <summary>
-        /// If true, all transactions hashes are queried for their receipt, and an exception
-        /// is thrown for receipts with an unsuccessful status code.
-        /// </summary>
-        bool CheckBadTransactionStatus { get; set; } = true;
+        public bool CheckBadTransactionStatus { get; set; } = true;
 
-        public JsonRpcErrorFormatterDelegate ErrorFormatter { get; }
+        public JsonRpcErrorFormatterDelegate ErrorFormatter { get; set; }
 
         public RawTransactionSignerDelegate RawTransactionSigner { get; set; }
 
         public TimeSpan TransactionReceiptPollInterval { get; set; }
 
-        public static IJsonRpcClient Create(Uri serverUri, long defaultGasLimit, long defaultGasPrice, JsonRpcErrorFormatterDelegate errorFormatter = null)
+        public static JsonRpcExecutionAnalysisDelegate JsonRpcExecutionAnalysis { get; set; }
+
+        public static IJsonRpcClient Create(Uri serverUri, long defaultGasLimit, long defaultGasPrice)
         {
-            var dynamicClient = new JsonRpcClient(serverUri, errorFormatter);
+            var dynamicClient = new JsonRpcClient(serverUri);
             dynamicClient._defaultGasLimit = defaultGasLimit;
             dynamicClient._defaultGasPrice = defaultGasPrice;
 
@@ -149,11 +157,9 @@ namespace Meadow.JsonRpc.Client
             return clientInterface;
         }
 
-        private JsonRpcClient(Uri serverUri, JsonRpcErrorFormatterDelegate errorFormatter)
+        private JsonRpcClient(Uri serverUri)
         {
             _serverUri = serverUri;
-
-            ErrorFormatter = errorFormatter;
         }
 
         class ReflectedMethodInfo
@@ -371,29 +377,13 @@ namespace Meadow.JsonRpc.Client
 
         public async Task<Hash> SendTransaction(TransactionParams transactionParams)
         {
-            transactionParams.Gas = transactionParams.Gas ?? _defaultGasLimit;
-            transactionParams.GasPrice = transactionParams.GasPrice ?? _defaultGasPrice;
-
-            string request;
-            if (RawTransactionSigner != null)
-            {
-                var signed = await RawTransactionSigner(_thisInterface, transactionParams);
-                request = CreateRequestObject(RpcApiMethod.eth_sendRawTransaction, signed);
-            }
-            else
-            {
-                request = CreateRequestObject(RpcApiMethod.eth_sendTransaction, transactionParams);
-            }
-
-            var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
+            var (error, result) = await TrySendTransaction(transactionParams);
             if (error != null)
             {
                 throw error.ToException();
             }
 
-            var hashHexStr = result.Value<string>();
-            var hash = HexConverter.HexToValue<Hash>(hashHexStr);
-            return hash;
+            return result;
         }
 
         public async Task<(JsonRpcError Error, Hash Result)> TrySendTransaction(TransactionParams transactionParams)
@@ -413,6 +403,12 @@ namespace Meadow.JsonRpc.Client
             }
 
             var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
+
+            if (JsonRpcExecutionAnalysis != null)
+            {
+                await JsonRpcExecutionAnalysis(_thisInterface);
+            }
+
             if (error != null)
             {
                 return (error, default);
@@ -425,14 +421,13 @@ namespace Meadow.JsonRpc.Client
 
         public async Task<byte[]> Call(CallParams callParams, DefaultBlockParameter blockParameter)
         {
-            callParams.Gas = callParams.Gas ?? _defaultGasLimit;
-            callParams.GasPrice = callParams.GasPrice ?? _defaultGasPrice;
-            blockParameter = blockParameter ?? DefaultBlockParameter.Default;
+            var (error, result) = await TryCall(callParams, blockParameter);
+            if (error != null)
+            {
+                throw error.ToException();
+            }
 
-            var request = CreateRequestObject(RpcApiMethod.eth_call, callParams, blockParameter);
-
-            var (error, result) = await InvokeRpcMethod(request);
-            return result.Value<string>().HexToBytes();
+            return result;
         }
 
         public async Task<(JsonRpcError Error, byte[] Result)> TryCall(CallParams callParams, DefaultBlockParameter blockParameter)
@@ -444,6 +439,12 @@ namespace Meadow.JsonRpc.Client
             var request = CreateRequestObject(RpcApiMethod.eth_call, callParams, blockParameter);
 
             var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
+
+            if (JsonRpcExecutionAnalysis != null)
+            {
+                await JsonRpcExecutionAnalysis(_thisInterface);
+            }
+
             if (error != null)
             {
                 return (error, default);

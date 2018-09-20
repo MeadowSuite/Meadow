@@ -1,0 +1,17 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "es2017",
+		"noImplicitAny": false,
+		"removeComments": false,
+		"noUnusedLocals": false,
+		"allowUnusedLabels": true,
+		"noImplicitThis": true,
+		"inlineSourceMap": false,
+		"sourceMap": true,
+		"outDir": "../out",
+		"preserveConstEnums": true,
+		"strictNullChecks": true,
+		"noUnusedParameters": false
+	}
+}

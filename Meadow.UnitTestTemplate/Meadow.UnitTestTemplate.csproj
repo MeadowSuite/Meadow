@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="ExposedObject" Version="1.3.0" />
+    <PackageReference Include="Microsoft.UnitTestFramework.Extensions" Version="2.0.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
   </ItemGroup>
@@ -18,6 +19,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Meadow.Contract\Meadow.Contract.csproj" />
     <ProjectReference Include="..\Meadow.CoverageReport\Meadow.CoverageReport.csproj" />
+    <ProjectReference Include="..\Meadow.DebugAdapterProxy\Meadow.DebugAdapterProxy.csproj" />
+    <ProjectReference Include="..\Meadow.DebugAdapterServer\Meadow.DebugAdapterServer.csproj" />
+    <ProjectReference Include="..\Meadow.MSTest.Runner\Meadow.MSTest.Runner.csproj" />
     <ProjectReference Include="..\Meadow.TestNode\Meadow.TestNode.csproj" />
   </ItemGroup>
 

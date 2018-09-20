@@ -335,3 +335,5 @@ ASALocalRun/
 Meadow.UnitTestTemplate.Test/Report/
 Meadow.UnitTestTemplate.ParallelTest/Report/
 pwsh_testing/GeneratedAssembly/
+Meadow.VSCode.Debugger/out/
+Meadow.DebugExampleTests/Report/
