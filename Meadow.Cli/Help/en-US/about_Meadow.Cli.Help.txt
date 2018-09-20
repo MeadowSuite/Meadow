@@ -1,0 +1,44 @@
+﻿TOPIC 
+	about_Meadow.Cli
+	
+SHORT DESCRIPTION	
+	This is the command line interface for the Meadow project.
+	
+LONG DESCRIPTION
+	The Meadow.Cli is an interactive commandline for the Meadow project.  It provides a test server to deploy solidity contracts to so that you can interact with their functions directly.
+	
+NOTE
+	The help files will be updated as frequently as possible to make sure that all changes and as many use cases as possible are referenced here.
+	
+TROUBLESHOOTING NOTE
+	Meadow.Cli can be installed as both a dotnet global tool or as a powershell module.  
+	Both contain the same files and functionality, so don't worry about missing out on any important features.  
+	Once you have installed Meadow.Cli, please remember to use the same method you used to install it to update it.  
+	If you installed as a dotnet global tool, powershell package management does not know you have it installed and won't be able to update it.  
+	The same goes for installing as a PowerShell Module, if you try to update it with the dotnet command nothing will happen.  
+	It is 100% possible to have both installation methods on the same machine, they will be separated by their installation directory.  
+	If you do use both installation methods to install Meadow.Cli, please use both methods to keep the installs up to date.
+	
+	
+EXAMPLES
+	dotnet global tool -> to start, begin at a PowerShell prompt and type meadow then enter to begin
+
+	PowerShell module -> to start, begin at a PowerShell prompt and type Import-Module Meadow.Cli then enter to begin
+
+	For a list of Meadow related commands, start Meadow.Cli and then type Get-Command -Module Meadow.Cli to see what commands are available.
+	
+	You can get explicit help per command by typing Get-Help <Command-Name> -Full
+	
+KEYWORDS
+	Meadow
+	CLI
+	Meadow.Cli
+	Etherium
+	Eth
+    Test
+	Framework
+	
+	
+SEE ALSO
+	Get-Help for further information or visit the website -> https://www.meadowsuite.com
+	Meadow Suite is brought to you by the Hosho Group -> https://hosho.io
