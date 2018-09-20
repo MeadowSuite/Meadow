@@ -43,16 +43,17 @@ namespace Meadow.MSTest.Runner
 
         public void RunTests()
         {
-            const string MSTEST_ADAPTER_NAMESPACE = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter";
-            const string MSTEST_ADAPTER_DLL = MSTEST_ADAPTER_NAMESPACE + ".dll";
-            const string MSTEST_EXECUTOR_TYPE = MSTEST_ADAPTER_NAMESPACE + ".MSTestExecutor";
-
-            var adapterDllPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), MSTEST_ADAPTER_DLL);
-            var msTestAdapterAssembly = Assembly.LoadFile(adapterDllPath);
-            var testExecutorType = msTestAdapterAssembly.GetType(MSTEST_EXECUTOR_TYPE, throwOnError: true);
-            dynamic testExecutor = Activator.CreateInstance(testExecutorType);
             var runContext = new RunContext();
             var frameworkHandler = new MyFrameworkHandle(GetConsoleLogger());
+
+            const string MSTEST_ADAPTER_DLL = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll";
+            const string MSTEST_EXECUTOR_TYPE = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.MSTestExecutor";
+
+            var cwd = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            var msTestAdapterAssembly = Assembly.LoadFrom(Path.Combine(cwd, MSTEST_ADAPTER_DLL));
+            var testExecutorType = msTestAdapterAssembly.GetType(MSTEST_EXECUTOR_TYPE, throwOnError: true);
+
+            dynamic testExecutor = Activator.CreateInstance(testExecutorType);
             testExecutor.RunTests(_assemblies, runContext, frameworkHandler);
 
             //var tDisc = new MSTestDiscoverer();
