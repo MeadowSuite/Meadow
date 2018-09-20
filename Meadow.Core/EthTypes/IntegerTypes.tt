@@ -1,127 +1,635 @@
-﻿<#@ template language="C#" #>
-<#@ assembly name="System.Core" #>
-<#@ import namespace="System.Linq" #>
-<#@ import namespace="System.Text" #>
+﻿<#@ import namespace="System.Collections" #>
 <#@ import namespace="System.Collections.Generic" #>
-
-<#   /* Disable for now since these are unused */ return ""; #>
-
+using Meadow.Core.Utils;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Meadow.Core.EthTypes
 {
 
-<#    for (var i = 24; i < 256; i += 8) {
-        if (i == 32 || i == 64) continue; #>
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct UInt<#=i#> : IEquatable<UInt<#=i#>>, IComparable<UInt<#=i#>>
+    #region Base Interface
+    public interface IIntegerBase
     {
-        public const int SIZE = <#=i / 8#>;
-        public static BigInteger MaxValue = BigInteger.Pow(2, SIZE * 8);
+        #region Properties
+        bool Signed { get; }
+        int Size { get; }
+        #endregion
 
-        readonly byte <#=string.Join(", ", Enumerable.Range(1, i / 8).Select(p => "P" + p))#>;
+        #region Functions
+        byte[] ToArray(bool littleEndian);
+        Span<byte> ToSpan(bool littleEndian);
+        BigInteger ToBigInteger();
+        string ToHexString(bool hexPrefix);
+        #endregion
+    }
+    #endregion
 
-        public static implicit operator BigInteger(UInt<#=i#> v) => new BigInteger(v.GetSpan().ToArray());
-        public static implicit operator UInt<#=i#>(BigInteger v) => FromBigInteger(v);
-        public static implicit operator UInt<#=i#>(byte v) => FromBigInteger(new BigInteger(v));
-        public static implicit operator UInt<#=i#>(sbyte v) => FromBigInteger(new BigInteger(v));
-        public static implicit operator UInt<#=i#>(uint v) => FromBigInteger(new BigInteger(v));
-        public static implicit operator UInt<#=i#>(int v) => FromBigInteger(new BigInteger(v));
-        public static implicit operator UInt<#=i#>(ulong v) => FromBigInteger(new BigInteger(v));
-        public static implicit operator UInt<#=i#>(long v) => FromBigInteger(new BigInteger(v));
+<#
+int START_SIZE = 8;
+int END_SIZE = 248;
 
-        public static explicit operator byte(UInt<#=i#> v) => (byte)v.ToBigInteger();
-        public static explicit operator sbyte(UInt<#=i#> v) => (sbyte)v.ToBigInteger();
-        public static explicit operator short(UInt<#=i#> v) => (short)v.ToBigInteger();
-        public static explicit operator ushort(UInt<#=i#> v) => (ushort)v.ToBigInteger();
-        public static explicit operator uint(UInt<#=i#> v) => (uint)v.ToBigInteger();
-        public static explicit operator int(UInt<#=i#> v) => (int)v.ToBigInteger();
-        public static explicit operator ulong(UInt<#=i#> v) => (ulong)v.ToBigInteger();
-        public static explicit operator long(UInt<#=i#> v) => (long)v.ToBigInteger();
+List<int> IGNORE_SIZE = new List<int>();
+IGNORE_SIZE.Add(8);
+IGNORE_SIZE.Add(16);
+IGNORE_SIZE.Add(32);
+IGNORE_SIZE.Add(64);
 
-        public static UInt<#=i#> operator %(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Remainder(a, b);
-        public static UInt<#=i#> operator +(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Add(a, b);
-        public static UInt<#=i#> operator -(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Min(a, b);
-        public static UInt<#=i#> operator *(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Multiply(a, b);
-        public static UInt<#=i#> operator /(UInt<#=i#> a, UInt<#=i#> b) => BigInteger.Divide(a, b);
-        public static UInt<#=i#> operator |(UInt<#=i#> a, UInt<#=i#> b) => a.ToBigInteger() | b.ToBigInteger();
-        public static UInt<#=i#> operator &(UInt<#=i#> a, UInt<#=i#> b) => a.ToBigInteger() & b.ToBigInteger();
-        public static UInt<#=i#> operator ^(UInt<#=i#> a, UInt<#=i#> b) => a.ToBigInteger() ^ b.ToBigInteger();
-        public static UInt<#=i#> operator >>(UInt<#=i#> a, int shift) => a.ToBigInteger() >> shift;
-        public static UInt<#=i#> operator <<(UInt<#=i#> a, int shift) => a.ToBigInteger() << shift;
+// Loop for signed/unsigned state
+for(var signedState = 0; signedState < 2; signedState++) { 
 
-        public static bool operator ==(UInt<#=i#> a, UInt<#=i#> b) => a.Equals(b);
-        public static bool operator !=(UInt<#=i#> a, UInt<#=i#> b) => !a.Equals(b);
-        public static bool operator >(UInt<#=i#> a, UInt<#=i#> b) => a.CompareTo(b) > 0;
-        public static bool operator <(UInt<#=i#> a, UInt<#=i#> b) => a.CompareTo(b) < 0;
+    // Define our name
+    bool classSigned = signedState == 0;
 
-        public BigInteger ToBigInteger()
+#>
+    #region <#= classSigned ? "Signed" : "Unsigned" #> Types
+<#
+
+    // Loop for all size integers to generate
+    for (var i = START_SIZE; i <= END_SIZE; i += 8) {
+        if (IGNORE_SIZE.Contains(i)) continue; 
+
+        string className = integerName(classSigned, i);
+#>
+    /// <summary>
+    /// Represents a fixed size integer and implements its underlying operations.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct <#=className#> : IIntegerBase, IComparable, IComparable<<#=className#>>, IEquatable<<#=className#>>
+    {
+        #region Constants
+        public const bool SIGNED = <#=classSigned.ToString().ToLower()#>;
+        public const int SIZE = <#=(i / 8)#>;
+        #endregion
+
+        #region Fields
+        private static readonly BigInteger MaskValue = ((BigInteger.One << (SIZE * 8)) - 1);
+        public static readonly <#=className#> MaxValue = new <#=className#>(SIGNED ? (MaskValue / 2) : MaskValue);
+        public static readonly <#=className#> MinValue = new <#=className#>(SIGNED ? -(MaskValue / 2) - 1 : 0);
+        public static readonly <#=className#> Zero = new <#=className#>(0);
+        public static readonly <#=className#> One = new <#=className#>(1);
+
+        // Underlying values
+<#
+        // Loop for all bytes that constitute our integer type
+        for (var b = 0; b < i / 8; b++) {
+#>
+        private readonly byte _b<#=b#>;
+<#
+        }
+#>
+        #endregion
+
+        #region Properties
+        public bool Signed => SIGNED;
+        public int Size => SIZE;
+        #endregion
+
+        #region Constructors
+        public <#=className#>(BigInteger value) : this()
         {
-            Span<byte> bytes = stackalloc byte[SIZE + 1];
-            GetSpan().CopyTo(bytes);
-            return new BigInteger(bytes.ToArray());
+            // Obtain our data
+            Span<byte> data = BigIntegerConverter.GetBytes(value, SIZE);
+            data.Reverse();
+
+            // Set our internal value
+            var pos = 0;
+            FromByteArray(data, ref pos, ref this);
         }
 
-        public static UInt<#=i#> FromBigInteger(BigInteger bigInt)
+        public <#=className#>(Span<byte> data, bool littleEndian = true) : this()
         {
-            if (bigInt < 0)
+            // If it's not the correct size, or needs to be endian flipped.
+            if (data.Length < SIZE || !littleEndian)
             {
-                throw new OverflowException();
+                // Create a new array with our target size.
+                Span<byte> newArray = new byte[SIZE];
+
+                // Copy what data we have to it.
+                int copySize = Math.Min(data.Length, SIZE);
+
+                // If we are to flip our endianness..
+                if (!littleEndian)
+                {
+                    // Copy our data over
+                    data.Slice(0, copySize).CopyTo(newArray.Slice(newArray.Length - copySize));
+
+                    // Flip the endianness
+                    newArray.Reverse();
+                }
+                else
+                {
+                    // Copy our data over
+                    data.Slice(0, copySize).CopyTo(newArray);
+                }
+
+                // Set the input array as our new array.
+                data = newArray;
             }
-            else if (bigInt > MaxValue)
+
+            // Set our internal value
+            var pos = 0;
+            FromByteArray(data, ref pos, ref this);
+        }
+        #endregion
+
+        #region Operators
+        // Comparison Operators
+        public static bool operator !=(<#=className#> left, <#=className#> right) => !(left == right);
+        public static bool operator ==(<#=className#> left, <#=className#> right) => left.ToBigInteger() == right.ToBigInteger();
+        public static bool operator >(<#=className#> left, <#=className#> right) => left.ToBigInteger() > right.ToBigInteger();
+        public static bool operator >=(<#=className#> left, <#=className#> right) => left.ToBigInteger() >= right.ToBigInteger();
+        public static bool operator <(<#=className#> left, <#=className#> right) => left.ToBigInteger() < right.ToBigInteger();
+        public static bool operator <=(<#=className#> left, <#=className#> right) => left.ToBigInteger() <= right.ToBigInteger();
+
+        // Arithmetic/Computation Operators
+        public static <#=className#> operator %(<#=className#> dividend, <#=className#> divisor) => new <#=className#>(dividend.ToBigInteger() % divisor.ToBigInteger());
+        public static <#=className#> operator +(<#=className#> left, <#=className#> right) => new <#=className#>(left.ToBigInteger() + right.ToBigInteger());
+        public static <#=className#> operator -(<#=className#> left, <#=className#> right) => new <#=className#>(left.ToBigInteger() - right.ToBigInteger());
+        public static <#=className#> operator *(<#=className#> left, <#=className#> right) => new <#=className#>(left.ToBigInteger() * right.ToBigInteger());
+        public static <#=className#> operator /(<#=className#> dividend, <#=className#> divisor) => new <#=className#>(dividend.ToBigInteger() / divisor.ToBigInteger());
+        public static <#=className#> operator >>(<#=className#> value, int shift) => new <#=className#>(value.ToBigInteger() >> shift);
+        public static <#=className#> operator <<(<#=className#> value, int shift) => new <#=className#>(value.ToBigInteger() << shift);
+        public static <#=className#> operator |(<#=className#> left, <#=className#> right) => new <#=className#>(left.ToBigInteger() | right.ToBigInteger());
+        public static <#=className#> operator &(<#=className#> left, <#=className#> right) => new <#=className#>(left.ToBigInteger() & right.ToBigInteger());
+        public static <#=className#> operator ^(<#=className#> left, <#=className#> right) => new <#=className#>(left.ToBigInteger() ^ right.ToBigInteger());
+        public static <#=className#> operator ++(<#=className#> value) => value + One;
+        public static <#=className#> operator --(<#=className#> value) => value - One;
+        public static <#=className#> operator ~(<#=className#> value)
+        {
+            // Obtain our bytes
+            Span<byte> data = value.ToSpan();
+
+            // Invert all bits.
+            for (int i = 0; i < data.Length; i++)
             {
-                throw new OverflowException();
+                data[i] = (byte)~data[i];
             }
-            var arr = bigInt.ToByteArray();
-            if (arr.Length < SIZE)
-            {
-                Array.Resize(ref arr, SIZE);
+
+            // Return the data
+            return new <#=className#>(data);
+        }
+        #endregion
+
+        #region Casting Operators
+        // This Type -> Other Type
+<#
+        // If we are generating smaller types like Int24, Int40-Int56, we need to be sure the native
+        // types are implicitly cast to, if they are bigger. Signed types don't implictly cast to unsigned.
+        bool i8CastAccess = (i < 8) || (i == 8 && classSigned);
+        bool u8CastAccess = ((i <= 8) && !classSigned);
+        bool i16CastAccess = (i < 16) || (i == 16 && classSigned);
+        bool u16CastAccess = ((i <= 16) && !classSigned);
+        bool i32CastAccess = (i < 32) || (i == 32 && classSigned);
+        bool u32CastAccess = ((i <= 32) && !classSigned);
+        bool i64CastAccess = (i < 64) || (i == 64 && classSigned);
+        bool u64CastAccess = ((i <= 64) && !classSigned);
+#>
+        public static <#=castImplicit(i8CastAccess)#> operator sbyte(<#=className#> value) => (sbyte)(long)(value.ToBigInteger() & 0xFF);
+        public static <#=castImplicit(u8CastAccess)#> operator byte(<#=className#> value) => (byte)(long)(value.ToBigInteger() & 0xFF);
+        public static <#=castImplicit(i16CastAccess)#> operator short(<#=className#> value) => (short)(long)(value.ToBigInteger() & 0xFFFF);
+        public static <#=castImplicit(u16CastAccess)#> operator ushort(<#=className#> value) => (ushort)(long)(value.ToBigInteger() & 0xFFFF);
+        public static <#=castImplicit(i32CastAccess)#> operator int(<#=className#> value) => (int)(long)(value.ToBigInteger() & 0xFFFFFFFF);
+        public static <#=castImplicit(u32CastAccess)#> operator uint(<#=className#> value) => (uint)(long)(value.ToBigInteger() & 0xFFFFFFFF);
+        public static <#=castImplicit(i64CastAccess)#> operator long(<#=className#> value) => (long)(ulong)(value.ToBigInteger() & 0xFFFFFFFFFFFFFFFF);
+        public static <#=castImplicit(u64CastAccess)#> operator ulong(<#=className#> value) => (ulong)(value.ToBigInteger() & 0xFFFFFFFFFFFFFFFF);
+        public static explicit operator float(<#=className#> value) => (float)value.ToBigInteger();
+        public static explicit operator double(<#=className#> value) => (double)value.ToBigInteger();
+        public static explicit operator decimal(<#=className#> value) => (decimal)value.ToBigInteger();
+        public static explicit operator BigInteger(<#=className#> value) => value.ToBigInteger();
+
+        // Other Type -> This Type
+<#
+        // If we are generating smaller types like Int24, Int40-Int56, we need to be sure the native
+        // types are explicitly cast to, not implicitly, since values may be truncated.
+        i8CastAccess = ((i >= 8) && classSigned);
+        u8CastAccess = (i > 8) || (i == 8 && !classSigned);
+        i16CastAccess = ((i >= 16) && classSigned);
+        u16CastAccess = (i > 16) || (i == 16 && !classSigned);
+        i32CastAccess = ((i >= 24) && classSigned); // special case: implicitly cast int32 if above 16 bits. allows int24 to use int32 literals.
+        u32CastAccess = (i > 32) || (i == 32 && !classSigned);
+        i64CastAccess = ((i >= 64) && classSigned);
+        u64CastAccess = (i > 64) || (i == 64 && !classSigned);
+#>
+        public static <#=castImplicit(i8CastAccess)#> operator <#=className#>(sbyte value) => new <#=className#>(value);
+        public static <#=castImplicit(u8CastAccess)#> operator <#=className#>(byte value) => new <#=className#>(value);
+        public static <#=castImplicit(i16CastAccess)#> operator <#=className#>(short value) => new <#=className#>(value);
+        public static <#=castImplicit(u16CastAccess)#> operator <#=className#>(ushort value) => new <#=className#>(value);
+        public static <#=castImplicit(i32CastAccess)#> operator <#=className#>(int value) => new <#=className#>(value);
+        public static <#=castImplicit(u32CastAccess)#> operator <#=className#>(uint value) => new <#=className#>(value);
+        public static <#=castImplicit(i64CastAccess)#> operator <#=className#>(long value) => new <#=className#>(value);
+        public static <#=castImplicit(u64CastAccess)#> operator <#=className#>(ulong value) => new <#=className#>(value);
+        public static explicit operator <#=className#>(float value) => FromFloatingType(value);
+        public static explicit operator <#=className#>(double value) => FromFloatingType(value);
+        public static explicit operator <#=className#>(decimal value) => FromDecimalType(value);
+        public static explicit operator <#=className#>(string value) => TryParse(value, out var result) ? result : FromHexString(value);
+        public static explicit operator <#=className#>(BigInteger value) => new <#=className#>(value);
+
+        // Sibling Types -> This Type
+<#
+        // Loop for signed/unsigned state
+        for(var siblingSignedState = 0; siblingSignedState < 2; siblingSignedState++) { 
+            // Loop for all size integers to generate
+            for (var y = START_SIZE; y <= END_SIZE; y += 8) {
+
+                // Obtain our sibling information
+                bool siblingClassSigned = siblingSignedState == 0;
+                string siblingName = integerName(siblingClassSigned, y);
+
+                // If this is this type, or a built-in type, we skip it.
+                if (IGNORE_SIZE.Contains(y) || (y == i && siblingClassSigned == classSigned)) continue; 
+
+                // Determine if our sibling should be cast.
+                // Cases:
+                // IntX->UIntY: Never implicit
+                // UIntX->IntY: Implicit only if X < Y
+                // IntX->IntY: Implicit only if X < Y
+                // UIntX->UIntY: Implicit only if X < Y
+                bool siblingCastAccess = !((!classSigned && siblingClassSigned) || (y >= i));
+#>
+        public static <#=castImplicit(siblingCastAccess)#> operator <#=className#>(<#=siblingName#> value) => new <#=className#>(value.ToBigInteger());
+<#
             }
-            return MemoryMarshal.Read<UInt<#=i#>>(arr);
+        }
+#>
+
+        public static <#=className#> DivRem(<#=className#> dividend, <#=className#> divisor, out <#=className#> remainder)
+        {
+            BigInteger remainderBigInt;
+            var result = new <#=className#>(BigInteger.DivRem(dividend.ToBigInteger(), divisor.ToBigInteger(), out remainderBigInt));
+            remainder = new <#=className#>(remainderBigInt);
+            return result;
         }
 
-        public unsafe ReadOnlySpan<byte> GetSpan()
+        public static <#=className#> Pow(<#=className#> value, int exponent) => new <#=className#>(BigInteger.Pow(value.ToBigInteger(), exponent));
+
+        public static double Log(<#=className#> value, double baseValue) => BigInteger.Log(value.ToBigInteger(), baseValue);
+        #endregion
+
+        #region Functions
+        static <#=className#> FromFloatingType(double floatingNum)
         {
-            var thisPtr = Unsafe.AsPointer(ref Unsafe.AsRef(this));
-            var thisSpan = new ReadOnlySpan<byte>(thisPtr, SIZE);
-            return thisSpan;
+            if (double.IsPositiveInfinity(floatingNum))
+            {
+                throw new NotFiniteNumberException($"Cannot convert +Infinity into {nameof(<#=className#>)}");
+            }
+
+            if (double.IsNegativeInfinity(floatingNum))
+            {
+                throw new NotFiniteNumberException($"Cannot convert -Infinity into {nameof(<#=className#>)}");
+            }
+
+            if (double.IsNaN(floatingNum))
+            {
+                throw new NotFiniteNumberException($"Cannot convert NaN into {nameof(<#=className#>)}");
+            }
+
+            if (floatingNum < 0)
+            {
+                throw new OverflowException($"Cannot convert negative number \"{floatingNum.ToString(CultureInfo.InvariantCulture)}\" into {nameof(<#=className#>)}");
+            }
+
+            var hasFractionalPart = (floatingNum - Math.Round(floatingNum) != 0);
+            if (hasFractionalPart)
+            {
+                throw new ArithmeticException($"Cannot convert a fractional number \"{floatingNum.ToString(CultureInfo.InvariantCulture)}\" into a {nameof(<#=className#>)}");
+            }
+
+            var exponentialNotationStr = floatingNum.ToString("E", CultureInfo.InvariantCulture);
+            var bigInt = BigInteger.Parse(exponentialNotationStr, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture);
+            if (bigInt > MaxValue.ToBigInteger())
+            {
+                throw new OverflowException($"Number \"{floatingNum.ToString(CultureInfo.InvariantCulture)}\" is larger than {MaxValue} (the max size of a {nameof(<#=className#>)})");
+            }
+
+            return new <#=className#>(bigInt);
         }
 
-        public bool Equals(UInt<#=i#> other)
+        static <#=className#> FromDecimalType(decimal decimalNum)
         {
-            return GetSpan().SequenceEqual(other.GetSpan());
+            if (decimalNum < 0)
+            {
+                throw new OverflowException($"Cannot convert negative number \"{decimalNum.ToString(CultureInfo.InvariantCulture)}\" into {nameof(<#=className#>)}");
+            }
+
+            var bigInt = new BigInteger(decimalNum);
+            var hasFractionalPart = (decimalNum - ((decimal)bigInt) != 0);
+            if (hasFractionalPart)
+            {
+                throw new ArithmeticException($"Cannot convert a fractional number \"{decimalNum.ToString(CultureInfo.InvariantCulture)}\" into a {nameof(<#=className#>)}");
+            }
+
+            if (bigInt > MaxValue.ToBigInteger())
+            {
+                throw new OverflowException($"Number \"{decimalNum.ToString(CultureInfo.InvariantCulture)}\" is larger than {MaxValue} (the max size of a {nameof(<#=className#>)})");
+            }
+
+            return new <#=className#>(bigInt);
+        }
+
+        public static <#=className#> Parse(string value, IFormatProvider provider) => new <#=className#>(BigInteger.Parse("0" + value, provider));
+        public static <#=className#> Parse(string value, NumberStyles style) => new <#=className#>(BigInteger.Parse("0" + value, style, CultureInfo.InvariantCulture));
+        public static <#=className#> Parse(string value, NumberStyles style, IFormatProvider provider) => new <#=className#>(BigInteger.Parse("0" + value, style, provider));
+
+        /// <summary>
+        /// Parses a string of a positive numeric value. 
+        /// Can be a integer without commas or decimals. 
+        /// Can be a exponential notation, examples: "45e10", "1.23e5", "24E18", "24e+18". 
+        /// Underscores and spaces are ignored. 
+        /// </summary>
+        public static <#=className#> Parse(string numericString)
+        {
+            return TryParseInternal(numericString, out var result, out var ex) ? result : throw ex;
+        }
+
+        /// <summary>
+        /// Parses a hex string as bytes. The '0x' prefix is optional.
+        /// Examples: "0x12a05f200", "12a05f200", "0xff", "ff", "0xcded53d631ce4a38a1f90d59e5f2f9c023cd28c64aa66488e9462cc4a64a032f"
+        /// </summary>
+        public static <#=className#> ParseHex(string hexString)
+        {
+            // Obtain our span
+            Span<byte> bytes = hexString.HexToSpan();
+
+            // If it's more than the desired size, throw an exception
+            if (bytes.Length > SIZE)
+            {
+                throw new ArgumentException($"Input value for {nameof(<#=className#>)} is too large. Max size is {SIZE} bytes. Input value was {bytes.Length} bytes.");
+            }
+
+            return new <#=className#>(bytes, littleEndian: false);
+        }
+
+        /// <summary>
+        /// Parses a string of a positive numeric value. 
+        /// Can be a integer (no decimals). 
+        /// Can be a exponential notation, examples: "45e10", "1.23e5", "24E18", "24e+18". 
+        /// Commas, underscores, spaces are ignored. 
+        /// </summary>
+        public static bool TryParse(string numericString, out <#=className#> val)
+        {
+            return TryParseInternal(numericString, out val, out _);
+        }
+
+        static bool TryParseInternal(string numericString, out <#=className#> val, out Exception ex)
+        {
+            // Check if the input has a hex prefix
+            var trimmed = numericString.Trim().Replace("_", "").Replace(" ", "");
+            if (trimmed.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+            {
+                ex = new ArgumentException($"Input value contains a hex string prefix. Did you mean to use '{nameof(FromHexString)}'?");
+                val = default;
+                return false;
+            }
+
+            BigInteger bigInt;
+
+            // Check if the input is a number in exponential notation
+            var exponentialIndex = trimmed.IndexOfAny(new[] { 'e', 'E' });
+            if (exponentialIndex > 0 && exponentialIndex == trimmed.LastIndexOfAny(new[] { 'e', 'E' }))
+            {
+                if (!BigInteger.TryParse(trimmed, NumberStyles.AllowExponent | NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out bigInt))
+                {
+                    ex = new ArgumentException("Input value is in an invalid exponential notation.");
+                    val = default;
+                    return false;
+                }
+            }
+            else
+            {
+                // Check if the value has a decimal
+                if (trimmed.Contains('.'))
+                {
+                    ex = new ArgumentException("Input value should not contain demicals or thousands seperator characters.");
+                    val = default;
+                    return false;
+                }
+
+                // Try to parse the integer
+                if (!BigInteger.TryParse(trimmed, NumberStyles.Integer | NumberStyles.AllowThousands, CultureInfo.InvariantCulture, out bigInt))
+                {
+                    ex = new ArgumentException("Input value could not be parsed as an integer.");
+                    val = default;
+                    return false;
+                }
+            }
+
+            // Disallow negatives
+            if (bigInt.Sign < 0)
+            {
+                ex = new ArgumentException("Input value should not be negative.");
+                val = default;
+                return false;
+            }
+
+            // Check the the number fits into our byte count
+            Span<byte> bytes = bigInt.ToByteArray();
+            while (bytes.Length > SIZE && bytes[bytes.Length - 1] == 0)
+            {
+                bytes = bytes.Slice(0, bytes.Length - 1);
+            }
+
+            if (bytes.Length > SIZE)
+            {
+                ex = new ArgumentException($"Input value for {nameof(<#=className#>)} is too large. Max size is {SIZE} bytes. Input value was {bytes.Length} bytes.");
+                val = default;
+                return false;
+            }
+
+            ex = null;
+            val = new <#=className#>(bytes, littleEndian: true);
+            return true;
+        }
+
+        /// <summary>
+        /// Alias for <see cref="Parse(string)"/>
+        /// </summary>
+        public static <#=className#> FromString(string numericString)
+        {
+#pragma warning disable CA1305 // Specify IFormatProvider
+            return Parse(numericString);
+#pragma warning restore CA1305 // Specify IFormatProvider
+        }
+
+        /// <summary>
+        /// Alias for <see cref="ParseHex(string)"/>
+        /// </summary>
+        public static <#=className#> FromHexString(string hexString)
+        {
+            return ParseHex(hexString);
+        }
+
+        public int CompareTo(<#=className#> other)
+        {
+            // Compare our type
+            if (this == other)
+            {
+                return 0;
+            }
+            else if (this < other)
+            {
+                return -1;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
+        int IComparable.CompareTo(object obj)
+        {
+            // If our object is null, they are not equal
+            if (obj == null)
+            {
+                return 1;
+            }
+
+            // If it's not the correct type, we throw an exception
+            if (!(obj is <#=className#>))
+            {
+                throw new ArgumentException($"Cannot compare type {obj.GetType().ToString()} to type {nameof(<#=className#>)}");
+            }
+
+            // Compare the underlying object
+            return CompareTo((<#=className#>)obj);
+        }
+
+        public bool Equals(<#=className#> other)
+        {
+            // Verify the values equal eachother.
+            return this == other;
         }
 
         public override bool Equals(object obj)
         {
-            return obj is UInt<#=i#> other ? Equals(other) : false;
-        }
+            // If our type is correct, verify it equals. Otherwise return false.
+            if (obj is <#=className#> parsedInt)
+            {
+                return Equals(parsedInt);
+            }
+        
+            // Obtain our value as a big integer
+            BigInteger bigInt = (BigInteger)obj;
 
-        public int CompareTo(UInt<#=i#> other)
-        {
-            return GetSpan().SequenceCompareTo(other.GetSpan());
+            // It's a big integer, we can cast it to our type and check equality
+            return Equals((<#=className#>)bigInt);
         }
 
         public override int GetHashCode()
         {
-            int hash = 0;
-            var arr = GetSpan();
-            for (int i = 0; i < arr.Length; i++)
-                hash ^= arr[i].GetHashCode();
-            return hash;
+<#
+            // Loop for all bytes that constitute our integer type
+            string bHashCodeStr = "";
+            for (var b = 0; b < i / 8; b++) 
+            {
+                bHashCodeStr += "_b" + b + ((b == ((i / 8) - 1)) ? "" : ", ");
+            }
+#>
+            // Obtain a unique hashcode for our integer.
+            return (SIGNED, SIZE, <#=bHashCodeStr#>).GetHashCode();
+        }
+
+        public BigInteger ToBigInteger()
+        {
+            // Return our internal big integer
+            var buffer = new byte[SIGNED ? SIZE : SIZE + 1];
+            int position = 0;
+            ToArray(buffer, ref position, ref this, littleEndian: true);
+            return new BigInteger(buffer);
+        }
+
+        public static void FromByteArray(ReadOnlySpan<byte> buffer, out <#=className#> num, bool littleEndian = true)
+        {
+            num = MemoryMarshal.Read<<#=className#>>(buffer);
+        }
+
+        public static void FromByteArray(Span<byte> buffer, ref int position, ref <#=className#> num, bool littleEndian = true)
+        {
+            if (buffer.Length - position < SIZE)
+            {
+                throw new ArgumentOutOfRangeException($"Failed to parse integer type {nameof(<#=className#>)} from bytes because there were not enough bytes provided to represent it.");
+            }
+
+            // If this is big endian, we'll want to reverse the byte order.
+            if (!littleEndian)
+            {
+                Span<byte> newBuffer = new byte[SIZE];
+                buffer.Slice(position, SIZE).CopyTo(newBuffer);
+                buffer.Reverse();
+                buffer = newBuffer;
+            }
+
+            num = MemoryMarshal.Read<<#=className#>>(buffer.Slice(position));
+
+            position += SIZE;
+        }
+
+        public static void ToArray(Span<byte> buffer, ref int position, ref <#=className#> num, bool littleEndian = true)
+        {
+            if (buffer.Length - position < SIZE)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            MemoryMarshal.Write(buffer.Slice(position, SIZE), ref num);
+
+            // If the user wants a big endian array, we reverse the byte order.
+            if (!littleEndian)
+            {
+                buffer.Slice(position, SIZE).Reverse();
+            }
+
+            position += SIZE;
+        }
+
+        public Span<byte> ToSpan(bool littleEndian = true)
+        {
+            int position = 0;
+            Span<byte> buffer = new byte[SIZE];
+            ToArray(buffer, ref position, ref this, littleEndian);
+            return buffer;
+        }
+
+        public byte[] ToArray(bool littleEndian = true)
+        {
+            return ToSpan(littleEndian).ToArray();
         }
         
         public override string ToString()
         {
-            return ToBigInteger().ToString();
+            // Obtain the value as a string.
+            return ToBigInteger().ToString(CultureInfo.InvariantCulture);
         }
 
+        public string ToHexString(bool hexPrefix = true)
+        {
+            // Obtain a hex string from this integer.
+            return ToArray(littleEndian: false).ToHexString(hexPrefix);
+        }
+        #endregion
     }
 
-<# } #>
+<# 
+    } // end of this integer size
+#>
+    #endregion
 
+<#
+} // end of signed statem
+#>
 }
+
+<#+
+public string castImplicit(bool condition)
+{
+    return condition ? "implicit" : "explicit";
+}
+public string integerName(bool signed, int bitCount)
+{
+    return (signed ? "Int" : "UInt") + bitCount.ToString();
+}
+#>
