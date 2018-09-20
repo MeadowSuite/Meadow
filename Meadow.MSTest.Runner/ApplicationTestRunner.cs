@@ -1,5 +1,4 @@
 ﻿using Microsoft.VisualStudio.TestPlatform.CrossPlatEngine.Adapter;
-using Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Adapter;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
@@ -44,7 +43,14 @@ namespace Meadow.MSTest.Runner
 
         public void RunTests()
         {
-            var testExecutor = new MSTestExecutor();
+            const string MSTEST_ADAPTER_NAMESPACE = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter";
+            const string MSTEST_ADAPTER_DLL = MSTEST_ADAPTER_NAMESPACE + ".dll";
+            const string MSTEST_EXECUTOR_TYPE = MSTEST_ADAPTER_NAMESPACE + ".MSTestExecutor";
+
+            var adapterDllPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), MSTEST_ADAPTER_DLL);
+            var msTestAdapterAssembly = Assembly.LoadFile(adapterDllPath);
+            var testExecutorType = msTestAdapterAssembly.GetType(MSTEST_EXECUTOR_TYPE, throwOnError: true);
+            dynamic testExecutor = Activator.CreateInstance(testExecutorType);
             var runContext = new RunContext();
             var frameworkHandler = new MyFrameworkHandle(GetConsoleLogger());
             testExecutor.RunTests(_assemblies, runContext, frameworkHandler);
