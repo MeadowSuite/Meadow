@@ -6,6 +6,7 @@ using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
+using Meadow.CoverageReport.Debugging;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -28,21 +29,29 @@ namespace Meadow.DebugAdapterServer
 
     public class MeadowSolidityDebugAdapter : DebugAdapterBase
     {
+        #region Fields
         readonly TaskCompletionSource<object> _terminatedTcs = new TaskCompletionSource<object>();
 
         public readonly TaskCompletionSource<object> CompletedInitializationRequest = new TaskCompletionSource<object>();
         public readonly TaskCompletionSource<object> CompletedLaunchRequest = new TaskCompletionSource<object>();
         public readonly TaskCompletionSource<object> CompletedConfigurationDoneRequest = new TaskCompletionSource<object>();
+        #endregion
 
+        #region Properties
         public Task Terminated => _terminatedTcs.Task;
-
         public SolidityMeadowConfigurationProperties ConfigurationProperties { get; private set; }
+        public Dictionary<System.Threading.Thread, MeadowDebugAdapterThreadState> ThreadStates { get; }
+        #endregion
 
+        #region Constructor
         public MeadowSolidityDebugAdapter()
         {
-
+            // Initialize our thread state lookup.
+            ThreadStates = new Dictionary<System.Threading.Thread, MeadowDebugAdapterThreadState>();
         }
+        #endregion
 
+        #region Functions
         public void InitializeStream(Stream input, Stream output)
         {
             InitializeProtocolClient(input, output);    
@@ -51,6 +60,57 @@ namespace Meadow.DebugAdapterServer
             {
                 r.SetResponse(new ExampleRequestResponse { Response = "good" });
             });
+        }
+
+        public void ProcessExecutionTraceAnalysis(ExecutionTraceAnalysis traceAnalysis)
+        {
+            // Obtain our thread ID
+            int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+
+            // Create a thread state for this thread
+            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(traceAnalysis, threadId);
+
+            // Set the thread state in our lookup
+            ThreadStates[System.Threading.Thread.CurrentThread] = threadState;
+
+            // Process the execution trace analysis
+            while (threadState.CurrentStepIndex.HasValue)
+            {
+                // Obtain our breakpoints.
+                bool hitBreakpoint = CheckBreakpointExists(threadState.CurrentStepIndex.Value);
+
+                // If we hit a breakpoint, we can 
+                if (hitBreakpoint)
+                {
+                    // Signal our breakpoint event has occurred for this thread.
+                    Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = threadId });
+
+                    // Lock until we are allowed through.
+                    threadState.Semaphore.WaitOne();
+                }
+
+                // Increment our position
+                bool successfulStep = threadState.IncrementStep();
+
+                // If we couldn't step, break out of our loop
+                if (!successfulStep)
+                {
+                    break;
+                }
+            }
+
+            // Remove the thread from our lookup.
+            ThreadStates.Remove(System.Threading.Thread.CurrentThread);
+
+            // TODO: Force thread list update here (if needed, depends on underlying architectural design of debug adapter).
+        }
+
+        private bool CheckBreakpointExists(int stepIndex)
+        {
+            // Obtain the source 
+
+            // TODO: Finish implementing this function.
+            return true;
         }
 
         protected override void HandleInitializeRequestAsync(IRequestResponder<InitializeArguments, InitializeResponse> responder)
@@ -284,6 +344,6 @@ namespace Meadow.DebugAdapterServer
         {
             throw new NotImplementedException();
         }
-
+        #endregion
     }
 }

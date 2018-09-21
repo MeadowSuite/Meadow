@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Meadow.Contract\Meadow.Contract.csproj" />
+    <ProjectReference Include="..\Meadow.CoverageReport\Meadow.CoverageReport.csproj" />
   </ItemGroup>
 
 </Project>

@@ -10,6 +10,7 @@ using SolcNet.DataDescription.Output;
 using SolcNet.DataDescription.Parsing;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -56,6 +57,10 @@ namespace Meadow.CoverageReport.Debugging
         /// Handles storage slot index/data offset resolving as well as stores information about the current trace index context to resolve local/state variables.
         /// </summary>
         public StorageManager StorageManager { get; }
+        /// <summary>
+        /// Indices which signify the index of each significant step in the trace, where a significant step is defined as one that advances in source position from the previous.
+        /// </summary>
+        public ReadOnlyCollection<int> SignificantStepIndices { get; private set; }
         #endregion
 
         #region Constructor
@@ -91,13 +96,13 @@ namespace Meadow.CoverageReport.Debugging
         #endregion
 
         #region TODO: Move elsewhere and cleanup
-        private SourceFileLine[] GetSourceLines()
+        public SourceFileLine[] GetSourceLines()
         {
             // Obtain our lines for the current point in execution.
             return GetSourceLines(ExecutionTrace.Tracepoints.Length - 1);
         }
 
-        private SourceFileLine[] GetSourceLines(int traceIndex)
+        public SourceFileLine[] GetSourceLines(int traceIndex)
         {
             // Loop backwards from our trace index
             for (int i = traceIndex; i >= 0; i--)

@@ -1,4 +1,5 @@
-﻿using Meadow.DebugAdapterProxy;
+﻿using Meadow.CoverageReport.Debugging;
+using Meadow.DebugAdapterProxy;
 using Meadow.DebugAdapterServer;
 using Meadow.JsonRpc.Client;
 using Meadow.MSTest.Runner;
@@ -79,23 +80,12 @@ namespace Meadow.UnitTestTemplate
 
         public async Task RpcExecutionCallback(IJsonRpcClient client)
         {
-            var traceAnalysis = client.GetExecutionTrace();
+            // Obtain an execution trace from our client.
+            var executionTrace = await client.GetExecutionTrace();
+            var executionTraceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
-            // TODO: determine the .sol source files executed from trace analysis
-            var executedSolFiles = new string[] { };
-
-            foreach (var sourcefile in executedSolFiles)
-            {
-                // check if breakpoints are set for this source file
-                if (_debugAdapter.TryGetSourceBreakpoints(sourcefile, out var breakpoints))
-                {
-                    // TODO: resolve source breakpoints to instruction indexes, and check if any were hit during execution
-                    var breakPointsHit = new int[] { };
-                    _debugAdapter.Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint));
-
-                }
-            }
-
+            // Process our execution trace in the debug adapter.
+            _debugAdapter.ProcessExecutionTraceAnalysis(executionTraceAnalysis);
 
             await Task.CompletedTask;
         }
