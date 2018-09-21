@@ -108,6 +108,10 @@ namespace Meadow.SolCodeGen.CodeGenerators
             var solcBytecodeInfosJson = JsonConvert.SerializeObject(solcBytecodeInfos, Formatting.Indented);
             resxWriter.AddEntry("ByteCodeData", solcBytecodeInfosJson);
 
+            var contractAbis = _solcOutput.ContractsFlattened.ToDictionary(c => c.SolFile + "/" + c.ContractName, c => c.Contract.Abi);
+            var contractAbisJson = JsonConvert.SerializeObject(contractAbis, Formatting.Indented);
+            resxWriter.AddEntry("ContractAbiJson", contractAbisJson);
+
             return resxWriter;
 
         }
