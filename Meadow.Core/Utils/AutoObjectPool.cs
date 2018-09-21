@@ -5,7 +5,10 @@ namespace Meadow.Core.Utils
 {
     public class AutoObjectPool<T> where T : class, new()
     {
+
+#pragma warning disable CA1823
         static readonly AutoObjectPool<T> Instance = new AutoObjectPool<T>();
+#pragma warning restore CA1823
 
         static ConcurrentBag<T> _objects;
 

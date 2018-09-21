@@ -90,8 +90,6 @@ namespace Meadow.Core.AbiEncoding
             return info.ClrTypeName;
         }
 
-        static readonly char[] SquareBracketChars = new[] { '[', ']' };
-
         static readonly string[] SquareBracketString = new[] { "][" };
 
         static int[] ParseArrayDimensionSizes(string brackets)
