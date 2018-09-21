@@ -1,4 +1,5 @@
 ﻿using ExposedObject;
+using Meadow.Core.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -43,9 +44,20 @@ namespace Meadow.UnitTestTemplate
 
             // Create a new internal test state.
             InternalTestState internalTestState = testContext.ResetInternalTestState();
-            
+
+            // Convert test argument types
+            object[] args = null;
+            if (testMethod.Arguments != null)
+            {
+                args = new object[testMethod.Arguments.Length];
+                for (var i = 0; i < args.Length; i++)
+                {
+                    args[i] = TypeConversion.ConvertValue(testMethod.ParameterTypes[i].ParameterType, testMethod.Arguments[i]);
+                }
+            }
+
             // Execute our test method on our main node.
-            TestResult mainResult = testMethod.Invoke(testMethod.Arguments);
+            TestResult mainResult = testMethod.Invoke(args);
 
             // Set a more accurate time elapse duration (end of init to start of cleanup)
             mainResult.Duration = internalTestState.EndTime - internalTestState.StartTime;
@@ -71,7 +83,7 @@ namespace Meadow.UnitTestTemplate
                 internalTestState.InExternalNodeContext = true;
 
                 // Execute our test method on our parallel node
-                TestResult parallelResult = testMethod.Invoke(testMethod.Arguments);
+                TestResult parallelResult = testMethod.Invoke(args);
 
                 // Set a more accurate time elapse duration (end of init to start of cleanup)
                 parallelResult.Duration = internalTestState.EndTime - internalTestState.StartTime;
