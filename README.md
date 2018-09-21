@@ -1,3 +1,7 @@
+[![TeamCity Build Status](https://teamcity.meadowsuite.com/app/rest/builds/buildType:(id:Meadow_MeadowSuiteTest)/statusIcon)](https://teamcity.meadowsuite.com/guestLogin.html?guest=1) 
+[![Coverage Status](https://coveralls.io/repos/github/MeadowSuite/Meadow/badge.svg?branch=master)](https://coveralls.io/github/MeadowSuite/Meadow?branch=master) 
+[![codecov](https://codecov.io/gh/MeadowSuite/Meadow/branch/master/graph/badge.svg)](https://codecov.io/gh/MeadowSuite/Meadow)
+
 # Meadow
 
 An Ethereum implementation geared towards Solidity testing and development. Written in fully cross platform C# with .NET Core.
