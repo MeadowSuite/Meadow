@@ -8,7 +8,7 @@
     <PackageProjectUrl>https://github.com/hosho</PackageProjectUrl>
     <RepositoryUrl>https://github.com/hosho</RepositoryUrl>
     <PackageLicenseUrl>https://www.gnu.org/licenses/gpl-3.0.en.html</PackageLicenseUrl>
-    <NoWarn>1591,1573</NoWarn>
+    <NoWarn>1591;1573;NU1603;NU1701</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <CodeAnalysisRuleSet>$(SolutionDir)\solution.ruleset</CodeAnalysisRuleSet>
     <DefineConstants>$(DefineConstants);LANG_7_3</DefineConstants>
