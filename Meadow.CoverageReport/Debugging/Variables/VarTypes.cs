@@ -17,6 +17,8 @@ namespace Meadow.CoverageReport.Debugging.Variables
         /// The default bit count for int/uint solidity types.
         /// </summary>
         private static string _cachedLocationRegexGroup = null;
+        static object _cacheSyncRoot = new object();
+
         private static Dictionary<string, VarTypeLocation> _locationLookup = new Dictionary<string, VarTypeLocation>()
         {
             { "storage ref", VarTypeLocation.StorageRef },
@@ -119,42 +121,45 @@ namespace Meadow.CoverageReport.Debugging.Variables
             // 3) "({_cachedLocationRegexGroup}).*" : Finally, we capture by matching possible locations, and let the rest of the string be anything.
             // Note: _cachedLocationRegexGroup refers to a chain of possible location strings, in an "|" (OR) pattern, such that we match to any of them.
             // Example: As of writing this, the final expression will be "^(.*\S)\s+(storage ref|storage pointer|memory|calldata).*"
-
-            // First we create the type matching group string if we haven't already.
-            if (_cachedLocationRegexGroup == null)
+            lock (_cacheSyncRoot)
             {
-                // Build our location string capture group.
-                _cachedLocationRegexGroup = "";
-                string[] locationKeys = new string[_locationLookup.Count];
-                _locationLookup.Keys.CopyTo(locationKeys, 0);
-                for (int i = 0; i < locationKeys.Length; i++)
+                // First we create the type matching group string if we haven't already.
+                if (_cachedLocationRegexGroup == null)
                 {
-                    _cachedLocationRegexGroup += locationKeys[i];
-                    if (i < locationKeys.Length - 1)
+                    // Build our location string capture group.
+                    _cachedLocationRegexGroup = "";
+                    string[] locationKeys = new string[_locationLookup.Count];
+                    _locationLookup.Keys.CopyTo(locationKeys, 0);
+                    for (int i = 0; i < locationKeys.Length; i++)
                     {
-                        _cachedLocationRegexGroup += "|";
+                        _cachedLocationRegexGroup += locationKeys[i];
+                        if (i < locationKeys.Length - 1)
+                        {
+                            _cachedLocationRegexGroup += "|";
+                        }
                     }
                 }
+
+                // Create our regular expression to capture all information from our type.
+                Regex regularExpression = new Regex($@"^(.*\S)\s+({_cachedLocationRegexGroup}).*", RegexOptions.IgnoreCase);
+
+                // Match the regular expression pattern against a text string.
+                Match match = regularExpression.Match(type);
+
+                // Verify we matched, if not, then there was no location in the type to extract, instead the whole string is likely just base type.
+                if (!match.Success)
+                {
+                    return (type, VarTypeLocation.NoneSpecified);
+                }
+
+                // Finally, we'll have two groups, one for base type, one for location.
+                string baseType = match.Groups[1].Value;
+                string locationString = match.Groups[2].Value.ToLowerInvariant();
+
+                // Return the 
+                return (baseType, _locationLookup[locationString]);
+
             }
-
-            // Create our regular expression to capture all information from our type.
-            Regex regularExpression = new Regex($@"^(.*\S)\s+({_cachedLocationRegexGroup}).*", RegexOptions.IgnoreCase);
-
-            // Match the regular expression pattern against a text string.
-            Match match = regularExpression.Match(type);
-
-            // Verify we matched, if not, then there was no location in the type to extract, instead the whole string is likely just base type.
-            if (!match.Success)
-            {
-                return (type, VarTypeLocation.NoneSpecified);
-            }
-
-            // Finally, we'll have two groups, one for base type, one for location.
-            string baseType = match.Groups[1].Value;
-            string locationString = match.Groups[2].Value.ToLowerInvariant();
-
-            // Return the 
-            return (baseType, _locationLookup[locationString]);
         }
 
         /// <summary>
