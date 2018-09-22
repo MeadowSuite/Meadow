@@ -40,14 +40,14 @@ namespace Meadow.DebugAdapterServer
         #region Properties
         public Task Terminated => _terminatedTcs.Task;
         public SolidityMeadowConfigurationProperties ConfigurationProperties { get; private set; }
-        public Dictionary<System.Threading.Thread, MeadowDebugAdapterThreadState> ThreadStates { get; }
+        public Dictionary<int, MeadowDebugAdapterThreadState> ThreadStates { get; }
         #endregion
 
         #region Constructor
         public MeadowSolidityDebugAdapter()
         {
             // Initialize our thread state lookup.
-            ThreadStates = new Dictionary<System.Threading.Thread, MeadowDebugAdapterThreadState>();
+            ThreadStates = new Dictionary<int, MeadowDebugAdapterThreadState>();
         }
         #endregion
 
@@ -71,46 +71,112 @@ namespace Meadow.DebugAdapterServer
             MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(traceAnalysis, threadId);
 
             // Set the thread state in our lookup
-            ThreadStates[System.Threading.Thread.CurrentThread] = threadState;
+            ThreadStates[threadId] = threadState;
 
-            // Process the execution trace analysis
-            while (threadState.CurrentStepIndex.HasValue)
-            {
-                // Obtain our breakpoints.
-                bool hitBreakpoint = CheckBreakpointExists(threadState.CurrentStepIndex.Value);
+            // Continue our execution.
+            ContinueExecution(threadState, DesiredControlFlow.Continue);
 
-                // If we hit a breakpoint, we can 
-                if (hitBreakpoint)
-                {
-                    // Signal our breakpoint event has occurred for this thread.
-                    Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = threadId });
-
-                    // Lock until we are allowed through.
-                    threadState.Semaphore.WaitOne();
-                }
-
-                // Increment our position
-                bool successfulStep = threadState.IncrementStep();
-
-                // If we couldn't step, break out of our loop
-                if (!successfulStep)
-                {
-                    break;
-                }
-            }
+            // Lock until we are allowed through.
+            threadState.Semaphore.WaitOne();
 
             // Remove the thread from our lookup.
-            ThreadStates.Remove(System.Threading.Thread.CurrentThread);
+            ThreadStates.Remove(threadId);
 
             // TODO: Force thread list update here (if needed, depends on underlying architectural design of debug adapter).
         }
 
-        private bool CheckBreakpointExists(int stepIndex)
+        private void ContinueExecution(MeadowDebugAdapterThreadState threadState, DesiredControlFlow controlFlow = DesiredControlFlow.Continue)
         {
-            // Obtain the source 
+            // Determine how to continue execution.
+            bool finishedExecution = false;
+            switch (controlFlow)
+            {
+                case DesiredControlFlow.StepInto:
+                    {
+                        // Increment our step
+                        finishedExecution = !threadState.IncrementStep();
 
-            // TODO: Finish implementing this function.
-            return true;
+                        // Signal our breakpoint event has occurred for this thread.
+                        Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
+                        break;
+                    }
+
+                case DesiredControlFlow.StepBackwards:
+                    {
+                        // Decrement our step
+                        threadState.DecrementStep();
+
+                        // Signal our breakpoint event has occurred for this thread.
+                        Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
+
+                        // TODO: Check if we couldn't decrement step. Disable step backward if we can.
+                        break;
+                    }
+
+                case DesiredControlFlow.Continue:
+                    {
+                        // Process the execution trace analysis
+                        while (threadState.CurrentStepIndex.HasValue)
+                        {
+                            // Obtain our breakpoints.
+                            bool hitBreakpoint = CheckBreakpointExists(threadState);
+
+                            // If we hit a breakpoint, we can signal our breakpoint and exit this execution method.
+                            if (hitBreakpoint)
+                            {
+                                // Signal our breakpoint event has occurred for this thread.
+                                Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = threadState.ThreadId });
+                                return;
+                            }
+
+                            // Increment our position
+                            bool successfulStep = threadState.IncrementStep();
+
+                            // If we couldn't step, break out of our loop
+                            if (!successfulStep)
+                            {
+                                break;
+                            }
+                        }
+
+                        // If we exited this way, our execution has concluded because we could not step any further (or there were never any steps).
+                        finishedExecution = true;
+                        break;
+                    }
+            }
+
+            // If we finished execution, signal our thread
+            threadState.Semaphore.Release();
+        }
+
+        private bool CheckBreakpointExists(MeadowDebugAdapterThreadState threadState)
+        {
+            // Verify we have a valid step at this point.
+            if (!threadState.CurrentStepIndex.HasValue)
+            {
+                return false;
+            }
+
+            // Loop through all the source lines at this step.
+            var sourceLines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
+            foreach (var sourceLine in sourceLines)
+            {
+                // Verify our source path.
+                var sourceFilePath = sourceLine.SourceFileMapParent?.SourceFileName;
+
+                // TODO: Resolve relative path properly so it can simply be looked up.
+                string relativePath = _sourceBreakpoints.Keys.First(x => x.Contains(sourceFilePath, StringComparison.InvariantCultureIgnoreCase));
+                bool success = _sourceBreakpoints.TryGetValue(relativePath, out var breakpointLines);
+
+                // If we have a breakpoint at this line number..
+                bool containsBreakpoint = success && breakpointLines.Any(x => x == sourceLine.LineNumber);
+                if (containsBreakpoint)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         protected override void HandleInitializeRequestAsync(IRequestResponder<InitializeArguments, InitializeResponse> responder)
@@ -169,7 +235,16 @@ namespace Meadow.DebugAdapterServer
 
         protected override StepInResponse HandleStepInRequest(StepInArguments arguments)
         {
-            return base.HandleStepInRequest(arguments);
+            // Obtain the current thread state
+            bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+            if (success)
+            {
+                // Continue executing
+                ContinueExecution(threadState, DesiredControlFlow.StepInto);
+            }
+
+            // Return our continue response
+            return new StepInResponse();
         }
 
         protected override StepInTargetsResponse HandleStepInTargetsRequest(StepInTargetsArguments arguments)
@@ -184,12 +259,33 @@ namespace Meadow.DebugAdapterServer
 
         protected override StepBackResponse HandleStepBackRequest(StepBackArguments arguments)
         {
-            return base.HandleStepBackRequest(arguments);
+            // Obtain the current thread state
+            bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+            if (success)
+            {
+                // Continue executing
+                ContinueExecution(threadState, DesiredControlFlow.StepBackwards);
+            }
+
+            // Return our continue response
+            return new StepBackResponse();
         }
 
         protected override ContinueResponse HandleContinueRequest(ContinueArguments arguments)
         {
-            return base.HandleContinueRequest(arguments);
+            // Obtain the current thread state
+            bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+            if (success)
+            {
+                // Advance our step from our current position
+                threadState.IncrementStep();
+
+                // Continue executing
+                ContinueExecution(threadState, DesiredControlFlow.Continue);
+            }
+
+            // Return our continue response
+            return new ContinueResponse();
         }
 
         protected override ReverseContinueResponse HandleReverseContinueRequest(ReverseContinueArguments arguments)
@@ -209,28 +305,56 @@ namespace Meadow.DebugAdapterServer
 
         protected override ThreadsResponse HandleThreadsRequest(ThreadsArguments arguments)
         {
-            var threadID = 1;
-            var threadName = "some thread name";
-            var thread = new Thread(threadID, threadName);
-            return new ThreadsResponse(new List<Thread> { thread });
+            // Create a list of threads from our thread states.
+            List<Thread> threads = ThreadStates.Values.Select(x => new Thread(x.ThreadId, $"thread_{x.ThreadId}")).ToList();
+            return new ThreadsResponse(threads);
         }
 
         protected override StackTraceResponse HandleStackTraceRequest(StackTraceArguments arguments)
         {
-            // TODO
-            var stackFrameID = 0;
-            var line = 10;
-            var stackFrame = new StackFrame(stackFrameID, "example method name", line, 0);
+            // Create our list of stack frames.
+            List<StackFrame> stackFrames = new List<StackFrame>();
 
-            var fileName = _breakpointFiles[0].Name;
-            var filePath = _breakpointFiles[0].Path;
-
-            stackFrame.Source = new Source
+            // Verify we have a thread state for this thread, and a valid step to represent in it.
+            if (ThreadStates.TryGetValue(arguments.ThreadId, out var threadState) && threadState.CurrentStepIndex.HasValue)
             {
-                Name = fileName,
-                Path = filePath
-            };
-            return new StackTraceResponse(new List<StackFrame> { stackFrame });
+                // Obtain the callstack
+                var callstack = threadState.ExecutionTraceAnalysis.GetCallStack(threadState.CurrentStepIndex.Value);
+
+                // Loop through our scopes.
+                foreach (var scope in callstack)
+                {
+                    // If the scope is invalid, then we skip it.
+                    if (scope.FunctionDefinition == null)
+                    {
+                        continue;
+                    }
+
+                    // Obtain the method name we are executing in.
+                    string frameName = scope.FunctionDefinition.Name;
+                    if (string.IsNullOrEmpty(frameName))
+                    {
+                        frameName = scope.FunctionDefinition.IsConstructor ? $".ctor ({scope.ContractDefinition.Name})" : "<N/A>";
+                    }
+
+                    var stackFrame = new StackFrame(scope.ScopeDepth, frameName, 10, 0);
+
+                    //var fileName = _breakpointFiles[0].Name;
+                    //var filePath = _breakpointFiles[0].Path;
+
+                    //stackFrame.Source = new Source
+                    //{
+                    //    Name = fileName,
+                    //    Path = filePath
+                    //};
+
+                    // Add our stack frame to the list
+                    stackFrames.Add(stackFrame);
+                }
+            }
+
+            // Return our stack frames in our response.
+            return new StackTraceResponse(stackFrames);
         }
 
         protected override ScopesResponse HandleScopesRequest(ScopesArguments arguments)
@@ -243,7 +367,7 @@ namespace Meadow.DebugAdapterServer
 
         protected override VariablesResponse HandleVariablesRequest(VariablesArguments arguments)
         {
-            // TODO
+            // TODO: 
             var variablesScopeReference = arguments.VariablesReference;
             var response = new VariablesResponse(new List<Variable>
             {

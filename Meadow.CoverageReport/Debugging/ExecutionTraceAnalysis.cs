@@ -60,7 +60,7 @@ namespace Meadow.CoverageReport.Debugging
         /// <summary>
         /// Indices which signify the index of each significant step in the trace, where a significant step is defined as one that advances in source position from the previous.
         /// </summary>
-        public ReadOnlyCollection<int> SignificantStepIndices { get; private set; }
+        public List<int> SignificantStepIndices { get; private set; }
         #endregion
 
         #region Constructor
@@ -77,6 +77,9 @@ namespace Meadow.CoverageReport.Debugging
 
             // Initialize our lookup for scopes.
             Scopes = new Dictionary<int, ExecutionTraceScope>();
+
+            // Initialize our list of significant steps for a debugger or anyone wishing to jump through step history at a faster pace.
+            SignificantStepIndices = new List<int>();
 
             // Fill in our null/unchanged values for our execution trace to make it easier to parse.
             FillUnchangedValues();
@@ -746,6 +749,27 @@ namespace Meadow.CoverageReport.Debugging
 
                 // Obtain our instruction number and source map
                 (int instructionNumber, SourceMapEntry currentEntry) = GetInstructionAndSourceMap(traceIndex);
+
+                // If we have no entry or 
+                bool significantStep = false;
+                if (lastEntry.HasValue)
+                {
+                    // TODO: For now this will just be if the entry differs, we use it as a significant step.
+                    // Once the debugger is running, this should be changed to make significant steps actual desirable
+                    // paths for debuggers to act on.
+                    significantStep = !lastEntry.Value.Equals(currentEntry);
+                }
+                else
+                {
+                    // If the last entry wasn't set, this step is a significant one.
+                    significantStep = true;
+                }
+
+                // If this is a significant step, add it to our list
+                if (significantStep)
+                {
+                    SignificantStepIndices.Add(traceIndex);
+                }
 
                 // Determine if we're in an external call
                 bool withinExternalCall = parentScope != null && parentScope.CallDepth < currentScope.CallDepth;
