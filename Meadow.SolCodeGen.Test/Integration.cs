@@ -8,6 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Text;
+using System.Threading;
 using Xunit;
 
 namespace Meadow.SolCodeGen.Test
@@ -129,30 +131,89 @@ namespace Meadow.SolCodeGen.Test
 
         static string RunDotnet(params string[] args)
         {
+            var dotnetCliPath = DotNetExe.FullPathOrDefault();
             var processArgs = ArgumentEscaper.EscapeAndConcatenate(args);
-
-            var processStartInfo = new ProcessStartInfo(DotNetExe.FullPathOrDefault(), processArgs);
-            var runCommand = $"{processStartInfo.FileName} {processStartInfo.Arguments}";
+            var runCommand = $"dotnet {processArgs}";
             Console.WriteLine($"Running: {runCommand}");
-            processStartInfo.RedirectStandardOutput = true;
-            processStartInfo.RedirectStandardError = true;
-            using (var process = Process.Start(processStartInfo))
+
+            var (output, error, exitCode) = RunProcess(dotnetCliPath, args);
+
+            if (!string.IsNullOrWhiteSpace(error))
             {
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-                if (!string.IsNullOrWhiteSpace(error))
+                throw new Exception($"Error running: {runCommand}{Environment.NewLine}{error}");
+            }
+
+            if (exitCode != 0)
+            {
+                throw new Exception($"Bad exit code '{exitCode}' when running: {runCommand}{Environment.NewLine}{output}");
+            }
+
+            return output;
+        }
+
+        static (string StandardOutput, string StandardError, int ExitCode) RunProcess(string fileName, params string[] args)
+        {
+            using (Process process = new Process())
+            {
+                process.StartInfo.FileName = fileName;
+                foreach (var arg in args)
                 {
-                    throw new Exception($"Error running: {runCommand}{Environment.NewLine}{error}");
+                    process.StartInfo.ArgumentList.Add(arg);
                 }
 
-                if (process.ExitCode != 0)
-                {
-                    throw new Exception($"Bad exit code '{process.ExitCode}' when running: {runCommand}{Environment.NewLine}{output}");
-                }
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.StartInfo.RedirectStandardError = true;
 
-                return output;
+                StringBuilder output = new StringBuilder();
+                StringBuilder error = new StringBuilder();
+
+                using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
+                using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
+                {
+                    process.OutputDataReceived += (sender, e) => {
+
+                        if (e.Data == null)
+                        {
+                            outputWaitHandle.Set();
+                        }
+                        else
+                        {
+                            output.AppendLine(e.Data);
+                        }
+                    };
+                    process.ErrorDataReceived += (sender, e) =>
+                    {
+                        if (e.Data == null)
+                        {
+                            errorWaitHandle.Set();
+                        }
+                        else
+                        {
+                            error.AppendLine(e.Data);
+                        }
+                    };
+
+                    process.Start();
+
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                    var timeout = (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
+
+                    if (process.WaitForExit(timeout) &&
+                        outputWaitHandle.WaitOne(timeout) &&
+                        errorWaitHandle.WaitOne(timeout))
+                    {
+                        return (output.ToString(), error.ToString(), process.ExitCode);
+                    }
+                    else
+                    {
+                        throw new Exception("Timed out waiting for process to complete");
+                    }
+                }
             }
         }
+
     }
 }
