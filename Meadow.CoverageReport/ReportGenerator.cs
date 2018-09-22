@@ -43,17 +43,18 @@ namespace Meadow.CoverageReport
 
             var sourceFileMaps = CreateSourceFileMaps(sourcesList, analysis);
 
-            foreach (var node in analysis.ReachableNodes)
-            {
-                var sourceFileLine = SourceLineMatching.GetSourceFileLineFromAstNode(node, sourceFileMaps);
-                sourceFileLine.IsActive = true;
-            }
-
             foreach (var node in analysis.UnreachableNodes)
             {
                 var sourceFileLine = SourceLineMatching.GetSourceFileLineFromAstNode(node, sourceFileMaps);
                 sourceFileLine.IsActive = true;
                 sourceFileLine.IsUnreachable = true;
+            }
+
+            foreach (var node in analysis.ReachableNodes)
+            {
+                var sourceFileLine = SourceLineMatching.GetSourceFileLineFromAstNode(node, sourceFileMaps);
+                sourceFileLine.IsActive = true;
+                sourceFileLine.IsUnreachable = false;
             }
 
             foreach (var branch in analysis.BranchNodes)

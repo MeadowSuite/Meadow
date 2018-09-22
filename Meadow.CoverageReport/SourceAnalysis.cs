@@ -54,7 +54,7 @@ namespace Meadow.CoverageReport
             AstNodeType.FunctionDefinition,
             AstNodeType.ElementaryTypeName,
             AstNodeType.VariableDeclaration,
-            AstNodeType.Literal,
+            //AstNodeType.Literal,
             AstNodeType.PlaceholderStatement,
             AstNodeType.UserDefinedTypeName
         };
