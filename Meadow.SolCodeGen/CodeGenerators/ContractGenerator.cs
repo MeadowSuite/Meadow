@@ -95,10 +95,10 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     public const string CONTRACT_BYTECODE_HASH = ""{bytecodeHash}"";
                     public const string CONTRACT_BYTECODE_DEPLOYED_HASH = ""{bytecodeDeployedHash}"";
 
-                    public override string ContractSolFilePath => CONTRACT_SOL_FILE;
-                    public override string ContractName => CONTRACT_NAME;
-                    public override string ContractBytecodeHash => CONTRACT_BYTECODE_HASH;
-                    public override string ContractBytecodeDeployedHash => CONTRACT_BYTECODE_DEPLOYED_HASH;
+                    protected override string ContractSolFilePath => CONTRACT_SOL_FILE;
+                    protected override string ContractName => CONTRACT_NAME;
+                    protected override string ContractBytecodeHash => CONTRACT_BYTECODE_HASH;
+                    protected override string ContractBytecodeDeployedHash => CONTRACT_BYTECODE_DEPLOYED_HASH;
 
                     private {_contractName}({JsonRpcClientType} rpcClient, Address address, Address defaultFromAccount)
                         : base(rpcClient, address, defaultFromAccount)

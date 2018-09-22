@@ -327,7 +327,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
- report/
 
 # Meadow generated files
 *.sol.cs
@@ -335,3 +334,6 @@ ASALocalRun/
 Meadow.UnitTestTemplate.Test/Report/
 Meadow.UnitTestTemplate.ParallelTest/Report/
 pwsh_testing/GeneratedAssembly/
+coverage/
+report/
+reportgenerator/

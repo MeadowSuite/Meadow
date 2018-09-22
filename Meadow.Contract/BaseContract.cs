@@ -16,6 +16,7 @@ using Meadow.JsonRpc.Types;
 using Meadow.JsonRpc;
 using Meadow.JsonRpc.Client;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace Meadow.Contract
 {
@@ -26,21 +27,34 @@ namespace Meadow.Contract
         TransactionParams GetTransactionParams(TransactionParams optional);
         CallParams GetCallParams(CallParams optional);
         IJsonRpcClient JsonRpcClient { get; }
+
+        string ContractSolFilePath { get; }
+        string ContractName { get; }
+        string ContractBytecodeHash { get; }
+        string ContractBytecodeDeployedHash { get; }
     }
 
     public abstract class BaseContract : IContractInstanceSetup
     {
-        public abstract string ContractSolFilePath { get; }
-        public abstract string ContractName { get; }
-        public abstract string ContractBytecodeHash { get; }
-        public abstract string ContractBytecodeDeployedHash { get; }
+        public SolcNet.DataDescription.Output.Abi[] Abi => _abi.Value;
+        readonly Lazy<SolcNet.DataDescription.Output.Abi[]> _abi;
 
         public Address ContractAddress { get; protected set; }
         public Address DefaultFromAccount { get; protected set; }
 
         public IJsonRpcClient JsonRpcClient { get; protected set; }
 
-        public BaseContract(IJsonRpcClient rpcClient, Address contractAddress, Address defaultFromAccount)
+        protected abstract string ContractSolFilePath { get; }
+        protected abstract string ContractName { get; }
+        protected abstract string ContractBytecodeHash { get; }
+        protected abstract string ContractBytecodeDeployedHash { get; }
+
+        string IContractInstanceSetup.ContractSolFilePath => ContractSolFilePath;
+        string IContractInstanceSetup.ContractName => ContractName;
+        string IContractInstanceSetup.ContractBytecodeHash => ContractBytecodeHash;
+        string IContractInstanceSetup.ContractBytecodeDeployedHash => ContractBytecodeDeployedHash;
+
+        public BaseContract(IJsonRpcClient rpcClient, Address contractAddress, Address defaultFromAccount) : this()
         {
             ContractAddress = contractAddress;
             DefaultFromAccount = defaultFromAccount;
@@ -49,7 +63,7 @@ namespace Meadow.Contract
 
         public BaseContract()
         {
-
+            _abi = new Lazy<Abi[]>(() => GeneratedSolcData.Default.GetContractJsonAbi(ContractSolFilePath, ContractName));
         }
 
         TransactionParams IContractInstanceSetup.GetTransactionParams(TransactionParams optional)

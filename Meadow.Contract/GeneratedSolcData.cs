@@ -37,6 +37,7 @@ namespace Meadow.Contract
         readonly Lazy<SolcBytecodeInfo[]> _solcBytecodeInfo;
         readonly Lazy<SolcSourceInfo[]> _solcSourceInfo;
         readonly Lazy<string> _solidityCompilerVersion;
+        readonly Lazy<Dictionary<string, SolcNet.DataDescription.Output.Abi[]>> _contractAbis;
 
         public SolcBytecodeInfo[] SolcBytecodeInfo => _solcBytecodeInfo.Value;
         public SolcSourceInfo[] SolcSourceInfo => _solcSourceInfo.Value;
@@ -93,6 +94,7 @@ namespace Meadow.Contract
             _solcBytecodeInfo = new Lazy<SolcBytecodeInfo[]>(GetSolcBytecodeInfo);
             _solcSourceInfo = new Lazy<SolcSourceInfo[]>(GetSolcSourceInfo);
             _solidityCompilerVersion = new Lazy<string>(GetSolidityCompilerVersion);
+            _contractAbis = new Lazy<Dictionary<string, SolcNet.DataDescription.Output.Abi[]>>(GetContractAbiJson);
         }
 
         public ResourceManager GetResourceManager()
@@ -136,6 +138,19 @@ namespace Meadow.Contract
             return ver;
         }
 
+        Dictionary<string, SolcNet.DataDescription.Output.Abi[]> GetContractAbiJson()
+        {
+            var resourceManager = _resourceManager.Value;
+            var ver = resourceManager.GetString("ContractAbiJson", CultureInfo.InvariantCulture);
+            var json = JsonConvert.DeserializeObject<Dictionary<string, SolcNet.DataDescription.Output.Abi[]>>(ver);
+            return json;
+        }
+
+        public SolcNet.DataDescription.Output.Abi[] GetContractJsonAbi(string solFile, string contractName)
+        {
+            var abi = _contractAbis.Value[solFile + "/" + contractName];
+            return abi;
+        }
 
         ConcurrentDictionary<(string CodeHex, bool IsDeployed), SolcBytecodeInfo> _codeHexCache = new ConcurrentDictionary<(string CodeHex, bool IsDeployed), SolcBytecodeInfo>();
 
