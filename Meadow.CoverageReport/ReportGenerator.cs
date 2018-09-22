@@ -33,7 +33,8 @@ namespace Meadow.CoverageReport
             SolcBytecodeInfo[] byteCodeData,
             IGrouping<string, UnitTestResult>[] unitTestOutcome,
             string[] ignoredSourceFiles,
-            string reportOutputDirectory)
+            string reportOutputDirectory,
+            List<Exception> catchExceptions = null)
         {
 
             string reportIndexFilePath = Path.Combine(reportOutputDirectory, REPORT_INDEX_FILE);
@@ -90,10 +91,10 @@ namespace Meadow.CoverageReport
                 var matchedByteCodeData = byteCodeData.Single(s => s.FilePath == contractInst.FilePath && s.ContractName == contractInst.ContractName);
 
                 // The evm.bytecode.opcodes string corresponds to code executed during the deployment/construction of a contract.
-                IdentifyExecutedSourceLines(coverageMap.UndeployedMap, matchedByteCodeData.Opcodes, sourceMapNonDeployed, analysis, sourceFileMaps);
+                IdentifyExecutedSourceLines(coverageMap.UndeployedMap, matchedByteCodeData.Opcodes, sourceMapNonDeployed, analysis, sourceFileMaps, catchExceptions);
 
                 // The evm.bytecodeDeployed.opcodes string corresponds to code that can be excuted on a deployed contract via transactions or calls.
-                IdentifyExecutedSourceLines(coverageMap.DeployedMap, matchedByteCodeData.OpcodesDeployed, sourceMapDeployed, analysis, sourceFileMaps);
+                IdentifyExecutedSourceLines(coverageMap.DeployedMap, matchedByteCodeData.OpcodesDeployed, sourceMapDeployed, analysis, sourceFileMaps, catchExceptions);
 
                 // Identify branch coverage using instruction indexes from branch nodes corresponding to code executed during the deployment/construction of a contract.
                 IdentifySourceLineBranchCoverage(coverageMap.UndeployedMap, matchedByteCodeData.Opcodes, sourceMapNonDeployed, analysis, sourceFileMaps);
@@ -523,7 +524,7 @@ namespace Meadow.CoverageReport
         /// then matches the instruction offset a sourcemap entry (from solc output), then matches the sourcemap
         /// entry to a SourceFileLine and increments the execution count.
         /// </summary>
-        static void IdentifyExecutedSourceLines(CoverageMap coverageMap, string opcodesString, SourceMapEntry[] sourceMap, AnalysisResults analysis, Dictionary<int, SourceFileMap> sourceFileMaps)
+        static void IdentifyExecutedSourceLines(CoverageMap coverageMap, string opcodesString, SourceMapEntry[] sourceMap, AnalysisResults analysis, Dictionary<int, SourceFileMap> sourceFileMaps, List<Exception> catchExceptions = null)
         {
             // If the coverage map is null, exit
             if (coverageMap == null)
@@ -593,7 +594,15 @@ namespace Meadow.CoverageReport
 
                 if (sourceFileLine.IsUnreachable)
                 {
-                    throw new Exception("Coverage on source line that is supposed to be unreachable");
+                    var ex = new Exception("Coverage on source line that is supposed to be unreachable");
+                    if (catchExceptions != null)
+                    {
+                        catchExceptions.Add(ex);
+                    }
+                    else
+                    {
+                        throw ex;
+                    }
                 }
             }
         }

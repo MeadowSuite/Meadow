@@ -372,15 +372,27 @@ namespace Meadow.UnitTestTemplate
 
         public static async Task Cleanup([CallerFilePath]string callerFilePath = null)
         {
+            var reportGeneratorExceptions = new List<Exception>();
             try
             {
                 _callerFilePath = callerFilePath;
-                await CleanupInternal();
+                await CleanupInternal(reportGeneratorExceptions);
             }
             catch (Exception ex)
             {
+                reportGeneratorExceptions.Add(ex);
+            }
+
+            if (reportGeneratorExceptions.Count > 0)
+            {
+                var ex = reportGeneratorExceptions[0];
+                if (reportGeneratorExceptions.Count > 1)
+                {
+                    ex = new AggregateException(reportGeneratorExceptions);
+                }
+
                 File.WriteAllText($"post-test-exception-{DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture)}.txt", "Post-test exception: " + ex.ToString());
-                throw;
+                throw ex;
             }
         }
 
@@ -403,7 +415,7 @@ namespace Meadow.UnitTestTemplate
             return path;
         }
 
-        static async Task CleanupInternal()
+        static async Task CleanupInternal(List<Exception> catchExceptions)
         {
             var reportOutputDirectory = GetProjectDirectory();
 
@@ -462,7 +474,8 @@ namespace Meadow.UnitTestTemplate
                 sourcesData.SolcBytecodeInfo,
                 unitTestResults,
                 ignoredSourceFiles.ToArray(),
-                reportOutputDirectory);
+                reportOutputDirectory,
+                catchExceptions);
 
             var reportFilePath = Path.GetFullPath(Path.Combine(reportOutputDirectory, ReportGenerator.REPORT_INDEX_FILE));
             var reportFileUri = MiscUtil.GetFileUrl(reportFilePath);
