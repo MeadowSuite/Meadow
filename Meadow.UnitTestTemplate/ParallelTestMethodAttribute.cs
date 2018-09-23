@@ -62,6 +62,12 @@ namespace Meadow.UnitTestTemplate
             // Set a more accurate time elapse duration (end of init to start of cleanup)
             mainResult.Duration = internalTestState.EndTime - internalTestState.StartTime;
 
+            // Obtain the display name for our test.
+            string testDisplayName = mainResult.DisplayName ?? testMethod.TestMethodName;
+
+            // Reset the internal test state for this test context
+            internalTestState = testContext.ResetInternalTestState();
+
             // If we have a parallel node to run tests against..
             if (Global.ExternalNodeTestServices != null)
             {
@@ -72,12 +78,6 @@ namespace Meadow.UnitTestTemplate
                     // the external node, so we quit with the singular result.
                     return new[] { mainResult };
                 }
-
-                // Obtain the display name for our test.
-                string testDisplayName = mainResult.DisplayName ?? testMethod.TestMethodName;
-
-                // Reset the internal test state for this test context
-                internalTestState = testContext.ResetInternalTestState();
 
                 // Begin using the external node.
                 internalTestState.InExternalNodeContext = true;
@@ -99,7 +99,17 @@ namespace Meadow.UnitTestTemplate
             }
             else
             {
-                throw new Exception("Failed to run parallel test because parallel test node services failed to initialize properly.");
+                var parallelResult = new TestResult
+                {
+                    Outcome = UnitTestOutcome.Error,
+                    TestFailureException = new Exception("Failed to run parallel test because parallel test node services failed to initialize properly."),
+                };
+
+                // Set our test names
+                mainResult.DisplayName = $"{testDisplayName} (built-in)";
+                parallelResult.DisplayName = $"{testDisplayName} (external)";
+
+                return new[] { mainResult, parallelResult };
             }
         }
         #endregion
