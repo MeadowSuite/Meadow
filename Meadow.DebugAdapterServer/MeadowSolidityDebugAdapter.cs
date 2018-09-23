@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using Meadow.CoverageReport.Debugging;
+using Meadow.CoverageReport.Models;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -29,6 +30,10 @@ namespace Meadow.DebugAdapterServer
 
     public class MeadowSolidityDebugAdapter : DebugAdapterBase
     {
+        #region Constants
+        private const string CONTRACTS_PREFIX = "Contracts\\";
+        #endregion
+
         #region Fields
         readonly TaskCompletionSource<object> _terminatedTcs = new TaskCompletionSource<object>();
 
@@ -54,7 +59,7 @@ namespace Meadow.DebugAdapterServer
         #region Functions
         public void InitializeStream(Stream input, Stream output)
         {
-            InitializeProtocolClient(input, output);    
+            InitializeProtocolClient(input, output);
 
             Protocol.RegisterRequestType<ExampleCustomRequestWithResponse, ExampleRequestArgs, ExampleRequestResponse>(r =>
             {
@@ -91,6 +96,9 @@ namespace Meadow.DebugAdapterServer
             bool finishedExecution = false;
             switch (controlFlow)
             {
+                case DesiredControlFlow.StepOver:
+                // TODO: Implement
+
                 case DesiredControlFlow.StepInto:
                     {
                         // Increment our step
@@ -100,6 +108,9 @@ namespace Meadow.DebugAdapterServer
                         Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
                         break;
                     }
+
+                case DesiredControlFlow.StepOut:
+                // TODO: Implement
 
                 case DesiredControlFlow.StepBackwards:
                     {
@@ -164,9 +175,8 @@ namespace Meadow.DebugAdapterServer
                 // Verify our source path.
                 var sourceFilePath = sourceLine.SourceFileMapParent?.SourceFileName;
 
-                // TODO: Resolve relative path properly so it can simply be looked up.
-                string relativePath = _sourceBreakpoints.Keys.First(x => x.Contains(sourceFilePath, StringComparison.InvariantCultureIgnoreCase));
-                bool success = _sourceBreakpoints.TryGetValue(relativePath, out var breakpointLines);
+                // Resolve relative path properly so it can simply be looked up.
+                bool success = _sourceBreakpoints.TryGetValue(sourceFilePath, out var breakpointLines);
 
                 // If we have a breakpoint at this line number..
                 bool containsBreakpoint = success && breakpointLines.Any(x => x == sourceLine.LineNumber);
@@ -322,35 +332,101 @@ namespace Meadow.DebugAdapterServer
                 var callstack = threadState.ExecutionTraceAnalysis.GetCallStack(threadState.CurrentStepIndex.Value);
 
                 // Loop through our scopes.
-                foreach (var scope in callstack)
+                for (int i = 0; i < callstack.Length; i++)
                 {
+                    // Grab our current call frame
+                    var currentCallFrame = callstack[i];
+
                     // If the scope is invalid, then we skip it.
-                    if (scope.FunctionDefinition == null)
+                    if (currentCallFrame.FunctionDefinition == null)
                     {
                         continue;
                     }
 
-                    // Obtain the method name we are executing in.
-                    string frameName = scope.FunctionDefinition.Name;
-                    if (string.IsNullOrEmpty(frameName))
+                    // We obtain our relevant source lines for this call stack frame.
+                    SourceFileLine[] lines = null;
+
+                    // If it's the most recent call, we obtain the line for the current trace.
+                    if (i == 0)
                     {
-                        frameName = scope.FunctionDefinition.IsConstructor ? $".ctor ({scope.ContractDefinition.Name})" : "<N/A>";
+                        lines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
+                    }
+                    else
+                    {
+                        // If it's not the most recent call, we obtain the position at our 
+                        var previousCallFrame = callstack[i - 1];
+                        if (previousCallFrame.ParentFunctionCall != null)
+                        {
+                            lines = threadState.ExecutionTraceAnalysis.GetSourceLines(previousCallFrame.ParentFunctionCall);
+                        }
+                        else
+                        {
+                            throw new Exception("TODO: Stack Trace could not be generated because previous call frame's function call could not be resolved. Update behavior in this case.");
+                        }
                     }
 
-                    var stackFrame = new StackFrame(scope.ScopeDepth, frameName, 10, 0);
+                    // Obtain the method name we are executing in.
+                    string frameName = currentCallFrame.FunctionDefinition.Name;
+                    if (string.IsNullOrEmpty(frameName))
+                    {
+                        frameName = currentCallFrame.FunctionDefinition.IsConstructor ? $".ctor ({currentCallFrame.ContractDefinition.Name})" : "<N/A>";
+                    }
 
-                    //var fileName = _breakpointFiles[0].Name;
-                    //var filePath = _breakpointFiles[0].Path;
+                    // Determine the bounds of our stack frame.
+                    int startLine = 0;
+                    int startColumn = 0;
+                    int endLine = 0;
+                    int endColumn = 0;
 
-                    //stackFrame.Source = new Source
-                    //{
-                    //    Name = fileName,
-                    //    Path = filePath
-                    //};
+                    // Loop through all of our lines for this position.
+                    for (int x = 0; x < lines.Length; x++)
+                    {
+                        // Obtain our indexed line.
+                        SourceFileLine line = lines[x];
+
+                        // Set our start position if relevant.
+                        if (x == 0 || line.LineNumber <= startLine)
+                        {
+                            // Set our starting line number.
+                            startLine = line.LineNumber;
+
+                            // TODO: Determine our column start
+                        }
+
+                        // Set our end position if relevant.
+                        if (x == 0 || line.LineNumber >= endLine)
+                        {
+                            // Set our ending line number.
+                            endLine = line.LineNumber;
+
+                            // TODO: Determine our column
+                            endColumn = line.Length;
+                        }
+                    }
+
+                    // Create our source object
+                    Source stackFrameSource = new Source()
+                    {
+                        Name = lines[0].SourceFileMapParent.SourceFileName,
+                        Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, CONTRACTS_PREFIX + lines[0].SourceFileMapParent.SourceFilePath)
+                    };
+
+
+                    var stackFrame = new StackFrame()
+                    {
+                        // TODO: Id = currentCallFrame.ScopeDepth,
+                        Name = frameName,
+                        Line = startLine,
+                        Column = startColumn,
+                        Source = stackFrameSource,
+                        EndLine = endLine,
+                        EndColumn = endColumn
+                    };
 
                     // Add our stack frame to the list
                     stackFrames.Add(stackFrame);
                 }
+
             }
 
             // Return our stack frames in our response.
@@ -361,8 +437,9 @@ namespace Meadow.DebugAdapterServer
         {
             // TODO
             var stackFrameID = arguments.FrameId;
-            var scope = new Scope("Locals", 555, false);
-            return new ScopesResponse(new List<Scope> { scope });
+            var stateScope = new Scope("State Variables", 444, false);
+            var localScope = new Scope("Local Variables", 555, false);
+            return new ScopesResponse(new List<Scope> { stateScope, localScope });
         }
 
         protected override VariablesResponse HandleVariablesRequest(VariablesArguments arguments)
@@ -390,10 +467,24 @@ namespace Meadow.DebugAdapterServer
 
         public bool TryGetSourceBreakpoints(string relativeFilePath, out int[] breakpointLines)
         {
+            // Obtain our internal path from a vs code path
+            relativeFilePath = ConvertVSCodePathToInternalPath(relativeFilePath);
+
             lock (_sourceBreakpoints)
             {
                 return _sourceBreakpoints.TryGetValue(relativeFilePath, out breakpointLines);
             }
+        }
+
+        private string ConvertVSCodePathToInternalPath(string vsCodePath)
+        {
+            // Strip our contracts folder from our VS Code Path
+            int index = vsCodePath.IndexOf(CONTRACTS_PREFIX, StringComparison.InvariantCultureIgnoreCase);
+            string internalPath = vsCodePath.Trim().Substring(index + CONTRACTS_PREFIX.Length + 1);
+
+
+            // Return our internal path.
+            return internalPath;
         }
 
         protected override SetBreakpointsResponse HandleSetBreakpointsRequest(SetBreakpointsArguments arguments)
@@ -414,6 +505,9 @@ namespace Meadow.DebugAdapterServer
                 .Substring(ConfigurationProperties.WorkspaceDirectory.Length)
                 .TrimStart('/', '\\')
                 .Replace('\\', '/');
+
+            // Obtain our internal path from a vs code path
+            relativeFilePath = ConvertVSCodePathToInternalPath(relativeFilePath);
 
             lock (_sourceBreakpoints)
             {

@@ -136,7 +136,7 @@ namespace Meadow.CoverageReport.Debugging
             throw new Exception("Could not resolve source lines for the given trace index. Attempt to walk backwards to the last resolvable lines have also failed. Please report this.");
         }
 
-        private SourceFileLine[] GetSourceLines(AstNode node)
+        public SourceFileLine[] GetSourceLines(AstNode node)
         {
             // Obtain our analysis
             var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
