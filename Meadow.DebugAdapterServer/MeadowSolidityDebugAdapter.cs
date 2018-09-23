@@ -32,6 +32,7 @@ namespace Meadow.DebugAdapterServer
     {
         #region Constants
         private const string CONTRACTS_PREFIX = "Contracts\\";
+        private const int SIMULTANEOUS_TRACE_COUNT = 1;
         #endregion
 
         #region Fields
@@ -40,6 +41,7 @@ namespace Meadow.DebugAdapterServer
         public readonly TaskCompletionSource<object> CompletedInitializationRequest = new TaskCompletionSource<object>();
         public readonly TaskCompletionSource<object> CompletedLaunchRequest = new TaskCompletionSource<object>();
         public readonly TaskCompletionSource<object> CompletedConfigurationDoneRequest = new TaskCompletionSource<object>();
+        private System.Threading.Semaphore _processTraceSemaphore = new System.Threading.Semaphore(SIMULTANEOUS_TRACE_COUNT, SIMULTANEOUS_TRACE_COUNT);
         #endregion
 
         #region Properties
@@ -75,17 +77,26 @@ namespace Meadow.DebugAdapterServer
             // Create a thread state for this thread
             MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(traceAnalysis, threadId);
 
+            // Acquire the semaphore for processing a trace.
+            _processTraceSemaphore.WaitOne();
+
             // Set the thread state in our lookup
             ThreadStates[threadId] = threadState;
 
             // Continue our execution.
             ContinueExecution(threadState, DesiredControlFlow.Continue);
 
-            // Lock until we are allowed through.
+            // Lock execution is complete.
             threadState.Semaphore.WaitOne();
 
-            // Remove the thread from our lookup.
-            ThreadStates.Remove(threadId);
+            lock (ThreadStates)
+            {
+                // Remove the thread from our lookup.
+                ThreadStates.Remove(threadId);
+            }
+
+            // Release the semaphore for processing a trace.
+            _processTraceSemaphore.Release();
 
             // TODO: Force thread list update here (if needed, depends on underlying architectural design of debug adapter).
         }
@@ -157,7 +168,10 @@ namespace Meadow.DebugAdapterServer
             }
 
             // If we finished execution, signal our thread
-            threadState.Semaphore.Release();
+            if (finishedExecution)
+            {
+                threadState.Semaphore.Release();
+            }
         }
 
         private bool CheckBreakpointExists(MeadowDebugAdapterThreadState threadState)
@@ -245,17 +259,38 @@ namespace Meadow.DebugAdapterServer
 
         protected override StepInResponse HandleStepInRequest(StepInArguments arguments)
         {
-            // Obtain the current thread state
-            bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
-            if (success)
+            lock (ThreadStates)
             {
-                // Continue executing
-                ContinueExecution(threadState, DesiredControlFlow.StepInto);
+                // Obtain the current thread state
+                bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+                if (success)
+                {
+                    // Continue executing
+                    ContinueExecution(threadState, DesiredControlFlow.StepInto);
+                }
             }
 
             // Return our continue response
             return new StepInResponse();
         }
+
+        protected override NextResponse HandleNextRequest(NextArguments arguments)
+        {
+            lock (ThreadStates)
+            {
+                // Obtain the current thread state
+                bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+                if (success)
+                {
+                    // Continue executing
+                    ContinueExecution(threadState, DesiredControlFlow.StepOver);
+                }
+            }
+
+            // Return our step over response
+            return new NextResponse();
+        }
+
 
         protected override StepInTargetsResponse HandleStepInTargetsRequest(StepInTargetsArguments arguments)
         {
@@ -269,12 +304,22 @@ namespace Meadow.DebugAdapterServer
 
         protected override StepBackResponse HandleStepBackRequest(StepBackArguments arguments)
         {
-            // Obtain the current thread state
-            bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
-            if (success)
+            try
             {
-                // Continue executing
-                ContinueExecution(threadState, DesiredControlFlow.StepBackwards);
+                lock (ThreadStates)
+                {
+                    // Obtain the current thread state
+                    bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+                    if (success)
+                    {
+                        // Continue executing
+                        ContinueExecution(threadState, DesiredControlFlow.StepBackwards);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
             }
 
             // Return our continue response
@@ -283,15 +328,18 @@ namespace Meadow.DebugAdapterServer
 
         protected override ContinueResponse HandleContinueRequest(ContinueArguments arguments)
         {
-            // Obtain the current thread state
-            bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
-            if (success)
+            lock (ThreadStates)
             {
-                // Advance our step from our current position
-                threadState.IncrementStep();
+                // Obtain the current thread state
+                bool success = ThreadStates.TryGetValue(arguments.ThreadId, out var threadState);
+                if (success)
+                {
+                    // Advance our step from our current position
+                    threadState.IncrementStep();
 
-                // Continue executing
-                ContinueExecution(threadState, DesiredControlFlow.Continue);
+                    // Continue executing
+                    ContinueExecution(threadState, DesiredControlFlow.Continue);
+                }
             }
 
             // Return our continue response
@@ -315,122 +363,127 @@ namespace Meadow.DebugAdapterServer
 
         protected override ThreadsResponse HandleThreadsRequest(ThreadsArguments arguments)
         {
-            // Create a list of threads from our thread states.
-            List<Thread> threads = ThreadStates.Values.Select(x => new Thread(x.ThreadId, $"thread_{x.ThreadId}")).ToList();
-            return new ThreadsResponse(threads);
+            lock (ThreadStates)
+            {
+                // Create a list of threads from our thread states.
+                List<Thread> threads = ThreadStates.Values.Select(x => new Thread(x.ThreadId, $"thread_{x.ThreadId}")).ToList();
+                return new ThreadsResponse(threads);
+            }
         }
 
         protected override StackTraceResponse HandleStackTraceRequest(StackTraceArguments arguments)
         {
-            // Create our list of stack frames.
-            List<StackFrame> stackFrames = new List<StackFrame>();
-
-            // Verify we have a thread state for this thread, and a valid step to represent in it.
-            if (ThreadStates.TryGetValue(arguments.ThreadId, out var threadState) && threadState.CurrentStepIndex.HasValue)
+            lock (ThreadStates)
             {
-                // Obtain the callstack
-                var callstack = threadState.ExecutionTraceAnalysis.GetCallStack(threadState.CurrentStepIndex.Value);
+                // Create our list of stack frames.
+                List<StackFrame> stackFrames = new List<StackFrame>();
 
-                // Loop through our scopes.
-                for (int i = 0; i < callstack.Length; i++)
+                // Verify we have a thread state for this thread, and a valid step to represent in it.
+                if (ThreadStates.TryGetValue(arguments.ThreadId, out var threadState) && threadState.CurrentStepIndex.HasValue)
                 {
-                    // Grab our current call frame
-                    var currentCallFrame = callstack[i];
+                    // Obtain the callstack
+                    var callstack = threadState.ExecutionTraceAnalysis.GetCallStack(threadState.CurrentStepIndex.Value);
 
-                    // If the scope is invalid, then we skip it.
-                    if (currentCallFrame.FunctionDefinition == null)
+                    // Loop through our scopes.
+                    for (int i = 0; i < callstack.Length; i++)
                     {
-                        continue;
-                    }
+                        // Grab our current call frame
+                        var currentCallFrame = callstack[i];
 
-                    // We obtain our relevant source lines for this call stack frame.
-                    SourceFileLine[] lines = null;
-
-                    // If it's the most recent call, we obtain the line for the current trace.
-                    if (i == 0)
-                    {
-                        lines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
-                    }
-                    else
-                    {
-                        // If it's not the most recent call, we obtain the position at our 
-                        var previousCallFrame = callstack[i - 1];
-                        if (previousCallFrame.ParentFunctionCall != null)
+                        // If the scope is invalid, then we skip it.
+                        if (currentCallFrame.FunctionDefinition == null)
                         {
-                            lines = threadState.ExecutionTraceAnalysis.GetSourceLines(previousCallFrame.ParentFunctionCall);
+                            continue;
+                        }
+
+                        // We obtain our relevant source lines for this call stack frame.
+                        SourceFileLine[] lines = null;
+
+                        // If it's the most recent call, we obtain the line for the current trace.
+                        if (i == 0)
+                        {
+                            lines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
                         }
                         else
                         {
-                            throw new Exception("TODO: Stack Trace could not be generated because previous call frame's function call could not be resolved. Update behavior in this case.");
+                            // If it's not the most recent call, we obtain the position at our 
+                            var previousCallFrame = callstack[i - 1];
+                            if (previousCallFrame.ParentFunctionCall != null)
+                            {
+                                lines = threadState.ExecutionTraceAnalysis.GetSourceLines(previousCallFrame.ParentFunctionCall);
+                            }
+                            else
+                            {
+                                throw new Exception("TODO: Stack Trace could not be generated because previous call frame's function call could not be resolved. Update behavior in this case.");
+                            }
                         }
-                    }
 
-                    // Obtain the method name we are executing in.
-                    string frameName = currentCallFrame.FunctionDefinition.Name;
-                    if (string.IsNullOrEmpty(frameName))
-                    {
-                        frameName = currentCallFrame.FunctionDefinition.IsConstructor ? $".ctor ({currentCallFrame.ContractDefinition.Name})" : "<N/A>";
-                    }
-
-                    // Determine the bounds of our stack frame.
-                    int startLine = 0;
-                    int startColumn = 0;
-                    int endLine = 0;
-                    int endColumn = 0;
-
-                    // Loop through all of our lines for this position.
-                    for (int x = 0; x < lines.Length; x++)
-                    {
-                        // Obtain our indexed line.
-                        SourceFileLine line = lines[x];
-
-                        // Set our start position if relevant.
-                        if (x == 0 || line.LineNumber <= startLine)
+                        // Obtain the method name we are executing in.
+                        string frameName = currentCallFrame.FunctionDefinition.Name;
+                        if (string.IsNullOrEmpty(frameName))
                         {
-                            // Set our starting line number.
-                            startLine = line.LineNumber;
-
-                            // TODO: Determine our column start
+                            frameName = currentCallFrame.FunctionDefinition.IsConstructor ? $".ctor ({currentCallFrame.ContractDefinition.Name})" : "<N/A>";
                         }
 
-                        // Set our end position if relevant.
-                        if (x == 0 || line.LineNumber >= endLine)
+                        // Determine the bounds of our stack frame.
+                        int startLine = 0;
+                        int startColumn = 0;
+                        int endLine = 0;
+                        int endColumn = 0;
+
+                        // Loop through all of our lines for this position.
+                        for (int x = 0; x < lines.Length; x++)
                         {
-                            // Set our ending line number.
-                            endLine = line.LineNumber;
+                            // Obtain our indexed line.
+                            SourceFileLine line = lines[x];
 
-                            // TODO: Determine our column
-                            endColumn = line.Length;
+                            // Set our start position if relevant.
+                            if (x == 0 || line.LineNumber <= startLine)
+                            {
+                                // Set our starting line number.
+                                startLine = line.LineNumber;
+
+                                // TODO: Determine our column start
+                            }
+
+                            // Set our end position if relevant.
+                            if (x == 0 || line.LineNumber >= endLine)
+                            {
+                                // Set our ending line number.
+                                endLine = line.LineNumber;
+
+                                // TODO: Determine our column
+                                endColumn = line.Length;
+                            }
                         }
+
+                        // Create our source object
+                        Source stackFrameSource = new Source()
+                        {
+                            Name = lines[0].SourceFileMapParent.SourceFileName,
+                            Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, CONTRACTS_PREFIX + lines[0].SourceFileMapParent.SourceFilePath)
+                        };
+
+                        var stackFrame = new StackFrame()
+                        {
+                            // TODO: Id = currentCallFrame.ScopeDepth,
+                            Name = frameName,
+                            Line = startLine,
+                            Column = startColumn,
+                            Source = stackFrameSource,
+                            EndLine = endLine,
+                            EndColumn = endColumn
+                        };
+
+                        // Add our stack frame to the list
+                        stackFrames.Add(stackFrame);
                     }
 
-                    // Create our source object
-                    Source stackFrameSource = new Source()
-                    {
-                        Name = lines[0].SourceFileMapParent.SourceFileName,
-                        Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, CONTRACTS_PREFIX + lines[0].SourceFileMapParent.SourceFilePath)
-                    };
-
-
-                    var stackFrame = new StackFrame()
-                    {
-                        // TODO: Id = currentCallFrame.ScopeDepth,
-                        Name = frameName,
-                        Line = startLine,
-                        Column = startColumn,
-                        Source = stackFrameSource,
-                        EndLine = endLine,
-                        EndColumn = endColumn
-                    };
-
-                    // Add our stack frame to the list
-                    stackFrames.Add(stackFrame);
                 }
 
+                // Return our stack frames in our response.
+                return new StackTraceResponse(stackFrames);
             }
-
-            // Return our stack frames in our response.
-            return new StackTraceResponse(stackFrames);
         }
 
         protected override ScopesResponse HandleScopesRequest(ScopesArguments arguments)
@@ -522,10 +575,6 @@ namespace Meadow.DebugAdapterServer
             return base.HandleSetDebuggerPropertyRequest(arguments);
         }
 
-        protected override NextResponse HandleNextRequest(NextArguments arguments)
-        {
-            return base.HandleNextRequest(arguments);
-        }
 
         protected override LoadedSourcesResponse HandleLoadedSourcesRequest(LoadedSourcesArguments arguments)
         {

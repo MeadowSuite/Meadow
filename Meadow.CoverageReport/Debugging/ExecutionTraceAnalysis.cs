@@ -150,6 +150,22 @@ namespace Meadow.CoverageReport.Debugging
             // Return all obtained lines.
             return lines;
         }
+
+        public SourceFileLine[] GetSourceLines(SourceMapEntry sourceMapEntry)
+        {
+            // Obtain our analysis
+            var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
+
+            // Obtain our source file maps and lines.
+            var sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, analysis);
+
+            // Obtain our source lines and return them.
+            var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, sourceFileMaps) ?? Array.Empty<SourceFileLine>();
+            lines = lines.OrderBy(k => k.Offset);
+
+            // Return all obtained lines.
+            return lines.ToArray();
+        }
         #endregion
 
         #region Functions

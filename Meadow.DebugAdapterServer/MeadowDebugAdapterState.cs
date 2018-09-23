@@ -48,7 +48,7 @@ namespace Meadow.DebugAdapterServer
         public MeadowDebugAdapterThreadState(ExecutionTraceAnalysis traceAnalysis, int threadId)
         {
             // Initialize our thread locking
-            Semaphore = new Semaphore(0, int.MaxValue);
+            Semaphore = new Semaphore(0, 1);
 
             // Set our execution trace analysis
             ExecutionTraceAnalysis = traceAnalysis;
