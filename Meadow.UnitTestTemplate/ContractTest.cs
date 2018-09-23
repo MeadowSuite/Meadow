@@ -47,7 +47,8 @@ namespace Meadow.UnitTestTemplate
         public IJsonRpcClient RpcClient => TestServices.TestNodeClient;
         public TestNodeServer TestNodeServer => TestServices.TestNodeServer;
 
-        public MeadowAsserter Assert { get; } = new MeadowAsserter();
+        public MeadowAsserter Assert { get; } = MeadowAsserter.Instance;
+
         public CollectionAsserter CollectionAssert { get; } = new CollectionAsserter();
 
         #endregion
