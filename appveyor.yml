@@ -16,6 +16,6 @@ build_script:
     dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
 test_script:
 - ps: >-
-    Start-Process ganache-cli -PassThru -ArgumentList "--port=7454"
+    Start-Process ganache-cli -PassThru -ArgumentList "--port=7545"
 
     dotnet test --no-build --no-restore -c Debug
