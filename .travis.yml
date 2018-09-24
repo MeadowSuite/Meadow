@@ -12,6 +12,13 @@ matrix:
         - OS=linux_x64
         - DISABLE_EXTERNAL_PARALLEL_TESTS=true
       dist: bionic
+      sudo: required
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
 
     - os: osx
       env:

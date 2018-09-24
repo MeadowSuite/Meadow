@@ -3,7 +3,7 @@
 [![Coveralls](https://img.shields.io/coveralls/github/MeadowSuite/Meadow/master.svg?label=Coveralls.io)](https://coveralls.io/github/MeadowSuite/Meadow?branch=master) 
 [![codecov](https://img.shields.io/codecov/c/github/MeadowSuite/Meadow/master.svg?label=Codecov.io)](https://codecov.io/gh/MeadowSuite/Meadow) 
 [![AppVeyor Tests](https://img.shields.io/appveyor/tests/Meadow/Meadow/master.svg?label=AppVeyor%20Tests)](https://ci.appveyor.com/project/Meadow/meadow/branch/master) 
-[![Gitter](https://img.shields.io/gitter/room/MeadowSuite/Meadow.svg?label=Chat)](https://gitter.im/MeadowSuite)
+[![Gitter](https://img.shields.io/gitter/room/MeadowSuite/Meadow.svg?label=Chat)](https://gitter.im/MeadowSuite/Lobby)
 
 # Meadow
 
