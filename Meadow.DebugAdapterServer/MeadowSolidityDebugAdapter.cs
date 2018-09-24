@@ -262,6 +262,9 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleStepInRequestAsync(IRequestResponder<StepInArguments> responder)
         {
+            // Set our response
+            responder.SetResponse(new StepInResponse());
+
             // Obtain the current thread state
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
@@ -269,13 +272,13 @@ namespace Meadow.DebugAdapterServer
                 // Continue executing
                 ContinueExecution(threadState, DesiredControlFlow.StepInto);
             }
-
-            // Set our response
-            responder.SetResponse(new StepInResponse());
         }
 
         protected override void HandleNextRequestAsync(IRequestResponder<NextArguments> responder)
         {
+            // Set our response
+            responder.SetResponse(new NextResponse());
+
             // Obtain the current thread state
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
@@ -283,24 +286,24 @@ namespace Meadow.DebugAdapterServer
                 // Continue executing
                 ContinueExecution(threadState, DesiredControlFlow.StepOver);
             }
-
-            // Set our response
-            responder.SetResponse(new NextResponse());
         }
 
 
         protected override void HandleStepInTargetsRequestAsync(IRequestResponder<StepInTargetsArguments, StepInTargetsResponse> responder)
         {
-            base.HandleStepInTargetsRequestAsync(responder);
+            responder.SetResponse(new StepInTargetsResponse());
         }
 
         protected override void HandleStepOutRequestAsync(IRequestResponder<StepOutArguments> responder)
         {
-            base.HandleStepOutRequestAsync(responder);
+            responder.SetResponse(new StepOutResponse());
         }
 
         protected override void HandleStepBackRequestAsync(IRequestResponder<StepBackArguments> responder)
         {
+            // Set our response
+            responder.SetResponse(new StepBackResponse());
+
             // Obtain the current thread state
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
@@ -308,13 +311,13 @@ namespace Meadow.DebugAdapterServer
                 // Continue executing
                 ContinueExecution(threadState, DesiredControlFlow.StepBackwards);
             }
-
-            // Set our response
-            responder.SetResponse(new StepBackResponse());
         }
 
         protected override void HandleContinueRequestAsync(IRequestResponder<ContinueArguments, ContinueResponse> responder)
         {
+            // Set our response
+            responder.SetResponse(new ContinueResponse());
+
             // Obtain the current thread state
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
@@ -325,9 +328,6 @@ namespace Meadow.DebugAdapterServer
                 // Continue executing
                 ContinueExecution(threadState, DesiredControlFlow.Continue);
             }
-
-            // Set our response
-            responder.SetResponse(new ContinueResponse());
         }
 
         protected override void HandleReverseContinueRequestAsync(IRequestResponder<ReverseContinueArguments> responder)
@@ -337,7 +337,7 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandlePauseRequestAsync(IRequestResponder<PauseArguments> responder)
         {
-            base.HandlePauseRequestAsync(responder);
+            responder.SetResponse(new PauseResponse());
         }
         #endregion
 
@@ -452,7 +452,7 @@ namespace Meadow.DebugAdapterServer
                         EndLine = endLine,
                         EndColumn = endColumn
                     };
-
+                    
                     // Add our stack frame to the list
                     stackFrames.Add(stackFrame);
                 }
@@ -470,7 +470,7 @@ namespace Meadow.DebugAdapterServer
             var stackFrameID = responder.Arguments.FrameId;
             scopeList.Add(new Scope("State Variables", 444, false));
             scopeList.Add(new Scope("Local Variables", 555, false));
-
+            
             responder.SetResponse(new ScopesResponse(scopeList));
         }
 
