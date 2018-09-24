@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Reflection;
@@ -10,6 +12,34 @@ namespace Meadow.UnitTestTemplate
     public class MeadowAsserter : Asserter
     {
         public static readonly MeadowAsserter Instance = new MeadowAsserter();
+
+        static readonly CollectionAsserter _collectionAsserter = new CollectionAsserter();
+        public CollectionAsserter Collection => _collectionAsserter;
+
+        public void StringContains(string value, string substring)
+        {
+            StringAssert.Contains(value, substring);
+        }
+
+        public void StringStartsWith(string value, string substring)
+        {
+            StringAssert.StartsWith(value, substring);
+        }
+
+        public void StringEndsWith(string value, string substring)
+        {
+            StringAssert.EndsWith(value, substring);
+        }
+
+        public void AreEqual(string expected, string actual)
+        {
+            Assert.AreEqual(expected, actual);
+        }
+
+        public void AreEqual<T>(IEnumerable<T> expected, IEnumerable<T> actual)
+        {
+            CollectionAssert.AreEqual(expected.ToArray(), actual.ToArray());
+        }
 
         public void AreEqual(BigInteger expected, BigInteger actual)
         {
