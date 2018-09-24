@@ -10,11 +10,13 @@ matrix:
     - os: linux
       env: 
         - OS=linux_x64
+        - DISABLE_EXTERNAL_PARALLEL_TESTS=true
       dist: bionic
 
     - os: osx
       env:
         - OS=macos_x64
+        - DISABLE_EXTERNAL_PARALLEL_TESTS=true
       osx_image: xcode10
 
 install:
