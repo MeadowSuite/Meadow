@@ -85,7 +85,7 @@ namespace Meadow.UnitTestTemplate
             var executionTraceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Process our execution trace in the debug adapter.
-            _debugAdapter.ProcessExecutionTraceAnalysis(executionTraceAnalysis);
+            await _debugAdapter.ProcessExecutionTraceAnalysis(executionTraceAnalysis);
 
             await Task.CompletedTask;
         }

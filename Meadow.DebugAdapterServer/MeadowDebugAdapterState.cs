@@ -41,14 +41,14 @@ namespace Meadow.DebugAdapterServer
 
         public ExecutionTraceAnalysis ExecutionTraceAnalysis { get; }
 
-        public Semaphore Semaphore { get; }
+        public SemaphoreSlim Semaphore { get; }
         #endregion
 
         #region Constructors
         public MeadowDebugAdapterThreadState(ExecutionTraceAnalysis traceAnalysis, int threadId)
         {
             // Initialize our thread locking
-            Semaphore = new Semaphore(0, 1);
+            Semaphore = new SemaphoreSlim(0, 1);
 
             // Set our execution trace analysis
             ExecutionTraceAnalysis = traceAnalysis;

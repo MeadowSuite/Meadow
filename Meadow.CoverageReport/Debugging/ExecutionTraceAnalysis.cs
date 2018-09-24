@@ -698,6 +698,7 @@ namespace Meadow.CoverageReport.Debugging
                             {
                                 // Set the calling ast node
                                 currentScope.ParentFunctionCall = callNodeCandidates[0];
+                                currentScope.ParentFunctionCallIndex = previousTraceIndex;
                                 break;
                             }
                         }
