@@ -17,6 +17,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		run-coverage-tests.bat = run-coverage-tests.bat
 		SolCodeGen.targets = SolCodeGen.targets
 		solution.ruleset = solution.ruleset
+		travis.yml = travis.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Meadow.JsonRpc", "Meadow.JsonRpc\Meadow.JsonRpc.csproj", "{F9169F5F-FD4E-4DD0-B26A-D561CB271AB8}"
