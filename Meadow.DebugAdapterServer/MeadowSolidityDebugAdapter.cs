@@ -210,7 +210,7 @@ namespace Meadow.DebugAdapterServer
             var response = new InitializeResponse
             {
                 SupportsConfigurationDoneRequest = true,
-                SupportsEvaluateForHovers = true,
+                SupportsEvaluateForHovers = false,
                 SupportsStepBack = true,
                 SupportsStepInTargetsRequest = true,
                 SupportTerminateDebuggee = false,
@@ -521,6 +521,11 @@ namespace Meadow.DebugAdapterServer
 
             // Respond with our variable list.
             responder.SetResponse(new VariablesResponse(variableList));
+        }
+
+        protected override void HandleEvaluateRequestAsync(IRequestResponder<EvaluateArguments, EvaluateResponse> responder)
+        {
+            responder.SetResponse(new EvaluateResponse());
         }
 
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)

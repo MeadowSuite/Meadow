@@ -32,9 +32,11 @@ namespace Meadow.DebugAdapterProxy
                     if (copy != null)
                     {
                         await copy.WriteAsync(buffer, 0, read, cancellationToken);
+                        await copy.FlushAsync(cancellationToken);
                     }
 
                     await to.WriteAsync(buffer, 0, read, cancellationToken);
+                    await to.FlushAsync(cancellationToken);
                 }
             }
             catch (NotSupportedException) { }

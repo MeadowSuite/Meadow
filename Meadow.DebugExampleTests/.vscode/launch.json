@@ -10,7 +10,7 @@
             "name": "Solidity Meadow",
             "program": "${workspaceFolder}/test.sol",
             "stopOnEntry": false,
-            "logFile": "./bin/Debug/netcoreapp2.1/log.txt",
+            "logFile": "./debugger_trace.txt",
             "testAssembly": "./bin/Debug/netcoreapp2.1/Meadow.DebugExampleTests.dll",
             "disableUnitTestDebugging": true,
             "debugAdapterFile": "../Meadow.DebugAdapterProxy/bin/Debug/netcoreapp2.1/Meadow.DebugAdapterProxy.dll",
