@@ -1,0 +1,26 @@
+language: csharp
+dotnet: 2.1.402
+node_js: "10"
+
+env:
+  - DISABLE_EXTERNAL_PARALLEL_TESTS=true
+
+matrix:
+  include:
+    - os: linux
+      env: 
+        - OS=linux_x64
+      dist: bionic
+
+    - os: osx
+      env:
+        - OS=macos_x64
+      osx_image: xcode10
+
+install:
+  - npm install -g ganache-cli
+
+script:
+  - dotnet restore --configfile Nuget.Config
+  - dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
+  - dotnet test -c Debug --no-build --no-restore
