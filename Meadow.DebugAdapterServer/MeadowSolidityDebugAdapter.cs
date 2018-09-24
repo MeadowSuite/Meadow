@@ -49,6 +49,7 @@ namespace Meadow.DebugAdapterServer
         public Task Terminated => _terminatedTcs.Task;
         public SolidityMeadowConfigurationProperties ConfigurationProperties { get; private set; }
         public ConcurrentDictionary<int, MeadowDebugAdapterThreadState> ThreadStates { get; }
+        public ReferenceContainer ReferenceContainer;
         #endregion
 
         #region Constructor
@@ -56,6 +57,9 @@ namespace Meadow.DebugAdapterServer
         {
             // Initialize our thread state lookup.
             ThreadStates = new ConcurrentDictionary<int, MeadowDebugAdapterThreadState>();
+
+            // Initialize our reference collection
+            ReferenceContainer = new ReferenceContainer();
         }
         #endregion
 
@@ -96,6 +100,9 @@ namespace Meadow.DebugAdapterServer
             // Remove the thread from our lookup.
             ThreadStates.Remove(threadId, out _);
 
+            // Unlink our data for our thread id.
+            ReferenceContainer.UnlinkThreadId(threadId);
+
             // Send an event that our thread has exited.
             Protocol.SendEvent(new ThreadEvent(ThreadEvent.ReasonValue.Exited, threadState.ThreadId));
 
@@ -105,6 +112,9 @@ namespace Meadow.DebugAdapterServer
 
         private void ContinueExecution(MeadowDebugAdapterThreadState threadState, DesiredControlFlow controlFlow = DesiredControlFlow.Continue)
         {
+            // Unlink our data for our thread id.
+            ReferenceContainer.UnlinkThreadId(threadState.ThreadId);
+
             // Determine how to continue execution.
             bool finishedExecution = false;
             switch (controlFlow)
@@ -353,12 +363,16 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleStackTraceRequestAsync(IRequestResponder<StackTraceArguments, StackTraceResponse> responder)
         {
-            // Create our list of stack frames.
-            List<StackFrame> stackFrames = new List<StackFrame>();
+            // Create a list of stack frames or try to get cached ones.
+            List<StackFrame> stackFrames;
+            bool cachedStackFrames = ReferenceContainer.TryGetStackFrames(responder.Arguments.ThreadId, out stackFrames);
 
             // Verify we have a thread state for this thread, and a valid step to represent in it.
-            if (ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState) && threadState.CurrentStepIndex.HasValue)
+            if (!cachedStackFrames && ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState) && threadState.CurrentStepIndex.HasValue)
             {
+                // Initialize our stack frame list
+                stackFrames = new List<StackFrame>();
+
                 // Obtain the callstack
                 var callstack = threadState.ExecutionTraceAnalysis.GetCallStack(threadState.CurrentStepIndex.Value);
 
@@ -378,9 +392,11 @@ namespace Meadow.DebugAdapterServer
                     SourceFileLine[] lines = null;
 
                     // If it's the most recent call, we obtain the line for the current trace.
+                    int traceIndex = -1;
                     if (i == 0)
                     {
-                        lines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
+                        traceIndex = threadState.CurrentStepIndex.Value;
+                        lines = threadState.ExecutionTraceAnalysis.GetSourceLines(traceIndex);
                     }
                     else
                     {
@@ -388,6 +404,7 @@ namespace Meadow.DebugAdapterServer
                         var previousCallFrame = callstack[i - 1];
                         if (previousCallFrame.ParentFunctionCall != null)
                         {
+                            traceIndex = previousCallFrame.ParentFunctionCallIndex.Value;
                             lines = threadState.ExecutionTraceAnalysis.GetSourceLines(previousCallFrame.ParentFunctionCall);
                         }
                         else
@@ -444,7 +461,7 @@ namespace Meadow.DebugAdapterServer
 
                     var stackFrame = new StackFrame()
                     {
-                        Id = currentCallFrame.ScopeDepth,
+                        Id = ReferenceContainer.GetUniqueId(),
                         Name = frameName,
                         Line = startLine,
                         Column = startColumn,
@@ -452,8 +469,11 @@ namespace Meadow.DebugAdapterServer
                         EndLine = endLine,
                         EndColumn = endColumn
                     };
+
+                    // Add the stack frame to our reference list
+                    ReferenceContainer.LinkStackFrame(threadState.ThreadId, stackFrame, traceIndex);
                     
-                    // Add our stack frame to the list
+                    // Add our stack frame to the result list
                     stackFrames.Add(stackFrame);
                 }
 
@@ -465,19 +485,34 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleScopesRequestAsync(IRequestResponder<ScopesArguments, ScopesResponse> responder)
         {
-            // TODO
+            // Create our scope list
             List<Scope> scopeList = new List<Scope>();
-            var stackFrameID = responder.Arguments.FrameId;
-            scopeList.Add(new Scope("State Variables", 444, false));
-            scopeList.Add(new Scope("Local Variables", 555, false));
+
+            // Obtain all relevant ids.
+            int stackFrameId = responder.Arguments.FrameId;
+            int? localScopeId = ReferenceContainer.GetLocalScopeId(stackFrameId);
+            int? stateScopeId = ReferenceContainer.GetStateScopeId(stackFrameId);
+
+            // Add state variable scope if applicable.
+            if (stateScopeId.HasValue)
+            {
+                scopeList.Add(new Scope("State Variables", stateScopeId.Value, false));
+            }
+
+            // Add local variable scope if applicable.
+            if (localScopeId.HasValue)
+            {
+                scopeList.Add(new Scope("Local Variables", localScopeId.Value, false));
+            }
             
+            // Set our response.
             responder.SetResponse(new ScopesResponse(scopeList));
         }
 
         protected override void HandleVariablesRequestAsync(IRequestResponder<VariablesArguments, VariablesResponse> responder)
         {
-            // TODO: Obtain the thread id for this scope.
-            int threadId = -1;
+            // Obtain relevant variable resolving information.
+            (int threadId, int traceIndex, bool isLocalVariable) = ReferenceContainer.GetVariableResolvingInformation(responder.Arguments.VariablesReference);
 
             // Using our trace index, obtain our thread state
             ThreadStates.TryGetValue(threadId, out var threadState);
@@ -490,10 +525,8 @@ namespace Meadow.DebugAdapterServer
             }
 
             // Obtain the trace index for this scope.
-            int traceIndex = -1;
             List<Variable> variableList = new List<Variable>();
             
-            bool isLocalVariable = responder.Arguments.VariablesReference == 555;
             if (isLocalVariable)
             {
                 // Obtain our local variables at this point in execution

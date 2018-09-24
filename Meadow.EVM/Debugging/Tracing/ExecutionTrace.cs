@@ -76,7 +76,26 @@ namespace Meadow.EVM.Debugging.Tracing
             Dictionary<Memory<byte>, byte[]> storage = null;
             if (contextChanged || storageChanged)
             {
-                storage = evm.State.GetAccount(evm.Message.To).StorageTrie.ToDictionary();
+                // Obtain our storage dictionary.
+                var account = evm.State.GetAccount(evm.Message.To);
+                storage = account.StorageTrie.ToDictionary();
+
+                // Apply all in progress edits.
+                foreach (var key in account.StorageCache.Keys)
+                {
+                    // Obtain our value from our storage cache.
+                    var value = account.StorageCache[key];
+
+                    // If it's zero bytes, it's an entry to be removed, otherwise we set it.
+                    if (value == null || value.Length == 0)
+                    {
+                        storage.Remove(key);
+                    }
+                    else
+                    {
+                        storage[key] = value;
+                    }
+                }
             }
 
             // If our context changed, we want to include code hash.
