@@ -13,15 +13,11 @@ namespace Meadow.DebugAdapterProxy
         readonly BlockingCollection<string> _logMessageQueue;
         readonly Thread _logWriterThread;
 
-        readonly FileStream _fileStream;
-        readonly StreamWriter _streamWriter;
+        static readonly UTF8Encoding UTF8 = new UTF8Encoding(false, false);
 
         public FileLogger(string logFilePath)
         {
             _logFilePath = logFilePath;
-
-            _fileStream = new FileStream(_logFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
-            _streamWriter = new StreamWriter(_fileStream, new UTF8Encoding(false, false));
 
             _logMessageQueue = new BlockingCollection<string>();
             _logWriterThread = new Thread(new ThreadStart(() => LogWriterLoop()));
@@ -37,7 +33,7 @@ namespace Meadow.DebugAdapterProxy
 
         public void Log(string message)
         {
-            var msg = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)} : {message}";
+            var msg = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture)} : {message}";
             var added = _logMessageQueue.TryAdd(msg);
             if (!added)
             {
@@ -49,31 +45,26 @@ namespace Meadow.DebugAdapterProxy
         {
             try
             {
-                using (_fileStream)
-                using (_streamWriter)
+                while (!_logMessageQueue.IsCompleted)
                 {
-                    while (!_logMessageQueue.IsCompleted)
-                    {
-                        var msg = _logMessageQueue.Take();
+                    var msg = _logMessageQueue.Take();
 
-                        // Debug.WriteLine("[DEBUG] " + message);
-                        // Trace.WriteLine("[TRACE] " + message);
-                        bool pendingWrite = true;
-                        do
+                    // Debug.WriteLine("[DEBUG] " + message);
+                    // Trace.WriteLine("[TRACE] " + message);
+                    bool pendingWrite = true;
+                    do
+                    {
+                        try
                         {
-                            try
-                            {
-                                _streamWriter.WriteLine(msg);
-                                _streamWriter.Flush();
-                                pendingWrite = false;
-                            }
-                            catch (IOException)
-                            {
-                                Thread.Sleep(5);
-                            }
+                            File.AppendAllLines(_logFilePath, new[] { msg }, UTF8);
+                            pendingWrite = false;
                         }
-                        while (pendingWrite);
+                        catch (IOException)
+                        {
+                            Thread.Sleep(5);
+                        }
                     }
+                    while (pendingWrite);
                 }
             }
             catch (InvalidOperationException) { }
