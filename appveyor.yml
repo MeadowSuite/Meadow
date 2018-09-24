@@ -11,7 +11,7 @@ cache:
   - packages -> **\packages.config
 build_script:
 - ps: >-
-    dotnet restore --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/hosho/api/v3/index.json --configfile Nuget.Config --ignore-failed-sources
+    dotnet restore --configfile Nuget.Config --ignore-failed-sources
 
     dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
 test_script:
