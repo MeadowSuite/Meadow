@@ -49,13 +49,13 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public override object ParseDereferencedFromMemory(Memory<byte> memory, int offset)
         {
             // Create our result array
-            var results = new (StateVariable member, object value)[Members.Length];
+            var results = new VariableValuePair[Members.Length];
 
             // Loop for each result we need to evaluate
             for (int i = 0; i < Members.Length; i++)
             {
                 // Set our indexed result
-                results[i] = (Members[i], Members[i].ValueParser.ParseFromMemory(memory, offset));
+                results[i] = new VariableValuePair(Members[i], Members[i].ValueParser.ParseFromMemory(memory, offset));
 
                 // Advance our offset
                 offset += UInt256.SIZE;
@@ -67,7 +67,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
         {
             // Create our result array
-            var results = new (StateVariable member, object value)[Members.Length];
+            var results = new VariableValuePair[Members.Length];
 
             // Loop for each result we need to evaluate
             for (int i = 0; i < Members.Length; i++)
@@ -76,7 +76,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                 StorageLocation memberLocation = new StorageLocation(storageLocation.SlotKeyInteger + Members[i].StorageLocation.SlotKeyInteger, storageLocation.DataOffset + Members[i].StorageLocation.DataOffset);
 
                 // Parse our result for our indexed variable.
-                results[i] = (Members[i], Members[i].ValueParser.ParseFromStorage(storageManager, memberLocation));
+                results[i] = new VariableValuePair(Members[i], Members[i].ValueParser.ParseFromStorage(storageManager, memberLocation));
             }
 
             return results;

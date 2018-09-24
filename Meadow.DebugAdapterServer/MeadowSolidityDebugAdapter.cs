@@ -536,7 +536,7 @@ namespace Meadow.DebugAdapterServer
                 foreach (var localVariable in localVariables)
                 {
                     // Temporary: Some values will need to be structured. For now, they're not.
-                    variableList.Add(new Variable(localVariable.variable.Name, localVariable.value?.ToString() ?? "<unresolved>", 0));
+                    variableList.Add(new Variable(localVariable.Variable.Name, localVariable.Value?.ToString() ?? "<unresolved>", 0));
                 }
             }
             else
@@ -548,7 +548,7 @@ namespace Meadow.DebugAdapterServer
                 foreach (var stateVariable in stateVariables)
                 {
                     // Temporary: Some values will need to be structured. For now, they're not.
-                    variableList.Add(new Variable(stateVariable.variable.Name, stateVariable.value?.ToString() ?? "<unresolved>", 0));
+                    variableList.Add(new Variable(stateVariable.Variable.Name, stateVariable.Value?.ToString() ?? "<unresolved>", 0));
                 }
             }
 

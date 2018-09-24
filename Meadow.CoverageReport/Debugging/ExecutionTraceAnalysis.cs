@@ -845,13 +845,13 @@ namespace Meadow.CoverageReport.Debugging
         }
 
        
-        public (LocalVariable variable, object value)[] GetLocalVariables()
+        public VariableValuePair[] GetLocalVariables()
         {
             // Obtain the local variables for the last trace point.
             return GetLocalVariables(ExecutionTrace.Tracepoints.Length - 1);
         }
 
-        public (LocalVariable variable, object value)[] GetLocalVariables(int traceIndex)
+        public VariableValuePair[] GetLocalVariables(int traceIndex)
         {
             // Obtain the scope for this trace index
             ExecutionTraceScope currentScope = GetScope(traceIndex);
@@ -875,7 +875,7 @@ namespace Meadow.CoverageReport.Debugging
             StorageManager.TraceIndex = traceIndex;
 
             // Define our result
-            List<(LocalVariable variable, object value)> result = new List<(LocalVariable variable, object value)>();
+            List<VariableValuePair> result = new List<VariableValuePair>();
 
             // Loop for each local variable in this scope
             foreach (LocalVariable variable in currentScope.Locals.Values)
@@ -890,20 +890,20 @@ namespace Meadow.CoverageReport.Debugging
                 object value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager);
 
                 // Add our local variable to our results
-                result.Add((variable, value));
+                result.Add(new VariableValuePair(variable, value));
             }
 
             // Return our local variable array.
             return result.ToArray();
         }
 
-        public (StateVariable variable, object value)[] GetStateVariables()
+        public VariableValuePair[] GetStateVariables()
         {
             // Obtain the state variables for the last trace point.
             return GetStateVariables(ExecutionTrace.Tracepoints.Length - 1);
         }
 
-        public (StateVariable variable, object value)[] GetStateVariables(int traceIndex)
+        public VariableValuePair[] GetStateVariables(int traceIndex)
         {
             // Obtain the scope for this trace index
             ExecutionTraceScope currentScope = GetScope(traceIndex);
@@ -927,7 +927,7 @@ namespace Meadow.CoverageReport.Debugging
             StorageManager.TraceIndex = traceIndex;
 
             // Define our result
-            List<(StateVariable variable, object value)> result = new List<(StateVariable variable, object value)>();
+            List<VariableValuePair> result = new List<VariableValuePair>();
 
             // Obtain our state variables from our declarations we parsed in our current scope's contract we're in.
             // TODO: Cache all state variable declarations in the AstParser.
@@ -951,7 +951,7 @@ namespace Meadow.CoverageReport.Debugging
                 }
 
                 // Add the state variable to our result list.
-                result.Add((stateVariable, variableValue));
+                result.Add(new VariableValuePair(stateVariable, variableValue));
             }
 
             // Return our state variable array.

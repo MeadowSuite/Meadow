@@ -337,3 +337,4 @@ Meadow.UnitTestTemplate.ParallelTest/Report/
 pwsh_testing/GeneratedAssembly/
 Meadow.VSCode.Debugger/out/
 Meadow.DebugExampleTests/Report/
+Meadow.DebugExampleTests/debugger_trace.txt
