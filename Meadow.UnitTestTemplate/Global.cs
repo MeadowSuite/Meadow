@@ -101,7 +101,9 @@ namespace Meadow.UnitTestTemplate
         /// Identifies information for tests to be run on an external node.
         /// </summary>
         public static TestServices ExternalNodeTestServices { get; private set; }
-        
+
+        public static bool IsInitialized { get; private set; } = false;
+
         //static readonly Dictionary<string, string[]> AppConfigValues = new Dictionary<string, string[]>();
         static (string Key, string Value)[] appConfigValues;
 
@@ -315,8 +317,7 @@ namespace Meadow.UnitTestTemplate
                 var externalNodeClient = JsonRpcClient.Create(
                     externalServerUri,
                     defaultGasLimit: DefaultGasLimit ?? AttributeHelper.GetDefault(() => DefaultGasLimit),
-                    defaultGasPrice: DefaultGasPrice ?? AttributeHelper.GetDefault(() => DefaultGasPrice),
-                    errorFormatter: GetExecutionTraceException);
+                    defaultGasPrice: DefaultGasPrice ?? AttributeHelper.GetDefault(() => DefaultGasPrice));
 
                 // Cache our accounts for our external test node.
                 var externalAccounts = externalNodeClient.Accounts().Result;
@@ -353,6 +354,8 @@ namespace Meadow.UnitTestTemplate
                 .First();
 
             ParseAppConfigSettings(unitTestAssembly);
+
+            IsInitialized = true;
 
             await Task.CompletedTask;
         }

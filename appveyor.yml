@@ -1,0 +1,18 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+environment:
+  nodejs_version: 10.10
+install:
+- ps: >-
+    Install-Product node $env:nodejs_version
+    npm install -g ganache-cli
+cache:
+  - packages -> **\packages.config
+build_script:
+- ps: >-
+    dotnet restore --source https://api.nuget.org/v3/index.json --source https://www.myget.org/F/hosho/api/v3/index.json --configfile Nuget.Config --ignore-failed-sources
+    dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
+test_script:
+- ps: >-
+    Start-Process ganache-cli -PassThru -ArgumentList "--port=7545"
+    dotnet test --no-build --no-restore -c Debug

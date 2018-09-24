@@ -9,8 +9,4 @@
     <ProjectReference Include="..\Meadow.Core\Meadow.Core.csproj" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
-  </ItemGroup>
-
 </Project>

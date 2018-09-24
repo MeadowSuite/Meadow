@@ -9,10 +9,6 @@
     <PackageReference Include="ImpromptuInterface" Version="7.0.1" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
-  </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Meadow.JsonRpc\Meadow.JsonRpc.csproj" />
   </ItemGroup>

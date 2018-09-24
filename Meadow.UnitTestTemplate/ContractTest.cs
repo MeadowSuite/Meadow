@@ -60,6 +60,12 @@ namespace Meadow.UnitTestTemplate
         {
             try
             {
+
+                if (!Global.IsInitialized)
+                {
+                    throw new Exception("Test harness has not been initialized. Ensure \"Global.Init()\" has been called from a [AssemblyInitialize] method.");
+                }
+
                 // With parallel tests, all code should execute in pairs (main vs. external for every test)
                 // so we need to ensure sequential execution to avoid issues with other tests running and trying
                 // to snapshot, execute, restore on the external node, ending up with a race condition.
@@ -97,11 +103,11 @@ namespace Meadow.UnitTestTemplate
                 // Determine what message to log
                 if (InternalTestState.InExternalNodeContext)
                 {
-                    Log($"Using external node at host name \"{Global.ExternalNodeHost.Host}\" on port \"{Global.ExternalNodeHost.Port}\", snapshot: {_baseSnapshotID}");
+                    LogDebug($"Using external node at host name \"{Global.ExternalNodeHost.Host}\" on port \"{Global.ExternalNodeHost.Port}\", snapshot: {_baseSnapshotID}");
                 }
                 else
                 {
-                    Log($"Using built-in local test node on port {TestNodeServer.RpcServer.ServerPort}, snapshot: {_baseSnapshotID}");
+                    LogDebug($"Using built-in local test node on port {TestNodeServer.RpcServer.ServerPort}, snapshot: {_baseSnapshotID}");
                 }
 
                 // Execute our pre-test method
@@ -155,7 +161,7 @@ namespace Meadow.UnitTestTemplate
                 var testDuration = (InternalTestState.EndTime - InternalTestState.StartTime);
 
                 // Log the duration to the console.
-                Log($"{TestContext.CurrentTestOutcome.ToString()} - {Math.Round(testDuration.TotalMilliseconds)} ms");
+                LogDebug($"{TestContext.CurrentTestOutcome.ToString()} - {Math.Round(testDuration.TotalMilliseconds)} ms");
 
                 // If the built in node, we'll want to be collecting relevant testing data.
                 if (!InternalTestState.InExternalNodeContext)
@@ -230,6 +236,13 @@ namespace Meadow.UnitTestTemplate
             Console.WriteLine(globalMsg);
             Debug.WriteLine(globalMsg);
         }
+
+        [Conditional("DEBUG_UNITTESTS")]
+        public void LogDebug(object msg)
+        {
+            Log(msg);
+        }
+
         #endregion
     }
 }

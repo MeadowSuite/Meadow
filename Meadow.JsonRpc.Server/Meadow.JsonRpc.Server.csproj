@@ -14,15 +14,9 @@
     <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.9.0" />
   </ItemGroup>
   
-  <ItemGroup Condition="'$(Configuration)' == 'Release'">
-    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
-  </ItemGroup>
-      
   <ItemGroup>
     <ProjectReference Include="..\Meadow.Core\Meadow.Core.csproj" />
     <ProjectReference Include="..\Meadow.JsonRpc\Meadow.JsonRpc.csproj" />
   </ItemGroup>
-  
-
-
+ 
 </Project>
