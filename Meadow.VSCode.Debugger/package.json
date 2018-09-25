@@ -1,0 +1,141 @@
+{
+  "name": "meadow.vscode.debugger",
+  "version": "0.0.1",
+  "description": "",
+  "publisher": "Hosho",
+  "author": "Hosho",
+  "license": "GPL-3.0",
+  "main": "./out/extension",
+  "private": true,
+  "scripts": {
+    "prepublish": "tsc -p ./src",
+    "compile": "tsc -p ./src",
+    "tslint": "tslint ./src/**/*.ts",
+    "watch": "tsc -w -p ./src",
+    "postinstall": "node ./node_modules/vscode/bin/install",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "engines": {
+    "vscode": "^1.26.0",
+    "node": "^8.12.0"
+  },
+  "categories": [
+    "Debuggers"
+  ],
+  "dependencies": {
+    "await-notify": "^1.0.1",
+    "uuid": "^3.3.2",
+    "vscode-debugadapter": "1.31.0",
+    "vscode-debugprotocol": "1.31.0"
+  },
+  "devDependencies": {
+    "@types/node": "^8.10.0",
+    "tslint": "^5.11.0",
+    "typescript": "^3.0.3",
+    "vsce": "^1.48.0",
+    "vscode": "^1.1.21",
+    "vscode-debugadapter-testsupport": "^1.31.0"
+  },
+  "activationEvents": [
+    "onDebug",
+    "onDebugInitialConfigurations",
+    "onCommand:extension.meadow.vscode.debugger.getDebuggerPath"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "solidity",
+        "aliases": [
+          "Solidity",
+          "solidity"
+        ],
+        "extensions": [
+          ".sol"
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "solidity"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "solidityMeadow",
+        "label": "Solidity Debug",
+        "adapterExecutableCommand": "extension.meadow.vscode.debugger.getDebuggerPath",
+        "configurationAttributes": {
+          "attach": {
+            "properties": {
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          },
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceFolder}"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              },
+              "debugAdapterFile": {
+                "type": "string",
+                "description": "Specify the debug adapter assembly file to use."
+              },
+              "testAssembly": {
+                "type": "string",
+                "description": "The C# Unit test assembly to launch for debugging."
+              },
+              "disableUnitTestDebugging": {
+                "type": "boolean",
+                "description": "If true then the unit tests are launched without debug mode."
+              },
+              "logFile": {
+                "type": "string",
+                "description": "File to log debugger messages to."
+              },
+              "breakDebugAdapter": {
+                "type": "boolean",
+                "description": "Attach debugger in the debug adapter executable when its launched."
+              },
+              "breakDebugServer": {
+                "type": "boolean",
+                "description": "Attach debugger in the debug server when its launched."
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "Solidity Meadow Debug: Launch",
+            "description": "A new configuration for 'debugging' solidity with Meadow.",
+            "body": {
+              "type": "solidityMeadow",
+              "request": "launch",
+              "name": "Run Tests",
+              "program": "^\"\\${workspaceFolder}/\"",
+              "stopOnEntry": true
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

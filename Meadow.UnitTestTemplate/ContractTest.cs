@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 
 namespace Meadow.UnitTestTemplate
 {
+
     [TestClass]
     public abstract class ContractTest
     {
@@ -45,6 +46,11 @@ namespace Meadow.UnitTestTemplate
         public Address[] Accounts => TestServices.Accounts;
         public IJsonRpcClient RpcClient => TestServices.TestNodeClient;
         public TestNodeServer TestNodeServer => TestServices.TestNodeServer;
+
+        public MeadowAsserter Assert { get; } = MeadowAsserter.Instance;
+
+        public CollectionAsserter CollectionAssert { get; } = new CollectionAsserter();
+
         #endregion
 
         #region Functions

@@ -129,15 +129,19 @@ namespace Meadow.Cli.Commands
                 contractTypeNames,
                 new ParameterAttribute { Mandatory = true, Position = 0 });
 
-            var selectedContract = this.GetUnboundValue<string>(CONTRACT_NAME_PARAM, 0);
-
-            var selectedContractType = GlobalVariables.ContractTypes
-                .FirstOrDefault(t => string.Equals(t.Name, selectedContract, StringComparison.InvariantCultureIgnoreCase));
-
-            if (selectedContractType != null)
+            try
             {
-                AddRuntimeParamsForContract(selectedContractType);
+                string selectedContract = this.GetUnboundValue<string>(CONTRACT_NAME_PARAM, 0);
+
+                var selectedContractType = GlobalVariables.ContractTypes
+                    .FirstOrDefault(t => string.Equals(t.Name, selectedContract, StringComparison.InvariantCultureIgnoreCase));
+
+                if (selectedContractType != null)
+                {
+                    AddRuntimeParamsForContract(selectedContractType);
+                }
             }
+            catch { }
 
             return this.GetRuntimeParams();
         }

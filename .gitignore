@@ -333,6 +333,9 @@ ASALocalRun/
 *.sol.resx
 Meadow.UnitTestTemplate.Test/Report/
 Meadow.UnitTestTemplate.ParallelTest/Report/
+Meadow.VSCode.Debugger/out/
+Meadow.DebugExampleTests/Report/
+Meadow.DebugExampleTests/debugger_trace.txt
 pwsh_testing/GeneratedAssembly/
 coverage/
 report/

@@ -10,6 +10,7 @@ using SolcNet.DataDescription.Output;
 using SolcNet.DataDescription.Parsing;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
@@ -22,6 +23,14 @@ namespace Meadow.CoverageReport.Debugging
     {
         #region Fields
         /// <summary>
+        /// Cache for the generated solc data from the contracts in the project.
+        /// </summary>
+        private static (SolcSourceInfo[] SolcSourceInfo, SolcBytecodeInfo[] SolcBytecodeInfo) _solcData;
+
+        private static AnalysisResults _analysisResults;
+        private static Dictionary<int, SourceFileMap> _sourceFileMaps;
+
+        /// <summary>
         /// An array of code hashes for every trace point.
         /// </summary>
         private string[] _cachedTracepointCodes;
@@ -30,11 +39,6 @@ namespace Meadow.CoverageReport.Debugging
         /// A cache of contract states (address+deployed) to contract maps (source maps and instruction offset to number lookup).
         /// </summary>
         private Dictionary<(Address ContractAddress, string CodeHash, bool Deployed), (SourceMapEntry[] SourceMap, Dictionary<int, int> InstructionOffsetToNumber)> _contractMapCache;
-
-        /// <summary>
-        /// Cache for the generated solc data from the contracts in the project.
-        /// </summary>
-        (SolcSourceInfo[] SolcSourceInfo, SolcBytecodeInfo[] SolcBytecodeInfo) _solcData;
 
         /// <summary>
         /// A collection of all state VariableDeclaration AST nodes.
@@ -56,9 +60,26 @@ namespace Meadow.CoverageReport.Debugging
         /// Handles storage slot index/data offset resolving as well as stores information about the current trace index context to resolve local/state variables.
         /// </summary>
         public StorageManager StorageManager { get; }
+        /// <summary>
+        /// Indices which signify the index of each significant step in the trace, where a significant step is defined as one that advances in source position from the previous.
+        /// </summary>
+        public List<int> SignificantStepIndices { get; private set; }
         #endregion
 
         #region Constructor
+
+        static ExecutionTraceAnalysis()
+        {
+            // Set our solc data
+            _solcData = GeneratedSolcData.Default.GetSolcData();
+
+            // Obtain our analysis
+            _analysisResults = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
+
+            // Obtain our source file maps and lines.
+            _sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, _analysisResults);
+        }
+
         public ExecutionTraceAnalysis(ExecutionTrace executionTrace)
         {
             // Set our execution trace
@@ -73,14 +94,14 @@ namespace Meadow.CoverageReport.Debugging
             // Initialize our lookup for scopes.
             Scopes = new Dictionary<int, ExecutionTraceScope>();
 
+            // Initialize our list of significant steps for a debugger or anyone wishing to jump through step history at a faster pace.
+            SignificantStepIndices = new List<int>();
+
             // Fill in our null/unchanged values for our execution trace to make it easier to parse.
             FillUnchangedValues();
 
             // Parse all the ast nodes.
             AstParser.Parse();
-
-            // Set our solc data
-            _solcData = GeneratedSolcData.Default.GetSolcData();
 
             // Parse our state variable declarations.
             ParseStateVariableDeclarations();
@@ -91,13 +112,13 @@ namespace Meadow.CoverageReport.Debugging
         #endregion
 
         #region TODO: Move elsewhere and cleanup
-        private SourceFileLine[] GetSourceLines()
+        public SourceFileLine[] GetSourceLines()
         {
             // Obtain our lines for the current point in execution.
             return GetSourceLines(ExecutionTrace.Tracepoints.Length - 1);
         }
 
-        private SourceFileLine[] GetSourceLines(int traceIndex)
+        public SourceFileLine[] GetSourceLines(int traceIndex)
         {
             // Loop backwards from our trace index
             for (int i = traceIndex; i >= 0; i--)
@@ -105,14 +126,8 @@ namespace Meadow.CoverageReport.Debugging
                 // Obtain our source map entry and instruction number for this point inthe execution trace.
                 (int instructionIndex, SourceMapEntry sourceMapEntry) = GetInstructionAndSourceMap(i);
 
-                // Obtain our analysis
-                var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
-
-                // Obtain our source file maps and lines.
-                var sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, analysis);
-
                 // Obtain the lines corresponding to this source map entry.
-                var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, sourceFileMaps);
+                var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps);
 
                 // If our lines could not be obtained, skip to the previous trace index
                 if (lines == null)
@@ -128,19 +143,23 @@ namespace Meadow.CoverageReport.Debugging
             throw new Exception("Could not resolve source lines for the given trace index. Attempt to walk backwards to the last resolvable lines have also failed. Please report this.");
         }
 
-        private SourceFileLine[] GetSourceLines(AstNode node)
+        public SourceFileLine[] GetSourceLines(AstNode node)
         {
-            // Obtain our analysis
-            var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
-
-            // Obtain our source file maps and lines.
-            var sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, analysis);
-
             // Obtain our source lines and return them.
-            SourceFileLine[] lines = SourceLineMatching.GetSourceFileLinesContainingAstNode(node, sourceFileMaps).OrderBy(k => k.Offset).ToArray();
+            SourceFileLine[] lines = SourceLineMatching.GetSourceFileLinesContainingAstNode(node, _sourceFileMaps).OrderBy(k => k.Offset).ToArray();
 
             // Return all obtained lines.
             return lines;
+        }
+
+        public SourceFileLine[] GetSourceLines(SourceMapEntry sourceMapEntry)
+        {
+            // Obtain our source lines and return them.
+            var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps) ?? Array.Empty<SourceFileLine>();
+            lines = lines.OrderBy(k => k.Offset);
+
+            // Return all obtained lines.
+            return lines.ToArray();
         }
         #endregion
 
@@ -483,7 +502,14 @@ namespace Meadow.CoverageReport.Debugging
                     }
 
                     // Else, we obtain the line for the previous' call.
-                    message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
+                    if (currentCallFrame.FunctionDefinition != null)
+                    {
+                        message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
+                    }
+                    else
+                    {
+                        message.AppendLine($"-> at <code outside of mapped function>");
+                    }
                 }
             }
 
@@ -646,37 +672,38 @@ namespace Meadow.CoverageReport.Debugging
                         // Add our local variable to our scope
                         currentScope.AddLocalVariable(localVariable);
                     }
+                }
+            }
 
-                    // If we have a scope depth > 0, it means we were invoked by a call, so we resolve the relevant location of the call.
-                    if (currentScope.ScopeDepth > 0)
+            // If we have a scope depth > 0, it means we were invoked by a call, so we resolve the relevant location of the call.
+            if (currentScope.ScopeDepth > 0 && currentScope.ParentFunctionCall == null)
+            {
+                // Resolve the parent call by looping backwards from this scope's starting point, 
+                // finding the last call that could've led us here.
+                for (int previousTraceIndex = currentScope.StartIndex - 1; previousTraceIndex >= 0; previousTraceIndex--)
+                {
+                    // Obtain the instruction number and source map entry for this previous trace index
+                    (int previousInstructionNumber, SourceMapEntry previousEntry) = GetInstructionAndSourceMap(previousTraceIndex);
+
+                    // Obtain all ast nodes for our source map entry.
+                    var callNodeCandidates = AstParser.AllAstNodes.Where(a =>
                     {
-                        // Resolve the parent call by looping backwards from this scope's starting point, 
-                        // finding the last call that could've led us here.
-                        for (int previousTraceIndex = currentScope.StartIndex - 1; previousTraceIndex >= 0; previousTraceIndex--)
-                        {
-                            // Obtain the instruction number and source map entry for this previous trace index
-                            (int previousInstructionNumber, SourceMapEntry previousEntry) = GetInstructionAndSourceMap(previousTraceIndex);
+                        return
+                            a.NodeType == AstNodeType.FunctionCall &&
+                            a.SourceRange.SourceIndex == previousEntry.Index &&
+                            a.SourceRange.Offset >= previousEntry.Offset &&
+                            a.SourceRange.Offset + a.SourceRange.Length <= previousEntry.Offset + previousEntry.Length;
+                    }).ToArray();
 
-                            // Obtain all ast nodes for our source map entry.
-                            var callNodeCandidates = AstParser.AllAstNodes.Where(a =>
-                            {
-                                return
-                                    a.NodeType == AstNodeType.FunctionCall &&
-                                    a.SourceRange.SourceIndex == previousEntry.Index &&
-                                    a.SourceRange.Offset >= previousEntry.Offset &&
-                                    a.SourceRange.Offset + a.SourceRange.Length <= previousEntry.Offset + previousEntry.Length;
-                            }).ToArray();
-
-                            // Verify we have obtained an item
-                            // UPDATE NOTES: This used to check that the function call had "referencedDeclaration" property referencing 
-                            // the FunctionDefinition, that it called.
-                            if (callNodeCandidates.Length == 1)
-                            {
-                                // Set the calling ast node
-                                currentScope.ParentFunctionCall = callNodeCandidates[0];
-                                break;
-                            }
-                        }
+                    // Verify we have obtained an item
+                    // UPDATE NOTES: This used to check that the function call had "referencedDeclaration" property referencing 
+                    // the FunctionDefinition, that it called.
+                    if (callNodeCandidates.Length == 1)
+                    {
+                        // Set the calling ast node
+                        currentScope.ParentFunctionCall = callNodeCandidates[0];
+                        currentScope.ParentFunctionCallIndex = previousTraceIndex;
+                        break;
                     }
                 }
             }
@@ -742,6 +769,39 @@ namespace Meadow.CoverageReport.Debugging
                 // Obtain our instruction number and source map
                 (int instructionNumber, SourceMapEntry currentEntry) = GetInstructionAndSourceMap(traceIndex);
 
+                // If we have no entry or 
+                bool significantStep = false;
+                if (lastEntry.HasValue)
+                {
+                    // If our source maps are different.
+                    if (!lastEntry.Value.Equals(currentEntry))
+                    {
+                        // Verify our lines or files don't match the previous, if so, mark them as significant.
+                        var lastLines = GetSourceLines(lastEntry.Value);
+                        var currentLines = GetSourceLines(currentEntry);
+                        if (currentLines.Length > 0 && lastLines.Length > 0)
+                        {
+                            significantStep = currentLines[0].SourceFileMapParent.SourceFilePath != lastLines[0].SourceFileMapParent.SourceFilePath ||
+                                currentLines[0].LineNumber != lastLines[0].LineNumber;
+                        }
+                        else if (currentLines.Length > 0)
+                        {
+                            significantStep = true;
+                        }
+                    }
+                }
+                else
+                {
+                    // If the last entry wasn't set, this step is a significant one.
+                    significantStep = true;
+                }
+
+                // If this is a significant step, add it to our list
+                if (significantStep)
+                {
+                    SignificantStepIndices.Add(traceIndex);
+                }
+
                 // Determine if we're in an external call
                 bool withinExternalCall = parentScope != null && parentScope.CallDepth < currentScope.CallDepth;
 
@@ -799,13 +859,13 @@ namespace Meadow.CoverageReport.Debugging
         }
 
        
-        public (LocalVariable variable, object value)[] GetLocalVariables()
+        public VariableValuePair[] GetLocalVariables()
         {
             // Obtain the local variables for the last trace point.
             return GetLocalVariables(ExecutionTrace.Tracepoints.Length - 1);
         }
 
-        public (LocalVariable variable, object value)[] GetLocalVariables(int traceIndex)
+        public VariableValuePair[] GetLocalVariables(int traceIndex)
         {
             // Obtain the scope for this trace index
             ExecutionTraceScope currentScope = GetScope(traceIndex);
@@ -829,7 +889,7 @@ namespace Meadow.CoverageReport.Debugging
             StorageManager.TraceIndex = traceIndex;
 
             // Define our result
-            List<(LocalVariable variable, object value)> result = new List<(LocalVariable variable, object value)>();
+            List<VariableValuePair> result = new List<VariableValuePair>();
 
             // Loop for each local variable in this scope
             foreach (LocalVariable variable in currentScope.Locals.Values)
@@ -844,20 +904,20 @@ namespace Meadow.CoverageReport.Debugging
                 object value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager);
 
                 // Add our local variable to our results
-                result.Add((variable, value));
+                result.Add(new VariableValuePair(variable, value));
             }
 
             // Return our local variable array.
             return result.ToArray();
         }
 
-        public (StateVariable variable, object value)[] GetStateVariables()
+        public VariableValuePair[] GetStateVariables()
         {
             // Obtain the state variables for the last trace point.
             return GetStateVariables(ExecutionTrace.Tracepoints.Length - 1);
         }
 
-        public (StateVariable variable, object value)[] GetStateVariables(int traceIndex)
+        public VariableValuePair[] GetStateVariables(int traceIndex)
         {
             // Obtain the scope for this trace index
             ExecutionTraceScope currentScope = GetScope(traceIndex);
@@ -881,7 +941,7 @@ namespace Meadow.CoverageReport.Debugging
             StorageManager.TraceIndex = traceIndex;
 
             // Define our result
-            List<(StateVariable variable, object value)> result = new List<(StateVariable variable, object value)>();
+            List<VariableValuePair> result = new List<VariableValuePair>();
 
             // Obtain our state variables from our declarations we parsed in our current scope's contract we're in.
             // TODO: Cache all state variable declarations in the AstParser.
@@ -905,7 +965,7 @@ namespace Meadow.CoverageReport.Debugging
                 }
 
                 // Add the state variable to our result list.
-                result.Add((stateVariable, variableValue));
+                result.Add(new VariableValuePair(stateVariable, variableValue));
             }
 
             // Return our state variable array.

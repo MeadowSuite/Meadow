@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Meadow.UnitTestTemplate;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -6,9 +7,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-[assembly: Parallelize(Workers = 0, Scope = ExecutionScope.MethodLevel)]
+[assembly: Parallelize(Workers = 1, Scope = ExecutionScope.MethodLevel)]
 
-namespace Meadow.UnitTestTemplate.Test
+namespace Meadow.DebugExampleTests
 {
     [TestClass]
     public static class GlobalSetup

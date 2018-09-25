@@ -1,0 +1,43 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "solidityMeadow",
+            "request": "launch",
+            "name": "Solidity Meadow",
+            "program": "${workspaceFolder}/test.sol",
+            "stopOnEntry": false,
+            "logFile": "./debugger_trace.txt",
+            "testAssembly": "./bin/Debug/netcoreapp2.1/Meadow.DebugExampleTests.dll",
+            "disableUnitTestDebugging": true,
+            "debugAdapterFile": "../Meadow.DebugAdapterProxy/bin/Debug/netcoreapp2.1/Meadow.DebugAdapterProxy.dll",
+            "breakDebugAdapter": false,
+            "breakDebugServer": true,
+            "trace": true
+        },
+        {
+            "name": "Run Unit Tests",
+            "type": "coreclr",
+            "request": "launch",
+            "program": "dotnet",
+            "args": [ "test", "--verbosity", "normal", "--settings", ".runsettings", "--logger", "trx;LogFileName=test_results.trx", "--results-directory", "./Report" ],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "stopAtEntry": true,
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "OPEN_REPORT": "TRUE",
+                "VSTEST_HOST_DEBUG": "1"
+            }
+        }
+    ],
+	"compounds": [
+		{
+			"name": "Both Meadow",
+			"configurations": [ "Solidity Meadow", "Unit Tests" ]
+		}
+	]
+}

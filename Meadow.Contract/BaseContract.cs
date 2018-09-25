@@ -100,11 +100,4 @@ namespace Meadow.Contract
             JsonRpcClient = rpcClient;
         }
     }
-
-    public class ContractConstructParams
-    {
-        public Uri Server { get; set; }
-
-        public Address DefaultFromAccount { get; set; }
-    }
 }

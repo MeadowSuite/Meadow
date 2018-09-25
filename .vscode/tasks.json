@@ -7,7 +7,17 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/EthNet.RpcServer.TestApp/EthNet.RpcServer.TestApp.csproj"
+                "${workspaceFolder}"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-Meadow.UnitTestTemplate.Test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}"
             ],
             "problemMatcher": "$msCompile"
         }

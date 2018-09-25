@@ -18,13 +18,13 @@ namespace Meadow.CoverageReport.Debugging
         /// </summary>
         public AstContractDefinition ContractDefinition { get; set; }
         /// <summary>
-        /// The trace index where the function definition is first resolved for this scope.
-        /// </summary>
-        public int? FunctionDefinitionIndex { get; set; }
-        /// <summary>
         /// The function definition for the function this scope's execution context takes place in.
         /// </summary>
         public AstFunctionDefinition FunctionDefinition { get; set; }
+        /// <summary>
+        /// The trace index where the function definition is first resolved for this scope.
+        /// </summary>
+        public int? FunctionDefinitionIndex { get; set; }
         /// <summary>
         /// The trace index into the execution trace where the first instruction for this scope occurred.
         /// </summary>
@@ -49,6 +49,10 @@ namespace Meadow.CoverageReport.Debugging
         /// Represents the ast node for the function call which had created/invoked this scope.
         /// </summary>
         public AstNode ParentFunctionCall { get; set; }
+        /// <summary>
+        /// The trace index where the parent function call is first resolved for this scope.
+        /// </summary>
+        public int? ParentFunctionCallIndex { get; set; }
 
         /// <summary>
         /// Represents a lookup of local variables by ID.
@@ -70,6 +74,7 @@ namespace Meadow.CoverageReport.Debugging
             FunctionDefinitionIndex = null;
             FunctionDefinition = null;
             ParentFunctionCall = null;
+            ParentFunctionCallIndex = null;
 
             // Initialize our locals list
             Locals = new Dictionary<long, LocalVariable>();

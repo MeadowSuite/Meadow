@@ -76,9 +76,9 @@ namespace Meadow.TestNode.Test.App
             var client = JsonRpcClient.Create(
                 new Uri($"http://{IPAddress.Loopback}:{port}"),
                 defaultGasLimit: 6_000_000,
-                defaultGasPrice: 0,
-                errorFormatter: GetExecutionTraceException);
+                defaultGasPrice: 0);
 
+            client.ErrorFormatter = GetExecutionTraceException;
 
             // If we're testing meadow, we enable special coverage/tracing options.
             if (meadow)
