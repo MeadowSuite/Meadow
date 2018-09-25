@@ -507,7 +507,14 @@ namespace Meadow.CoverageReport.Debugging
                     }
 
                     // Else, we obtain the line for the previous' call.
-                    message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
+                    if (currentCallFrame.FunctionDefinition != null)
+                    {
+                        message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
+                    }
+                    else
+                    {
+                        message.AppendLine($"-> at <code outside of mapped function>");
+                    }
                 }
             }
 
@@ -670,38 +677,38 @@ namespace Meadow.CoverageReport.Debugging
                         // Add our local variable to our scope
                         currentScope.AddLocalVariable(localVariable);
                     }
+                }
+            }
 
-                    // If we have a scope depth > 0, it means we were invoked by a call, so we resolve the relevant location of the call.
-                    if (currentScope.ScopeDepth > 0)
+            // If we have a scope depth > 0, it means we were invoked by a call, so we resolve the relevant location of the call.
+            if (currentScope.ScopeDepth > 0 && currentScope.ParentFunctionCall == null)
+            {
+                // Resolve the parent call by looping backwards from this scope's starting point, 
+                // finding the last call that could've led us here.
+                for (int previousTraceIndex = currentScope.StartIndex - 1; previousTraceIndex >= 0; previousTraceIndex--)
+                {
+                    // Obtain the instruction number and source map entry for this previous trace index
+                    (int previousInstructionNumber, SourceMapEntry previousEntry) = GetInstructionAndSourceMap(previousTraceIndex);
+
+                    // Obtain all ast nodes for our source map entry.
+                    var callNodeCandidates = AstParser.AllAstNodes.Where(a =>
                     {
-                        // Resolve the parent call by looping backwards from this scope's starting point, 
-                        // finding the last call that could've led us here.
-                        for (int previousTraceIndex = currentScope.StartIndex - 1; previousTraceIndex >= 0; previousTraceIndex--)
-                        {
-                            // Obtain the instruction number and source map entry for this previous trace index
-                            (int previousInstructionNumber, SourceMapEntry previousEntry) = GetInstructionAndSourceMap(previousTraceIndex);
+                        return
+                            a.NodeType == AstNodeType.FunctionCall &&
+                            a.SourceRange.SourceIndex == previousEntry.Index &&
+                            a.SourceRange.Offset >= previousEntry.Offset &&
+                            a.SourceRange.Offset + a.SourceRange.Length <= previousEntry.Offset + previousEntry.Length;
+                    }).ToArray();
 
-                            // Obtain all ast nodes for our source map entry.
-                            var callNodeCandidates = AstParser.AllAstNodes.Where(a =>
-                            {
-                                return
-                                    a.NodeType == AstNodeType.FunctionCall &&
-                                    a.SourceRange.SourceIndex == previousEntry.Index &&
-                                    a.SourceRange.Offset >= previousEntry.Offset &&
-                                    a.SourceRange.Offset + a.SourceRange.Length <= previousEntry.Offset + previousEntry.Length;
-                            }).ToArray();
-
-                            // Verify we have obtained an item
-                            // UPDATE NOTES: This used to check that the function call had "referencedDeclaration" property referencing 
-                            // the FunctionDefinition, that it called.
-                            if (callNodeCandidates.Length == 1)
-                            {
-                                // Set the calling ast node
-                                currentScope.ParentFunctionCall = callNodeCandidates[0];
-                                currentScope.ParentFunctionCallIndex = previousTraceIndex;
-                                break;
-                            }
-                        }
+                    // Verify we have obtained an item
+                    // UPDATE NOTES: This used to check that the function call had "referencedDeclaration" property referencing 
+                    // the FunctionDefinition, that it called.
+                    if (callNodeCandidates.Length == 1)
+                    {
+                        // Set the calling ast node
+                        currentScope.ParentFunctionCall = callNodeCandidates[0];
+                        currentScope.ParentFunctionCallIndex = previousTraceIndex;
+                        break;
                     }
                 }
             }

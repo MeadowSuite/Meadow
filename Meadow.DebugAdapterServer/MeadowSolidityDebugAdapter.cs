@@ -9,6 +9,7 @@ using System.Linq;
 using Meadow.CoverageReport.Debugging;
 using Meadow.CoverageReport.Models;
 using System.Collections.Concurrent;
+using Meadow.CoverageReport.Debugging.Variables;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -533,7 +534,7 @@ namespace Meadow.DebugAdapterServer
                 var localVariables = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
 
                 // Loop for each local variables
-                foreach (var localVariable in localVariables)
+                foreach (VariableValuePair localVariable in localVariables)
                 {
                     // Temporary: Some values will need to be structured. For now, they're not.
                     variableList.Add(new Variable(localVariable.Variable.Name, localVariable.Value?.ToString() ?? "<unresolved>", 0));
@@ -545,7 +546,7 @@ namespace Meadow.DebugAdapterServer
                 var stateVariables = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
 
                 // Loop for each state variables
-                foreach (var stateVariable in stateVariables)
+                foreach (VariableValuePair stateVariable in stateVariables)
                 {
                     // Temporary: Some values will need to be structured. For now, they're not.
                     variableList.Add(new Variable(stateVariable.Variable.Name, stateVariable.Value?.ToString() ?? "<unresolved>", 0));
