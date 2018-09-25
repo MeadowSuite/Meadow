@@ -52,7 +52,7 @@ namespace Meadow.MSTest.Runner
             }
 
             Console.WriteLine("Running tests on: " + string.Join(";", assemblies));
-            var testRunner = new ApplicationTestRunner(assemblies);
+            var testRunner = ApplicationTestRunner.CreateFromAssemblies(assemblies);
             testRunner.RunTests();
         }
     }

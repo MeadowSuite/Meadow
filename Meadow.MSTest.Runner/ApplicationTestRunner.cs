@@ -15,15 +15,33 @@ namespace Meadow.MSTest.Runner
     public class ApplicationTestRunner
     {
         string[] _assemblies;
+        (string FullyQualifiedTestName, string SourceAssembly)[] _testCases;
 
-        public ApplicationTestRunner(params Assembly[] assemblies)
+        private ApplicationTestRunner()
         {
-            _assemblies = assemblies.Select(a => a.Location).ToArray();
+
         }
 
-        public ApplicationTestRunner(params string[] assemblies)
+        public static ApplicationTestRunner CreateFromAssemblies(params Assembly[] assemblies)
         {
-            _assemblies = assemblies;
+            var runner = new ApplicationTestRunner();
+            runner._assemblies = assemblies.Select(a => a.Location).ToArray();
+            return runner;
+        }
+
+        public static ApplicationTestRunner CreateFromAssemblies(params string[] assemblies)
+        {
+            var runner = new ApplicationTestRunner();
+            runner._assemblies = assemblies;
+            return runner;
+        }
+
+        public static ApplicationTestRunner CreateFromSpecificTests(params (string FullyQualifiedTestName, string SourceAssembly)[] testCases)
+        {
+            var runner = new ApplicationTestRunner();
+            runner._assemblies = testCases.Select(t => t.SourceAssembly).Distinct().ToArray();
+            runner._testCases = testCases;
+            return runner;
         }
 
         public static void RunAllTests(Assembly scanAssembly = null)
@@ -37,13 +55,39 @@ namespace Meadow.MSTest.Runner
             assemblies.Add(Assembly.GetEntryAssembly());
             assemblies.Add(Assembly.GetCallingAssembly());
 
-            var applicationTestRunner = new ApplicationTestRunner(assemblies.ToArray());
+            var applicationTestRunner = CreateFromAssemblies(assemblies.ToArray());
             applicationTestRunner.RunTests();
+        }
+
+        public static void RunSpecificTests(Assembly assembly, params string[] fullyQualifiedTestNames)
+        {
+            RunSpecificTests(new[] { Assembly.GetEntryAssembly(), Assembly.GetCallingAssembly(), assembly }, fullyQualifiedTestNames);
+        }
+
+        public static void RunSpecificTests(params string[] fullyQualifiedTestNames)
+        {
+            RunSpecificTests(new[] { Assembly.GetEntryAssembly(), Assembly.GetCallingAssembly() }, fullyQualifiedTestNames);
+        }
+
+        static void RunSpecificTests(Assembly[] assemblies, string[] fullyQualifiedTestNames)
+        {
+            var assemblyLocations = assemblies.Select(a => a.Location).Distinct();
+            var testCases = new List<(string FullyQualifiedTestName, string SourceAssembly)>();
+            foreach (var assembly in assemblyLocations)
+            {
+                foreach (var testName in fullyQualifiedTestNames)
+                {
+                    testCases.Add((testName, assembly));
+                }
+            }
+
+            var runner = CreateFromSpecificTests(testCases.ToArray());
+            runner.RunTests();
         }
 
         public void RunTests()
         {
-            var runContext = new RunContext();
+            var runContext = new MyRunContext(_testCases);
             var frameworkHandler = new MyFrameworkHandle(GetConsoleLogger());
 
             const string MSTEST_ADAPTER_DLL = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll";
@@ -54,6 +98,7 @@ namespace Meadow.MSTest.Runner
             var testExecutorType = msTestAdapterAssembly.GetType(MSTEST_EXECUTOR_TYPE, throwOnError: true);
 
             dynamic testExecutor = Activator.CreateInstance(testExecutorType);
+
             testExecutor.RunTests(_assemblies, runContext, frameworkHandler);
 
             //var tDisc = new MSTestDiscoverer();
@@ -67,13 +112,14 @@ namespace Meadow.MSTest.Runner
 
         Action<string> GetConsoleLogger()
         {
-            var output = Console.OpenStandardOutput();
-            var sw = new StreamWriter(output);
+            //var output = Console.OpenStandardOutput();
+            //var sw = new StreamWriter(output);
             return msg =>
             {
-                sw.WriteLine(msg);
-                sw.Flush();
-                Debug.WriteLine(msg);
+                return;
+                //sw.WriteLine(msg);
+                //sw.Flush();
+                //Debug.WriteLine(msg);
                 //Trace.WriteLine(msg);
             };
         }
@@ -81,6 +127,12 @@ namespace Meadow.MSTest.Runner
         class MyRunContext : IRunContext
         {
             readonly RunContext _default = new RunContext();
+            readonly MyTestCaseFilterExpression _testFilter;
+
+            public MyRunContext((string FullyQualifiedTestName, string SourceAssembly)[] testCases)
+            {
+                _testFilter = new MyTestCaseFilterExpression(testCases);
+            }
 
             public bool KeepAlive => _default.KeepAlive;
 
@@ -98,7 +150,40 @@ namespace Meadow.MSTest.Runner
 
             public ITestCaseFilterExpression GetTestCaseFilter(IEnumerable<string> supportedProperties, Func<string, TestProperty> propertyProvider)
             {
-                return ((IRunContext)_default).GetTestCaseFilter(supportedProperties, propertyProvider);
+                return _testFilter;
+            }
+        }
+
+        class MyTestCaseFilterExpression : ITestCaseFilterExpression
+        {
+            readonly (string FullyQualifiedTestName, string SourceAssembly)[] _testCases;
+
+            public MyTestCaseFilterExpression((string FullyQualifiedTestName, string SourceAssembly)[] testCases)
+            {
+                _testCases = testCases;
+            }
+
+            public string TestCaseFilterValue
+            {
+                get
+                {
+                    return null;
+                }
+            }
+
+            public bool MatchTestCase(TestCase testCase, Func<string, object> propertyValueProvider)
+            {
+                if (_testCases == null)
+                {
+                    return true;
+                }
+
+                if (_testCases.Any(t => t.FullyQualifiedTestName == testCase.FullyQualifiedName && t.SourceAssembly == testCase.Source))
+                {
+                    return true;
+                }
+
+                return false;
             }
         }
 
