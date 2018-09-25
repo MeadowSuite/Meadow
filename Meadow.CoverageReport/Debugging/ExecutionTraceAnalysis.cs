@@ -23,6 +23,14 @@ namespace Meadow.CoverageReport.Debugging
     {
         #region Fields
         /// <summary>
+        /// Cache for the generated solc data from the contracts in the project.
+        /// </summary>
+        private static (SolcSourceInfo[] SolcSourceInfo, SolcBytecodeInfo[] SolcBytecodeInfo) _solcData;
+
+        private static AnalysisResults _analysisResults;
+        private static Dictionary<int, SourceFileMap> _sourceFileMaps;
+
+        /// <summary>
         /// An array of code hashes for every trace point.
         /// </summary>
         private string[] _cachedTracepointCodes;
@@ -31,11 +39,6 @@ namespace Meadow.CoverageReport.Debugging
         /// A cache of contract states (address+deployed) to contract maps (source maps and instruction offset to number lookup).
         /// </summary>
         private Dictionary<(Address ContractAddress, string CodeHash, bool Deployed), (SourceMapEntry[] SourceMap, Dictionary<int, int> InstructionOffsetToNumber)> _contractMapCache;
-
-        /// <summary>
-        /// Cache for the generated solc data from the contracts in the project.
-        /// </summary>
-        (SolcSourceInfo[] SolcSourceInfo, SolcBytecodeInfo[] SolcBytecodeInfo) _solcData;
 
         /// <summary>
         /// A collection of all state VariableDeclaration AST nodes.
@@ -64,6 +67,19 @@ namespace Meadow.CoverageReport.Debugging
         #endregion
 
         #region Constructor
+
+        static ExecutionTraceAnalysis()
+        {
+            // Set our solc data
+            _solcData = GeneratedSolcData.Default.GetSolcData();
+
+            // Obtain our analysis
+            _analysisResults = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
+
+            // Obtain our source file maps and lines.
+            _sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, _analysisResults);
+        }
+
         public ExecutionTraceAnalysis(ExecutionTrace executionTrace)
         {
             // Set our execution trace
@@ -86,9 +102,6 @@ namespace Meadow.CoverageReport.Debugging
 
             // Parse all the ast nodes.
             AstParser.Parse();
-
-            // Set our solc data
-            _solcData = GeneratedSolcData.Default.GetSolcData();
 
             // Parse our state variable declarations.
             ParseStateVariableDeclarations();
@@ -113,14 +126,8 @@ namespace Meadow.CoverageReport.Debugging
                 // Obtain our source map entry and instruction number for this point inthe execution trace.
                 (int instructionIndex, SourceMapEntry sourceMapEntry) = GetInstructionAndSourceMap(i);
 
-                // Obtain our analysis
-                var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
-
-                // Obtain our source file maps and lines.
-                var sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, analysis);
-
                 // Obtain the lines corresponding to this source map entry.
-                var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, sourceFileMaps);
+                var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps);
 
                 // If our lines could not be obtained, skip to the previous trace index
                 if (lines == null)
@@ -138,14 +145,8 @@ namespace Meadow.CoverageReport.Debugging
 
         public SourceFileLine[] GetSourceLines(AstNode node)
         {
-            // Obtain our analysis
-            var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
-
-            // Obtain our source file maps and lines.
-            var sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, analysis);
-
             // Obtain our source lines and return them.
-            SourceFileLine[] lines = SourceLineMatching.GetSourceFileLinesContainingAstNode(node, sourceFileMaps).OrderBy(k => k.Offset).ToArray();
+            SourceFileLine[] lines = SourceLineMatching.GetSourceFileLinesContainingAstNode(node, _sourceFileMaps).OrderBy(k => k.Offset).ToArray();
 
             // Return all obtained lines.
             return lines;
@@ -153,14 +154,8 @@ namespace Meadow.CoverageReport.Debugging
 
         public SourceFileLine[] GetSourceLines(SourceMapEntry sourceMapEntry)
         {
-            // Obtain our analysis
-            var analysis = SourceAnalysis.Run(_solcData.SolcSourceInfo, _solcData.SolcBytecodeInfo);
-
-            // Obtain our source file maps and lines.
-            var sourceFileMaps = ReportGenerator.CreateSourceFileMaps(_solcData.SolcSourceInfo, analysis);
-
             // Obtain our source lines and return them.
-            var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, sourceFileMaps) ?? Array.Empty<SourceFileLine>();
+            var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps) ?? Array.Empty<SourceFileLine>();
             lines = lines.OrderBy(k => k.Offset);
 
             // Return all obtained lines.
