@@ -26,8 +26,13 @@ namespace Meadow.CoverageReport.Debugging
         /// Cache for the generated solc data from the contracts in the project.
         /// </summary>
         private static (SolcSourceInfo[] SolcSourceInfo, SolcBytecodeInfo[] SolcBytecodeInfo) _solcData;
-
+        /// <summary>
+        /// The analysis results of the embedded solidity source.
+        /// </summary>
         private static AnalysisResults _analysisResults;
+        /// <summary>
+        /// The source file maps of the embedded solidity source.
+        /// </summary>
         private static Dictionary<int, SourceFileMap> _sourceFileMaps;
 
         /// <summary>
@@ -44,6 +49,11 @@ namespace Meadow.CoverageReport.Debugging
         /// A collection of all state VariableDeclaration AST nodes.
         /// </summary>
         private AstNode[] _astStateVariableDeclarations;
+
+        /// <summary>
+        /// A lookup of trace index -> exception.
+        /// </summary>
+        private Dictionary<int, ExecutionTraceException> _exceptionLookup;
         #endregion
 
         #region Properties
@@ -93,6 +103,16 @@ namespace Meadow.CoverageReport.Debugging
 
             // Initialize our lookup for scopes.
             Scopes = new Dictionary<int, ExecutionTraceScope>();
+
+            // Initialize our lookup for exceptions
+            _exceptionLookup = new Dictionary<int, ExecutionTraceException>();
+            foreach (var exceptionPoint in ExecutionTrace.Exceptions)
+            {
+                // Determine our trace point for our exception.
+                int exceptionTraceIndex = exceptionPoint.TraceIndex.HasValue ? exceptionPoint.TraceIndex.Value : Math.Max(0, ExecutionTrace.Tracepoints.Length - 1);
+
+                _exceptionLookup[exceptionTraceIndex] = exceptionPoint;
+            }
 
             // Initialize our list of significant steps for a debugger or anyone wishing to jump through step history at a faster pace.
             SignificantStepIndices = new List<int>();
@@ -430,6 +450,20 @@ namespace Meadow.CoverageReport.Debugging
             {
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Obtains the execution trace exception at this trace index, or returns null if one does not exist.
+        /// </summary>
+        /// <param name="traceIndex">The trace index to obtain the exception at.</param>
+        /// <returns>Returns the execution trace exception at the given trace index, or returns null if one does not exist.</returns>
+        public ExecutionTraceException GetException(int traceIndex)
+        {
+            // Try to obtain our trace exception
+            _exceptionLookup.TryGetValue(traceIndex, out ExecutionTraceException traceException);
+
+            // Return our execution trace exception.
+            return traceException;
         }
 
         /// <summary>
@@ -793,6 +827,12 @@ namespace Meadow.CoverageReport.Debugging
                 else
                 {
                     // If the last entry wasn't set, this step is a significant one.
+                    significantStep = true;
+                }
+
+                // If an exception occurred at this step, it's a significant step
+                if (_exceptionLookup.ContainsKey(traceIndex))
+                {
                     significantStep = true;
                 }
 

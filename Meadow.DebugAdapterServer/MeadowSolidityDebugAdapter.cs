@@ -10,6 +10,7 @@ using Meadow.CoverageReport.Debugging;
 using Meadow.CoverageReport.Models;
 using System.Collections.Concurrent;
 using Meadow.CoverageReport.Debugging.Variables;
+using Meadow.JsonRpc.Types.Debugging;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -116,6 +117,12 @@ namespace Meadow.DebugAdapterServer
             // Unlink our data for our thread id.
             ReferenceContainer.UnlinkThreadId(threadState.ThreadId);
 
+            // Verify we don't have an exception at this point that we haven't already handled, if we do, break out.
+            if (threadState.LastExceptionTraceIndex != threadState.CurrentStepIndex && HandleExceptions(threadState))
+            {
+                return;
+            }
+
             // Determine how to continue execution.
             bool finishedExecution = false;
             switch (controlFlow)
@@ -185,6 +192,33 @@ namespace Meadow.DebugAdapterServer
             {
                 threadState.Semaphore.Release();
             }
+        }
+
+        private bool HandleExceptions(MeadowDebugAdapterThreadState threadState)
+        {
+            // Try to obtain an exception at this point
+            if (threadState.CurrentStepIndex.HasValue)
+            {
+                // Obtain an exception at the current point.
+                ExecutionTraceException traceException = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
+
+                // If we have an exception, throw it and return the appropriate status.
+                if (traceException != null)
+                {
+                    // Set our last exception index.
+                    threadState.LastExceptionTraceIndex = threadState.CurrentStepIndex.Value;
+
+                    // Send our exception event.
+                    Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Exception) { ThreadId = threadState.ThreadId });
+                    return true;
+                }
+            }
+
+            // If there was no exception, clear our last exception trace index
+            threadState.LastExceptionTraceIndex = null;
+
+            // We did not find an exception here, return false
+            return false;
         }
 
         private bool CheckBreakpointExists(MeadowDebugAdapterThreadState threadState)
@@ -561,10 +595,16 @@ namespace Meadow.DebugAdapterServer
         {
             responder.SetResponse(new EvaluateResponse());
         }
-
+     
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)
         {
-            base.HandleExceptionInfoRequestAsync(responder);
+            // Obtain the current thread state
+            bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
+            if (success)
+            {
+                string exceptionMessage = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value).Message;
+                responder.SetResponse(new ExceptionInfoResponse(exceptionMessage, ExceptionBreakMode.Always));
+            }
         }
 
         #endregion
