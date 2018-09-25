@@ -773,10 +773,22 @@ namespace Meadow.CoverageReport.Debugging
                 bool significantStep = false;
                 if (lastEntry.HasValue)
                 {
-                    // TODO: For now this will just be if the entry differs, we use it as a significant step.
-                    // Once the debugger is running, this should be changed to make significant steps actual desirable
-                    // paths for debuggers to act on.
-                    significantStep = !lastEntry.Value.Equals(currentEntry);
+                    // If our source maps are different.
+                    if (!lastEntry.Value.Equals(currentEntry))
+                    {
+                        // Verify our lines or files don't match the previous, if so, mark them as significant.
+                        var lastLines = GetSourceLines(lastEntry.Value);
+                        var currentLines = GetSourceLines(currentEntry);
+                        if (currentLines.Length > 0 && lastLines.Length > 0)
+                        {
+                            significantStep = currentLines[0].SourceFileMapParent.SourceFilePath != lastLines[0].SourceFileMapParent.SourceFilePath ||
+                                currentLines[0].LineNumber != lastLines[0].LineNumber;
+                        }
+                        else if (currentLines.Length > 0)
+                        {
+                            significantStep = true;
+                        }
+                    }
                 }
                 else
                 {
