@@ -1,9 +1,14 @@
-[![TeamCity Build Status](https://img.shields.io/teamcity/https/teamcity.meadowsuite.com/e/Meadow_MeadowSuiteTest.svg?label=TeamCity)](https://teamcity.meadowsuite.com/viewType.html?buildTypeId=Meadow_MeadowSuiteTest&guest=1) 
 [![Coverage; Report Generator; TeamCity](https://teamcity.meadowsuite.com/repository/download/Meadow_MeadowSuiteTest/lastSuccessful/coverage.zip%21/badge_combined.svg?guest=1)](https://teamcity.meadowsuite.com/viewLog.html?buildId=lastSuccessful&buildTypeId=Meadow_MeadowSuiteTest&tab=report_project2_Code_Coverage&guest=1)
 [![Coveralls](https://img.shields.io/coveralls/github/MeadowSuite/Meadow/master.svg?label=Coveralls.io)](https://coveralls.io/github/MeadowSuite/Meadow?branch=master) 
 [![codecov](https://img.shields.io/codecov/c/github/MeadowSuite/Meadow/master.svg?label=Codecov.io)](https://codecov.io/gh/MeadowSuite/Meadow) 
 [![AppVeyor Tests](https://img.shields.io/appveyor/tests/Meadow/Meadow/master.svg?label=AppVeyor%20Tests)](https://ci.appveyor.com/project/Meadow/meadow/branch/master) 
 [![Gitter](https://img.shields.io/gitter/room/MeadowSuite/Meadow.svg?label=Chat)](https://gitter.im/MeadowSuite/Lobby)
+
+| Platform | Build |
+|----------|-------|
+| Windows x64 | [![Build Status](https://ci.appveyor.com/api/projects/status/nauu7pmvu9q2b2xd/branch/master?svg=true)](https://ci.appveyor.com/project/Meadow/meadow/branch/master) |
+| Linux x64 | [![Build Status](https://img.shields.io/teamcity/https/teamcity.meadowsuite.com/e/Meadow_MeadowSuiteTest.svg)](https://teamcity.meadowsuite.com/viewType.html?buildTypeId=Meadow_MeadowSuiteTest&guest=1)  |
+| MacOS x64 | [![Build Status](https://travis-ci.com/MeadowSuite/Meadow.svg?branch=master)](https://travis-ci.com/MeadowSuite/Meadow) |
 
 # Meadow
 
