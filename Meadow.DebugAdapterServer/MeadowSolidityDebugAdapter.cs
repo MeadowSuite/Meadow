@@ -11,6 +11,8 @@ using Meadow.CoverageReport.Models;
 using System.Collections.Concurrent;
 using Meadow.CoverageReport.Debugging.Variables;
 using Meadow.JsonRpc.Types.Debugging;
+using Meadow.CoverageReport.Debugging.Variables.Enums;
+using System.Globalization;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -209,7 +211,12 @@ namespace Meadow.DebugAdapterServer
                     threadState.LastExceptionTraceIndex = threadState.CurrentStepIndex.Value;
 
                     // Send our exception event.
-                    Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Exception) { ThreadId = threadState.ThreadId });
+                    var stoppedEvent = new StoppedEvent(StoppedEvent.ReasonValue.Exception)
+                    {
+                        Text = traceException.Message,
+                        ThreadId = threadState.ThreadId
+                    };
+                    Protocol.SendEvent(stoppedEvent);
                     return true;
                 }
             }
@@ -255,7 +262,7 @@ namespace Meadow.DebugAdapterServer
             var response = new InitializeResponse
             {
                 SupportsConfigurationDoneRequest = true,
-                SupportsEvaluateForHovers = false,
+                SupportsEvaluateForHovers = true,
                 SupportsStepBack = true,
                 SupportsStepInTargetsRequest = true,
                 SupportTerminateDebuggee = false,
@@ -544,12 +551,63 @@ namespace Meadow.DebugAdapterServer
             responder.SetResponse(new ScopesResponse(scopeList));
         }
 
+        private bool IsNestedVariableType(VariableValuePair variableValuePair)
+        {
+            // Check the type of variable this is
+            return variableValuePair.Variable.GenericType == VarGenericType.Array ||
+                variableValuePair.Variable.GenericType == VarGenericType.ByteArrayDynamic ||
+                variableValuePair.Variable.GenericType == VarGenericType.ByteArrayFixed ||
+                variableValuePair.Variable.GenericType == VarGenericType.Mapping ||
+                variableValuePair.Variable.GenericType == VarGenericType.Struct;
+        }
+
+        private string GetVariableValueString(VariableValuePair variableValuePair)
+        {
+            // Determine how to format our value string.
+            switch (variableValuePair.Variable.GenericType)
+            {
+                case VarGenericType.Array:
+                    return variableValuePair.Variable.BaseType;
+                case VarGenericType.ByteArrayDynamic:
+                    return $"{variableValuePair.Variable.BaseType} (count: {((Memory<byte>)variableValuePair.Value).Length})";
+                case VarGenericType.ByteArrayFixed:
+                    return variableValuePair.Variable.BaseType;
+                case VarGenericType.Mapping:
+                    return "<unsupported>";
+                case VarGenericType.String:
+                    return $"\"{variableValuePair.Value}\"";
+                case VarGenericType.Struct:
+                    return variableValuePair.Variable.BaseType;
+                default:
+                    // As a fallback, try to turn the object into a string.
+                    return variableValuePair.Value?.ToString() ?? "null";
+            }
+        }
+
         protected override void HandleVariablesRequestAsync(IRequestResponder<VariablesArguments, VariablesResponse> responder)
         {
             // Obtain relevant variable resolving information.
-            (int threadId, int traceIndex, bool isLocalVariable) = ReferenceContainer.GetVariableResolvingInformation(responder.Arguments.VariablesReference);
+            int threadId = 0;
+            int traceIndex = 0;
+            bool isLocalVariableScope = false;
+            bool isStateVariableScope = false;
+            bool isParentVariableScope = false;
+            VariableValuePair parentVariableValuePair = new VariableValuePair(null, null);
 
-            // Using our trace index, obtain our thread state
+            // Try to obtain the variable reference as a local variable scope.
+            isLocalVariableScope = ReferenceContainer.ResolveLocalVariable(responder.Arguments.VariablesReference, out threadId, out traceIndex);
+            if (!isLocalVariableScope)
+            {
+                // Try to obtain the variable reference as a state variable scope.
+                isStateVariableScope = ReferenceContainer.ResolveStateVariable(responder.Arguments.VariablesReference, out threadId, out traceIndex);
+                if (!isStateVariableScope)
+                {
+                    // Try to obtain the variable reference as a sub-variable scope.
+                    isParentVariableScope = ReferenceContainer.ResolveParentVariable(responder.Arguments.VariablesReference, out threadId, out parentVariableValuePair);
+                }
+            }
+
+            // Using our thread id, obtain our thread state
             ThreadStates.TryGetValue(threadId, out var threadState);
 
             // Verify the thread state is valid
@@ -561,30 +619,69 @@ namespace Meadow.DebugAdapterServer
 
             // Obtain the trace index for this scope.
             List<Variable> variableList = new List<Variable>();
-            
-            if (isLocalVariable)
-            {
-                // Obtain our local variables at this point in execution
-                var localVariables = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
 
-                // Loop for each local variables
-                foreach (VariableValuePair localVariable in localVariables)
+            // Obtain our local variables at this point in execution
+            VariableValuePair[] variablePairs = Array.Empty<VariableValuePair>();
+            if (isLocalVariableScope)
+            {
+                variablePairs = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
+            }
+            else if (isStateVariableScope)
+            {
+                variablePairs = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
+            }
+            else if (isParentVariableScope)
+            {
+                // We're loading sub-variables for a variable.
+                switch (parentVariableValuePair.Variable.GenericType)
                 {
-                    // Temporary: Some values will need to be structured. For now, they're not.
-                    variableList.Add(new Variable(localVariable.Variable.Name, localVariable.Value?.ToString() ?? "<unresolved>", 0));
+                    case VarGenericType.Struct:
+                        {
+                            // Cast our to an enumerable type.
+                            variablePairs = ((IEnumerable<VariableValuePair>)parentVariableValuePair.Value).ToArray();
+                            break;
+                        }
+
+                    case VarGenericType.Array:
+                        {
+                            break;
+                        }
+
+                    case VarGenericType.ByteArrayDynamic:
+                    case VarGenericType.ByteArrayFixed:
+                        {
+                            // Cast our to an enumerable type.
+                            var bytes = (Memory<byte>)parentVariableValuePair.Value;
+                            int elementIndex = 0;
+                            foreach (byte b in bytes.Span)
+                            {
+                                variableList.Add(new Variable($"[{elementIndex}]", b.ToString(CultureInfo.InvariantCulture), 0));
+                                elementIndex++;
+                            }
+
+                            break;
+                        }
                 }
             }
-            else
-            {
-                // Obtain our state variables
-                var stateVariables = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
 
-                // Loop for each state variables
-                foreach (VariableValuePair stateVariable in stateVariables)
+            // Loop for each local variables
+            foreach (VariableValuePair variablePair in variablePairs)
+            {
+                // Check if this is a nested variable type
+                bool nestedType = IsNestedVariableType(variablePair);
+                int variablePairReferenceId = 0;
+                if (nestedType)
                 {
-                    // Temporary: Some values will need to be structured. For now, they're not.
-                    variableList.Add(new Variable(stateVariable.Variable.Name, stateVariable.Value?.ToString() ?? "<unresolved>", 0));
+                    // Create a new reference id for this variable if it's a nested type.
+                    variablePairReferenceId = ReferenceContainer.GetUniqueId();
+
+                    // Link our reference for any nested types so we can discover and recursively unlink sub-references for them.
+                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, variablePair);
                 }
+
+                // Obtain the value string for this variable and add it to our list.
+                string variableValueString = GetVariableValueString(variablePair);
+                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString ?? "<unresolved>", variablePairReferenceId));
             }
 
             // Respond with our variable list.

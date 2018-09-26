@@ -1,4 +1,5 @@
 ﻿using Meadow.CoverageReport.Debugging;
+using Meadow.CoverageReport.Debugging.Variables;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,14 @@ namespace Meadow.DebugAdapterServer
         private Dictionary<int, int> stackFrameIdToStateScopeId;
         // reverse: stackFrameId -> localScopeId
         private Dictionary<int, int> stateScopeIdToStackFrameId;
+
+
+        // variableReferenceId -> sub-variableReferenceIds
+        private Dictionary<int, List<int>> _variableReferenceIdToSubVariableReferenceIds;
+        // reverse: sub-variableReferenceIds -> variableReferenceId
+        private Dictionary<int, int> _subVariableReferenceIdToVariableReferenceId;
+        // variableReferenceId -> (threadId, variableValuePair)
+        private Dictionary<int, (int threadId, VariableValuePair variableValuePair)> _variableReferenceIdToVariableValuePair;
         #endregion
 
         #region Constructor
@@ -43,6 +52,10 @@ namespace Meadow.DebugAdapterServer
             localScopeIdToStackFrameId = new Dictionary<int, int>();
             stackFrameIdToStateScopeId = new Dictionary<int, int>();
             stateScopeIdToStackFrameId = new Dictionary<int, int>();
+
+            _variableReferenceIdToSubVariableReferenceIds = new Dictionary<int, List<int>>();
+            _subVariableReferenceIdToVariableReferenceId = new Dictionary<int, int>();
+            _variableReferenceIdToVariableValuePair = new Dictionary<int, (int threadId, VariableValuePair variableValuePair)>();
         }
         #endregion
 
@@ -121,22 +134,91 @@ namespace Meadow.DebugAdapterServer
             return null;
         }
 
-        public (int threadId, int traceIndex, bool isLocalVariable) GetVariableResolvingInformation(int variableReference)
+        public void LinkSubVariableReference(int parentVariableReference, int variableReference, int threadId, VariableValuePair variableValuePair)
         {
-            // Check what type the variable reference is.
-            bool isLocalVariable = true;
+            _variableReferenceIdToVariableValuePair[variableReference] = (threadId, variableValuePair);
+
+            // Try to get our variable subreference id, or if a list doesn't exist, create one.
+            if (!_variableReferenceIdToSubVariableReferenceIds.TryGetValue(parentVariableReference, out List<int> subVariableReferenceIds))
+            {
+                subVariableReferenceIds = new List<int>();
+                _variableReferenceIdToSubVariableReferenceIds[parentVariableReference] = subVariableReferenceIds;
+            }
+
+            // Add our sub reference to the list
+            subVariableReferenceIds.Add(variableReference);
+
+            // Add to the reverse lookup.
+            _subVariableReferenceIdToVariableReferenceId[variableReference] = parentVariableReference;
+        }
+
+        private void UnlinkSubVariableReference(int variableReference)
+        {
+            // Unlink our variable value pair
+            _variableReferenceIdToVariableValuePair.Remove(variableReference);
+
+            // Try to get our list of sub variable references to unlink.
+            if (_variableReferenceIdToSubVariableReferenceIds.TryGetValue(variableReference, out var subVariableReferenceIds))
+            {
+                // Remove our variable reference from our lookup since it existed
+                _variableReferenceIdToSubVariableReferenceIds.Remove(variableReference);
+                foreach (var subVariableReferenceId in subVariableReferenceIds)
+                {
+                    // Remove the reverse lookup
+                    _subVariableReferenceIdToVariableReferenceId.Remove(subVariableReferenceId);
+
+                    // Unlink recursively
+                    UnlinkSubVariableReference(subVariableReferenceId);
+                }
+            }
+        }
+
+        public bool ResolveParentVariable(int variableReference, out int threadId, out VariableValuePair variableValuePair)
+        {
+            // Try to obtain our thread id and variable value pair.
+            if (!_variableReferenceIdToVariableValuePair.TryGetValue(variableReference, out var result))
+            {
+                threadId = 0;
+                variableValuePair = new VariableValuePair(null, null);
+                return false;
+            }
+
+            // Obtain the thread id and variable value pair for this reference.
+            threadId = result.threadId;
+            variableValuePair = result.variableValuePair;
+            return true;
+        }
+
+        public bool ResolveLocalVariable(int variableReference, out int threadId, out int traceIndex)
+        {
+            // Try to obtain our stack frame id.
             if (!localScopeIdToStackFrameId.TryGetValue(variableReference, out int stackFrameId))
             {
-                isLocalVariable = false;
-                if (!stateScopeIdToStackFrameId.TryGetValue(variableReference, out stackFrameId))
-                {
-                    // TODO: Check if this is a struct or nested variable
-                    throw new NotImplementedException("Nested variable/variable references are not yet supported.");
-                }
+                threadId = 0;
+                traceIndex = 0;
+                return false;
             }
 
             // Obtain the thread id and trace index for this stack frame.
-            return (stackFrameIdToThreadId[stackFrameId], stackFrames[stackFrameId].traceIndex, isLocalVariable);
+            threadId = stackFrameIdToThreadId[stackFrameId];
+            traceIndex = stackFrames[stackFrameId].traceIndex;
+            return true;
+        }
+
+        public bool ResolveStateVariable(int variableReference, out int threadId, out int traceIndex)
+        {
+            // Try to obtain our stack frame id.
+            if (!stateScopeIdToStackFrameId.TryGetValue(variableReference, out int stackFrameId))
+            {
+                threadId = 0;
+                traceIndex = 0;
+                return false;
+            }
+
+            // Obtain the thread id and trace index for this stack frame.
+            threadId = stackFrameIdToThreadId[stackFrameId];
+            traceIndex = stackFrames[stackFrameId].traceIndex;
+            return true;
         }
 
         public void UnlinkThreadId(int threadId)
@@ -159,18 +241,20 @@ namespace Meadow.DebugAdapterServer
                 // Unlink our stack frame
                 stackFrames.Remove(stackFrameId);
 
-                // Unlink our state scope
+                // Unlink our state scope and sub variable references.
                 if (stackFrameIdToStateScopeId.TryGetValue(stackFrameId, out int stateScopeId))
                 {
                     stackFrameIdToStateScopeId.Remove(stackFrameId);
                     stateScopeIdToStackFrameId.Remove(stateScopeId);
+                    UnlinkSubVariableReference(stateScopeId);
                 }
 
-                // Unlink our local scope
+                // Unlink our local scope and sub variable references.
                 if (stackFrameIdToLocalScopeId.TryGetValue(stackFrameId, out int localScopeId))
                 {
                     stackFrameIdToLocalScopeId.Remove(stackFrameId);
                     localScopeIdToStackFrameId.Remove(localScopeId);
+                    UnlinkSubVariableReference(localScopeId);
                 }
             }
         }
