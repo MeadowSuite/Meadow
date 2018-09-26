@@ -93,8 +93,25 @@ namespace Meadow.MSTest.Runner
             const string MSTEST_ADAPTER_DLL = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll";
             const string MSTEST_EXECUTOR_TYPE = "Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.MSTestExecutor";
 
-            var cwd = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            var msTestAdapterAssembly = Assembly.LoadFrom(Path.Combine(cwd, MSTEST_ADAPTER_DLL));
+            string msTestAdapterAssemblyPath = null;
+            bool foundFile = false;
+
+            foreach (var assemblyDir in GetPossibleAssemblyDirectories())
+            {
+                msTestAdapterAssemblyPath = Path.Combine(assemblyDir, MSTEST_ADAPTER_DLL);
+                if (File.Exists(msTestAdapterAssemblyPath))
+                {
+                    foundFile = true;
+                    break;
+                }
+            }
+
+            if (!foundFile)
+            {
+                throw new Exception($"Could not find {MSTEST_ADAPTER_DLL}");
+            }
+
+            var msTestAdapterAssembly = Assembly.LoadFrom(msTestAdapterAssemblyPath);
             var testExecutorType = msTestAdapterAssembly.GetType(MSTEST_EXECUTOR_TYPE, throwOnError: true);
 
             dynamic testExecutor = Activator.CreateInstance(testExecutorType);
@@ -108,6 +125,13 @@ namespace Meadow.MSTest.Runner
             //e.StartTestRun(new TestExecutionContext())
             //var testExecutionManager = new TestExecutionManager();
             //testExecutionManager.RunTests(assemblyPaths, runContext, frameworkHandler, new TestRunCancellationToken());
+        }
+
+        IEnumerable<string> GetPossibleAssemblyDirectories()
+        {
+            yield return Directory.GetCurrentDirectory();
+            yield return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            yield return Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
         }
 
         Action<string> GetConsoleLogger()

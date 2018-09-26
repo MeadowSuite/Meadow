@@ -172,8 +172,8 @@ namespace Meadow.SolCodeGen.Test
                 using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
                 using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
                 {
-                    process.OutputDataReceived += (sender, e) => {
-
+                    process.OutputDataReceived += (sender, e) => 
+                    {
                         if (e.Data == null)
                         {
                             outputWaitHandle.Set();

@@ -1,5 +1,4 @@
 ﻿using Meadow.CoverageReport.Debugging;
-using Meadow.DebugAdapterProxy;
 using Meadow.DebugAdapterServer;
 using Meadow.JsonRpc.Client;
 using Meadow.MSTest.Runner;
@@ -51,7 +50,7 @@ namespace Meadow.UnitTestTemplate
         private Debugging(string debugSessionID)
         {
             _debugSessionID = debugSessionID;
-            _pipeServer = NamedPipes.CreatePipeServer(_debugSessionID);
+            _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             _debugAdapter = new MeadowSolidityDebugAdapter();
         }
 
