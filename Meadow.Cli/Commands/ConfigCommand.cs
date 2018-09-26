@@ -22,7 +22,12 @@ namespace Meadow.Cli.Commands
 
         public object GetDynamicParameters()
         {
-            var workspaceVal = Workspace ?? this.GetUnboundValue<string>(nameof(Workspace), 0) ?? string.Empty;
+            string workspaceVal = string.Empty;
+            try
+            {
+                workspaceVal = Workspace ?? this.GetUnboundValue<string>(nameof(Workspace), 0) ?? string.Empty;
+            }
+            catch { }
 
             if (workspaceVal.Equals(InitializeWorkspaceCommand.WORKSPACE_CONSOLE, StringComparison.OrdinalIgnoreCase))
             {

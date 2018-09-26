@@ -1,6 +1,7 @@
 using McMaster.Extensions.CommandLineUtils;
 using Meadow.Contract;
 using Meadow.JsonRpc;
+using Meadow.JsonRpc.Client;
 using System;
 using System.Diagnostics;
 using System.Globalization;
@@ -97,7 +98,7 @@ namespace Meadow.SolCodeGen.Test
 
                 object contractAddr = Activator.CreateInstance(addressType, "0x0");
                 object fromAccount = Activator.CreateInstance(addressType, "0x0");
-                object rpcClient = jsonRpcClientType.GetMethod("Create").Invoke(null, new object[] { new Uri("http://localhost"), ArbitraryDefaults.DEFAULT_GAS_LIMIT, ArbitraryDefaults.DEFAULT_GAS_PRICE, null });
+                var rpcClient = JsonRpcClient.Create(new Uri("http://localhost"), ArbitraryDefaults.DEFAULT_GAS_LIMIT, ArbitraryDefaults.DEFAULT_GAS_PRICE);
 
                 var atMethod = exampleContractType.GetMethod("At", BindingFlags.Static | BindingFlags.Public);
                 dynamic contractAtTask = atMethod.Invoke(null, new object[] { rpcClient, contractAddr, fromAccount });
@@ -171,8 +172,8 @@ namespace Meadow.SolCodeGen.Test
                 using (AutoResetEvent outputWaitHandle = new AutoResetEvent(false))
                 using (AutoResetEvent errorWaitHandle = new AutoResetEvent(false))
                 {
-                    process.OutputDataReceived += (sender, e) => {
-
+                    process.OutputDataReceived += (sender, e) => 
+                    {
                         if (e.Data == null)
                         {
                             outputWaitHandle.Set();

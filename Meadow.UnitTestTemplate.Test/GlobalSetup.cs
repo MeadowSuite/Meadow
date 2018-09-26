@@ -1,6 +1,8 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,5 +26,9 @@ namespace Meadow.UnitTestTemplate.Test
             await Global.Cleanup();
         }
 
+        public static void Main(string[] args)
+        {
+            Debugging.Launch();
+        }
     }
 }

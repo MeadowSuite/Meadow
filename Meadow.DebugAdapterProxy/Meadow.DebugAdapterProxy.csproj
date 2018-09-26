@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+  
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Pipelines.Sockets.Unofficial" Version="1.0.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="4.5.1" />
+  </ItemGroup>
+
+</Project>

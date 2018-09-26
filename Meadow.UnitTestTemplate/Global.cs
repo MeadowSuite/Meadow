@@ -294,8 +294,10 @@ namespace Meadow.UnitTestTemplate
             var jsonRpcClient = JsonRpcClient.Create(
                 localServerUri,
                 defaultGasLimit: DefaultGasLimit ?? AttributeHelper.GetDefault(() => DefaultGasLimit),
-                defaultGasPrice: DefaultGasPrice ?? AttributeHelper.GetDefault(() => DefaultGasPrice),
-                errorFormatter: GetExecutionTraceException);
+                defaultGasPrice: DefaultGasPrice ?? AttributeHelper.GetDefault(() => DefaultGasPrice));
+
+            jsonRpcClient.ErrorFormatter = GetExecutionTraceException;
+
             // Cache our accounts for our test node.
             var accounts = await jsonRpcClient.Accounts();
 
