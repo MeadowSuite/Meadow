@@ -4,7 +4,6 @@ using Meadow.Core.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Meadow.Core.EthTypes;
@@ -18,6 +17,7 @@ using Meadow.JsonRpc.Types;
 using Meadow.JsonRpc.JsonConverters;
 using System.Collections.Concurrent;
 using Meadow.JsonRpc.Types.Debugging;
+using Meadow.JsonRpc.Client.TransportAdapter;
 
 namespace Meadow.JsonRpc.Client
 {
@@ -76,7 +76,7 @@ namespace Meadow.JsonRpc.Client
         TimeSpan TransactionReceiptPollInterval { get; set; }
     }
 
-    public interface IJsonRpcClient : IRpcControllerMinimal, IRpcController, IJsonRpcClientExtensions
+    public interface IJsonRpcClient : IRpcControllerMinimal, IRpcController, IJsonRpcClientExtensions, IDisposable
     {
 
     }
@@ -114,7 +114,7 @@ namespace Meadow.JsonRpc.Client
 
     public delegate Task<byte[]> RawTransactionSignerDelegate(IJsonRpcClient rpcClient, TransactionParams transactionParams);
 
-    public class JsonRpcClient : DynamicObject, IRpcControllerMinimal, IJsonRpcClientExtensions
+    public class JsonRpcClient : DynamicObject, IRpcControllerMinimal, IJsonRpcClientExtensions, IDisposable
     {
         readonly Uri _serverUri;
 
@@ -134,9 +134,9 @@ namespace Meadow.JsonRpc.Client
 
         public static JsonRpcExecutionAnalysisDelegate JsonRpcExecutionAnalysis { get; set; }
 
-        public static IJsonRpcClient Create(Uri serverUri, long defaultGasLimit, long defaultGasPrice)
+        public static IJsonRpcClient Create(Uri serverUri, long defaultGasLimit, long defaultGasPrice, TimeSpan connectTimeout = default)
         {
-            var dynamicClient = new JsonRpcClient(serverUri);
+            var dynamicClient = new JsonRpcClient(serverUri, connectTimeout);
             dynamicClient._defaultGasLimit = defaultGasLimit;
             dynamicClient._defaultGasPrice = defaultGasPrice;
 
@@ -157,9 +157,30 @@ namespace Meadow.JsonRpc.Client
             return clientInterface;
         }
 
-        private JsonRpcClient(Uri serverUri)
+        readonly ITransportAdapter _transport;
+
+        private JsonRpcClient(Uri serverUri, TimeSpan connectTimeout = default)
         {
             _serverUri = serverUri;
+            _transport = CreateTransportAdapter(serverUri, connectTimeout);
+        }
+
+        static ITransportAdapter CreateTransportAdapter(Uri serverUri, TimeSpan connectTimeout = default)
+        {
+            switch (serverUri.Scheme.ToLowerInvariant())
+            {
+                case "http":
+                case "https":
+                    return new HttpTransportAdapter(serverUri, connectTimeout);
+                case "ws":
+                case "wss":
+                    return new WebSocketTransportAdapter(serverUri, connectTimeout);
+                case "file":
+                case "ipc":
+                    return new IpcTransportAdapter(serverUri, connectTimeout);
+                default:
+                    throw new ArgumentException("Unsupported end point URI protocol: " + serverUri.Scheme);
+            }
         }
 
         class ReflectedMethodInfo
@@ -230,10 +251,10 @@ namespace Meadow.JsonRpc.Client
             var (methodInfo, rpcMethod, taskGenericArgType) = reflectedMethodInfo;
 
             // Create the json request object.
-            string jsonStr = CreateRequestObject(rpcMethod, args);
+            JObject json = CreateRequestObject(rpcMethod, args);
 
             // Peform the http json-rpc request
-            Task<object> resultTask = InvokeRpcMethod(jsonStr, taskGenericArgType);
+            Task<object> resultTask = InvokeRpcMethod(json, taskGenericArgType);
 
             // Convert the Task<Object> to the Task<T> of the return type expected by the interface's method.
             Task convertedTask = ConvertTask(resultTask, taskGenericArgType);
@@ -243,11 +264,11 @@ namespace Meadow.JsonRpc.Client
         }
 
 
-        /// <param name="msgJson">Full message data as json string to POST.</param>
+        /// <param name="json">Full message data as json object to use as the RPC request data.</param>
         /// <param name="taskGenericArgType">The type to convert the json into.</param>
-        async Task<object> InvokeRpcMethod(string msgJson, Type taskGenericArgType)
+        async Task<object> InvokeRpcMethod(JObject json, Type taskGenericArgType)
         {
-            (JsonRpcError error, JToken result) = await CreateJsonRpcHttpRequest(msgJson);
+            (JsonRpcError error, JToken result) = await CreateJsonRpcHttpRequest(json);
             if (error != null)
             {
                 throw error.ToException();
@@ -257,9 +278,9 @@ namespace Meadow.JsonRpc.Client
             return resultObj;
         }
 
-        async Task<(JsonRpcError Error, JToken Result)> InvokeRpcMethod(string jsonStr, bool throwOnError = true)
+        async Task<(JsonRpcError Error, JToken Result)> InvokeRpcMethod(JObject json, bool throwOnError = true)
         {
-            var (error, result) = await CreateJsonRpcHttpRequest(jsonStr);
+            var (error, result) = await CreateJsonRpcHttpRequest(json);
             if (error != null && throwOnError)
             {
                 throw error.ToException();
@@ -324,7 +345,7 @@ namespace Meadow.JsonRpc.Client
             return true;
         }
 
-        string CreateRequestObject(RpcApiMethod rpcMethod, params object[] args)
+        JObject CreateRequestObject(RpcApiMethod rpcMethod, params object[] args)
         {
             var jArgs = JArray.FromObject(args, JsonRpcSerializer.Serializer);
             var jObj = new JObject();
@@ -332,32 +353,12 @@ namespace Meadow.JsonRpc.Client
             jObj["method"] = rpcMethod.Value();
             jObj["id"] = Interlocked.Increment(ref _lastRequestID);
             jObj["params"] = jArgs;
-            var jsonStr = jObj.ToString();
-            return jsonStr;
+            return jObj;
         }
 
-        async Task<(JsonRpcError Error, JToken Result)> CreateJsonRpcHttpRequest(string msgJson)
+        async Task<(JsonRpcError Error, JToken Result)> CreateJsonRpcHttpRequest(JObject msg)
         {
-            var payload = new StringContent(msgJson, Encoding.UTF8, "application/json");
-            var requestMsg = new HttpRequestMessage(HttpMethod.Post, _serverUri)
-            {
-                Content = payload
-            };
-
-            var response = await RootServiceProvider.GetRpcHttpClient().SendAsync(requestMsg);
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            JObject jObj;
-            try
-            {
-                jObj = JObject.Parse(responseBody);
-            }
-            catch
-            {
-                response.EnsureSuccessStatusCode();
-                throw;
-            }
+            var jObj = await _transport.Request(msg);
 
             if (jObj.TryGetValue("error", out var errorToken))
             {
@@ -370,7 +371,7 @@ namespace Meadow.JsonRpc.Client
             }
             else
             {
-                throw new Exception("Unexpected JSON-RPC response: " + responseBody);
+                throw new Exception("Unexpected JSON-RPC response: " + jObj.ToString());
             }
         }
 
@@ -391,7 +392,7 @@ namespace Meadow.JsonRpc.Client
             transactionParams.Gas = transactionParams.Gas ?? _defaultGasLimit;
             transactionParams.GasPrice = transactionParams.GasPrice ?? _defaultGasPrice;
 
-            string request;
+            JObject request;
             if (RawTransactionSigner != null)
             {
                 var signed = await RawTransactionSigner(_thisInterface, transactionParams);
@@ -539,6 +540,11 @@ namespace Meadow.JsonRpc.Client
             // Call our clear coverage command
             var requestData = CreateRequestObject(RpcApiMethod.testing_clearAllCoverage);
             var (error, result) = await InvokeRpcMethod(requestData);
+        }
+
+        public void Dispose()
+        {
+            _transport?.Dispose();
         }
     }
 }

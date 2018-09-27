@@ -30,12 +30,12 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	*/
 
-	vscode.debug.onDidStartDebugSession(async (e) => {
+	context.subscriptions.push(vscode.debug.onDidStartDebugSession(async (e) => {
 		Logger.log("onDidStartDebugSession", e);
 		//if (e.type === debugConfigProvider.SOLIDITY_MEADOW_TYPE) {
 		//	let debugSessionID = e.id!;
 		//}
-	});
+	}));
 
 	// register a configuration provider for the debug type
 	const provider = new debugConfigProvider.SolidityMeadowConfigurationProvider(context);

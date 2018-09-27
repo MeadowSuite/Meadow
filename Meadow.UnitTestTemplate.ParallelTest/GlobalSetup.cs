@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 [assembly: Parallelize(Workers = 0, Scope = ExecutionScope.MethodLevel)]
 
-namespace Meadow.UnitTestTemplate.Test
+namespace Meadow.UnitTestTemplate.ParallelTest
 {
     [TestClass]
     public static class GlobalSetup
@@ -21,6 +21,11 @@ namespace Meadow.UnitTestTemplate.Test
         public static async Task Cleanup()
         {
             await Global.Cleanup();
+        }
+
+        public static void Main(string[] args)
+        {
+            Debugging.Launch();
         }
 
     }
