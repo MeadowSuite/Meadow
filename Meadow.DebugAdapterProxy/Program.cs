@@ -33,7 +33,7 @@ namespace Meadow.DebugAdapterProxy
         [Option("--session", "The debug session ID to use for IPC", CommandOptionType.SingleValue)]
         public string Session { get; }
 
-        [Option("--vscode_debug","Is started from VSCode.", CommandOptionType.NoValue)]
+        [Option("--vscode_debug", "Is started from VSCode.", CommandOptionType.NoValue)]
         public bool VSCodeDebug { get; set; }
 
         public static ProcessArgs Parse(string[] args)
