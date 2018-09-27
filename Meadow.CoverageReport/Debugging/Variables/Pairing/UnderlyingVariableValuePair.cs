@@ -22,6 +22,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.Pairing
             Variable = variable;
             Value = value;
         }
+
         public UnderlyingVariableValuePair(VariableValuePair variableValuePair)
         {
             // Set our properties
