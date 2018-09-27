@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -62,7 +63,7 @@ namespace Meadow.DebugAdapterServer
         #region Functions
         public int GetUniqueId()
         {
-            return _nextId++;
+            return Interlocked.Increment(ref _nextId);
         }
 
         public bool TryGetStackFrames(int threadId, out List<StackFrame> result)
