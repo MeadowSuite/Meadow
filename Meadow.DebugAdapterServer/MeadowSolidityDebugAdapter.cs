@@ -10,6 +10,11 @@ using Meadow.CoverageReport.Debugging;
 using Meadow.CoverageReport.Models;
 using System.Collections.Concurrent;
 using Meadow.CoverageReport.Debugging.Variables;
+using Meadow.JsonRpc.Types.Debugging;
+using Meadow.CoverageReport.Debugging.Variables.Enums;
+using System.Globalization;
+using Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes;
+using Meadow.CoverageReport.Debugging.Variables.Pairing;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -33,7 +38,7 @@ namespace Meadow.DebugAdapterServer
     public class MeadowSolidityDebugAdapter : DebugAdapterBase
     {
         #region Constants
-        private const string CONTRACTS_PREFIX = "Contracts\\";
+        private string _contractsDirectory = "Contracts";
         private const int SIMULTANEOUS_TRACE_COUNT = 1;
         #endregion
 
@@ -44,6 +49,9 @@ namespace Meadow.DebugAdapterServer
         public readonly TaskCompletionSource<object> CompletedLaunchRequest = new TaskCompletionSource<object>();
         public readonly TaskCompletionSource<object> CompletedConfigurationDoneRequest = new TaskCompletionSource<object>();
         private System.Threading.SemaphoreSlim _processTraceSemaphore = new System.Threading.SemaphoreSlim(SIMULTANEOUS_TRACE_COUNT, SIMULTANEOUS_TRACE_COUNT);
+
+        readonly ConcurrentDictionary<string, int[]> _sourceBreakpoints = new ConcurrentDictionary<string, int[]>();
+
         #endregion
 
         #region Properties
@@ -116,6 +124,12 @@ namespace Meadow.DebugAdapterServer
             // Unlink our data for our thread id.
             ReferenceContainer.UnlinkThreadId(threadState.ThreadId);
 
+            // Verify we don't have an exception at this point that we haven't already handled, if we do, break out.
+            if (threadState.LastExceptionTraceIndex != threadState.CurrentStepIndex && HandleExceptions(threadState))
+            {
+                return;
+            }
+
             // Determine how to continue execution.
             bool finishedExecution = false;
             switch (controlFlow)
@@ -187,6 +201,38 @@ namespace Meadow.DebugAdapterServer
             }
         }
 
+        private bool HandleExceptions(MeadowDebugAdapterThreadState threadState)
+        {
+            // Try to obtain an exception at this point
+            if (threadState.CurrentStepIndex.HasValue)
+            {
+                // Obtain an exception at the current point.
+                ExecutionTraceException traceException = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
+
+                // If we have an exception, throw it and return the appropriate status.
+                if (traceException != null)
+                {
+                    // Set our last exception index.
+                    threadState.LastExceptionTraceIndex = threadState.CurrentStepIndex.Value;
+
+                    // Send our exception event.
+                    var stoppedEvent = new StoppedEvent(StoppedEvent.ReasonValue.Exception)
+                    {
+                        Text = traceException.Message,
+                        ThreadId = threadState.ThreadId
+                    };
+                    Protocol.SendEvent(stoppedEvent);
+                    return true;
+                }
+            }
+
+            // If there was no exception, clear our last exception trace index
+            threadState.LastExceptionTraceIndex = null;
+
+            // We did not find an exception here, return false
+            return false;
+        }
+
         private bool CheckBreakpointExists(MeadowDebugAdapterThreadState threadState)
         {
             // Verify we have a valid step at this point.
@@ -200,7 +246,7 @@ namespace Meadow.DebugAdapterServer
             foreach (var sourceLine in sourceLines)
             {
                 // Verify our source path.
-                var sourceFilePath = sourceLine.SourceFileMapParent?.SourceFileName;
+                var sourceFilePath = sourceLine.SourceFileMapParent?.SourceFilePath;
 
                 // Resolve relative path properly so it can simply be looked up.
                 bool success = _sourceBreakpoints.TryGetValue(sourceFilePath, out var breakpointLines);
@@ -221,7 +267,7 @@ namespace Meadow.DebugAdapterServer
             var response = new InitializeResponse
             {
                 SupportsConfigurationDoneRequest = true,
-                SupportsEvaluateForHovers = false,
+                SupportsEvaluateForHovers = true,
                 SupportsStepBack = true,
                 SupportsStepInTargetsRequest = true,
                 SupportTerminateDebuggee = false,
@@ -237,16 +283,33 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleAttachRequestAsync(IRequestResponder<AttachArguments> responder)
         {
-            ConfigurationProperties = JObject.FromObject(responder.Arguments.ConfigurationProperties).ToObject<SolidityMeadowConfigurationProperties>();
+            SetupConfigurationProperties(responder.Arguments.ConfigurationProperties);
             responder.SetResponse(new AttachResponse());
             CompletedLaunchRequest.SetResult(null);
         }
 
         protected override void HandleLaunchRequestAsync(IRequestResponder<LaunchArguments> responder)
         {
-            ConfigurationProperties = JObject.FromObject(responder.Arguments.ConfigurationProperties).ToObject<SolidityMeadowConfigurationProperties>();
+            SetupConfigurationProperties(responder.Arguments.ConfigurationProperties);
             responder.SetResponse(new LaunchResponse());
             CompletedLaunchRequest.SetResult(null);
+        }
+
+        void SetupConfigurationProperties(Dictionary<string, JToken> configProperties)
+        {
+            ConfigurationProperties = JObject.FromObject(configProperties).ToObject<SolidityMeadowConfigurationProperties>();
+            if (Directory.Exists(Path.Combine(ConfigurationProperties.WorkspaceDirectory, "Contracts")))
+            {
+                _contractsDirectory = "Contracts";
+            }
+            else if (Directory.Exists(Path.Combine(ConfigurationProperties.WorkspaceDirectory, "contracts")))
+            {
+                _contractsDirectory = "contracts";
+            }
+            else
+            {
+                throw new Exception("No contracts directory found");
+            }
         }
 
         protected override void HandleConfigurationDoneRequestAsync(IRequestResponder<ConfigurationDoneArguments> responder)
@@ -453,13 +516,20 @@ namespace Meadow.DebugAdapterServer
                         }
                     }
 
+                    // Format agnostic path to platform specific path
+                    var sourceFilePath = lines[0].SourceFileMapParent.SourceFilePath;
+                    if (Path.DirectorySeparatorChar == '\\')
+                    {
+                        sourceFilePath = sourceFilePath.Replace('/', Path.DirectorySeparatorChar);
+                    }
+                
                     // Create our source object
                     Source stackFrameSource = new Source()
                     {
                         Name = lines[0].SourceFileMapParent.SourceFileName,
-                        Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, CONTRACTS_PREFIX + lines[0].SourceFileMapParent.SourceFilePath)
+                        Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, _contractsDirectory, sourceFilePath)
                     };
-
+                    
                     var stackFrame = new StackFrame()
                     {
                         Id = ReferenceContainer.GetUniqueId(),
@@ -505,17 +575,68 @@ namespace Meadow.DebugAdapterServer
             {
                 scopeList.Add(new Scope("Local Variables", localScopeId.Value, false));
             }
-            
+
             // Set our response.
             responder.SetResponse(new ScopesResponse(scopeList));
+        }
+
+        private bool IsNestedVariableType(VarGenericType genericType)
+        {
+            // Check the type of variable this is
+            return genericType == VarGenericType.Array ||
+                genericType == VarGenericType.ByteArrayDynamic ||
+                genericType == VarGenericType.ByteArrayFixed ||
+                genericType == VarGenericType.Mapping ||
+                genericType == VarGenericType.Struct;
+        }
+
+        private string GetVariableValueString(UnderlyingVariableValuePair variableValuePair)
+        {
+            // Determine how to format our value string.
+            switch (variableValuePair.Variable.GenericType)
+            {
+                case VarGenericType.Array:
+                    return $"{variableValuePair.Variable.BaseType} (size: {((object[])variableValuePair.Value).Length})";
+                case VarGenericType.ByteArrayDynamic:
+                    return $"{variableValuePair.Variable.BaseType} (size: {((Memory<byte>)variableValuePair.Value).Length})";
+                case VarGenericType.ByteArrayFixed:
+                    return variableValuePair.Variable.BaseType;
+                case VarGenericType.Mapping:
+                    return "<unsupported>";
+                case VarGenericType.String:
+                    return $"\"{variableValuePair.Value}\"";
+                case VarGenericType.Struct:
+                    return variableValuePair.Variable.BaseType;
+                default:
+                    // As a fallback, try to turn the object into a string.
+                    return variableValuePair.Value?.ToString() ?? "null";
+            }
         }
 
         protected override void HandleVariablesRequestAsync(IRequestResponder<VariablesArguments, VariablesResponse> responder)
         {
             // Obtain relevant variable resolving information.
-            (int threadId, int traceIndex, bool isLocalVariable) = ReferenceContainer.GetVariableResolvingInformation(responder.Arguments.VariablesReference);
+            int threadId = 0;
+            int traceIndex = 0;
+            bool isLocalVariableScope = false;
+            bool isStateVariableScope = false;
+            bool isParentVariableScope = false;
+            UnderlyingVariableValuePair parentVariableValuePair = new UnderlyingVariableValuePair(null, null);
 
-            // Using our trace index, obtain our thread state
+            // Try to obtain the variable reference as a local variable scope.
+            isLocalVariableScope = ReferenceContainer.ResolveLocalVariable(responder.Arguments.VariablesReference, out threadId, out traceIndex);
+            if (!isLocalVariableScope)
+            {
+                // Try to obtain the variable reference as a state variable scope.
+                isStateVariableScope = ReferenceContainer.ResolveStateVariable(responder.Arguments.VariablesReference, out threadId, out traceIndex);
+                if (!isStateVariableScope)
+                {
+                    // Try to obtain the variable reference as a sub-variable scope.
+                    isParentVariableScope = ReferenceContainer.ResolveParentVariable(responder.Arguments.VariablesReference, out threadId, out parentVariableValuePair);
+                }
+            }
+
+            // Using our thread id, obtain our thread state
             ThreadStates.TryGetValue(threadId, out var threadState);
 
             // Verify the thread state is valid
@@ -527,30 +648,100 @@ namespace Meadow.DebugAdapterServer
 
             // Obtain the trace index for this scope.
             List<Variable> variableList = new List<Variable>();
-            
-            if (isLocalVariable)
-            {
-                // Obtain our local variables at this point in execution
-                var localVariables = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
 
-                // Loop for each local variables
-                foreach (VariableValuePair localVariable in localVariables)
+            // Obtain our local variables at this point in execution
+            VariableValuePair[] variablePairs = Array.Empty<VariableValuePair>();
+            if (isLocalVariableScope)
+            {
+                variablePairs = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
+            }
+            else if (isStateVariableScope)
+            {
+                variablePairs = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
+            }
+            else if (isParentVariableScope)
+            {
+                // We're loading sub-variables for a variable.
+                switch (parentVariableValuePair.Variable.GenericType)
                 {
-                    // Temporary: Some values will need to be structured. For now, they're not.
-                    variableList.Add(new Variable(localVariable.Variable.Name, localVariable.Value?.ToString() ?? "<unresolved>", 0));
+                    case VarGenericType.Struct:
+                        {
+                            // Cast our to an enumerable type.
+                            variablePairs = ((IEnumerable<VariableValuePair>)parentVariableValuePair.Value).ToArray();
+                            break;
+                        }
+
+                    case VarGenericType.Array:
+                        {
+                            // Cast our variable
+                            var arrayVariable = ((VarArray)parentVariableValuePair.Variable);
+
+                            // Cast to an object array.
+                            var arrayValue = (object[])parentVariableValuePair.Value;
+
+                            // Loop for each element
+                            for (int i = 0; i < arrayValue.Length; i++)
+                            {
+                                // Create an underlying variable value pair for this element
+                                var underlyingVariableValuePair = new UnderlyingVariableValuePair(arrayVariable.ElementObject, arrayValue[i]);
+
+                                // Check if this is a nested variable type
+                                bool nestedType = IsNestedVariableType(arrayVariable.ElementObject.GenericType);
+                                int variablePairReferenceId = 0;
+                                if (nestedType)
+                                {
+                                    // Create a new reference id for this variable if it's a nested type.
+                                    variablePairReferenceId = ReferenceContainer.GetUniqueId();
+
+                                    // Link our reference for any nested types.
+                                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, underlyingVariableValuePair);
+                                }
+
+                                // Obtain the value string for this variable and add it to our list.
+                                string variableValueString = GetVariableValueString(underlyingVariableValuePair);
+                                variableList.Add(new Variable($"[{i}]", variableValueString, variablePairReferenceId));
+                            }
+
+
+                            break;
+                        }
+
+                    case VarGenericType.ByteArrayDynamic:
+                    case VarGenericType.ByteArrayFixed:
+                        {
+                            // Cast our to an enumerable type.
+                            var bytes = (Memory<byte>)parentVariableValuePair.Value;
+                            for (int i = 0; i < bytes.Length; i++)
+                            {
+                                variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0));
+                            }
+
+                            break;
+                        }
                 }
             }
-            else
-            {
-                // Obtain our state variables
-                var stateVariables = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
 
-                // Loop for each state variables
-                foreach (VariableValuePair stateVariable in stateVariables)
+            // Loop for each local variables
+            foreach (VariableValuePair variablePair in variablePairs)
+            {
+                // Create an underlying variable value pair for this pair.
+                var underlyingVariableValuePair = new UnderlyingVariableValuePair(variablePair);
+
+                // Check if this is a nested variable type
+                bool nestedType = IsNestedVariableType(variablePair.Variable.GenericType);
+                int variablePairReferenceId = 0;
+                if (nestedType)
                 {
-                    // Temporary: Some values will need to be structured. For now, they're not.
-                    variableList.Add(new Variable(stateVariable.Variable.Name, stateVariable.Value?.ToString() ?? "<unresolved>", 0));
+                    // Create a new reference id for this variable if it's a nested type.
+                    variablePairReferenceId = ReferenceContainer.GetUniqueId();
+
+                    // Link our reference for any nested types.
+                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, underlyingVariableValuePair);
                 }
+
+                // Obtain the value string for this variable and add it to our list.
+                string variableValueString = GetVariableValueString(underlyingVariableValuePair);
+                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString, variablePairReferenceId));
             }
 
             // Respond with our variable list.
@@ -561,35 +752,31 @@ namespace Meadow.DebugAdapterServer
         {
             responder.SetResponse(new EvaluateResponse());
         }
-
+     
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)
         {
-            base.HandleExceptionInfoRequestAsync(responder);
+            // Obtain the current thread state
+            bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
+            if (success)
+            {
+                string exceptionMessage = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value).Message;
+                responder.SetResponse(new ExceptionInfoResponse(exceptionMessage, ExceptionBreakMode.Always));
+            }
         }
 
         #endregion
 
-        Dictionary<string, int[]> _sourceBreakpoints = new Dictionary<string, int[]>();
-
-        List<(string Name, string Path)> _breakpointFiles = new List<(string Name, string Path)>();
-
-        public bool TryGetSourceBreakpoints(string relativeFilePath, out int[] breakpointLines)
-        {
-            // Obtain our internal path from a vs code path
-            relativeFilePath = ConvertVSCodePathToInternalPath(relativeFilePath);
-
-            lock (_sourceBreakpoints)
-            {
-                return _sourceBreakpoints.TryGetValue(relativeFilePath, out breakpointLines);
-            }
-        }
 
         private string ConvertVSCodePathToInternalPath(string vsCodePath)
         {
-            // Strip our contracts folder from our VS Code Path
-            int index = vsCodePath.IndexOf(CONTRACTS_PREFIX, StringComparison.InvariantCultureIgnoreCase);
-            string internalPath = vsCodePath.Trim().Substring(index + CONTRACTS_PREFIX.Length + 1);
+            var relativeFilePath = vsCodePath.Substring(ConfigurationProperties.WorkspaceDirectory.Length);
 
+            // Strip our contracts folder from our VS Code Path
+            int index = relativeFilePath.IndexOf(_contractsDirectory, StringComparison.InvariantCultureIgnoreCase);
+            string internalPath = relativeFilePath.Trim().Substring(index + _contractsDirectory.Length + 1);
+
+            // Make path platform agnostic
+            internalPath = internalPath.Replace('\\', '/');
 
             // Return our internal path.
             return internalPath;
@@ -597,7 +784,12 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleSetBreakpointsRequestAsync(IRequestResponder<SetBreakpointsArguments, SetBreakpointsResponse> responder)
         {
-            _breakpointFiles.Add((responder.Arguments.Source.Name, responder.Arguments.Source.Path));
+            // Ignore breakpoints for files that are not solidity sources
+            if (!responder.Arguments.Source.Path.EndsWith(".sol", StringComparison.OrdinalIgnoreCase))
+            {
+                responder.SetResponse(new SetBreakpointsResponse());
+                return;
+            }
 
             if (!responder.Arguments.Source.Path.StartsWith(ConfigurationProperties.WorkspaceDirectory, StringComparison.OrdinalIgnoreCase))
             {
@@ -609,19 +801,12 @@ namespace Meadow.DebugAdapterServer
                 throw new Exception("Debugging modified sources is not supported.");
             }
 
-            var relativeFilePath = responder.Arguments.Source.Path
-                .Substring(ConfigurationProperties.WorkspaceDirectory.Length)
-                .TrimStart('/', '\\')
-                .Replace('\\', '/');
 
             // Obtain our internal path from a vs code path
-            relativeFilePath = ConvertVSCodePathToInternalPath(relativeFilePath);
+            var relativeFilePath = ConvertVSCodePathToInternalPath(responder.Arguments.Source.Path);
 
-            lock (_sourceBreakpoints)
-            {
-                _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
-            }
-
+            _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
+            
             responder.SetResponse(new SetBreakpointsResponse());
         }
 

@@ -2,6 +2,7 @@
 using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
+using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
 using Newtonsoft.Json.Linq;
 using System;

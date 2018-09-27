@@ -57,7 +57,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                 }
 
                 // Our enum index is valid, return our enum member name
-                return EnumDefinition.Members[(int)index].Name;
+                return string.Join('.', EnumDefinition.CanonicalName, EnumDefinition.Members[(int)index].Name);
             }
         }
         #endregion

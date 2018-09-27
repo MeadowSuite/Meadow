@@ -19,9 +19,16 @@ using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.Hosting.Server.Features;
 using System.Globalization;
+using System.Net.WebSockets;
+using System.Buffers;
+using System.Threading;
+using System.Diagnostics;
 
 namespace Meadow.JsonRpc.Server
 {
+    /// <summary>
+    /// Supports http and websockets
+    /// </summary>
     public class JsonRpcHttpServer : IDisposable
     {
         public IWebHost WebHost { get; }
@@ -54,6 +61,7 @@ namespace Meadow.JsonRpc.Server
             var webHostBuilder = new WebHostBuilder()
                .Configure(app =>
                {
+                   app.UseWebSockets();
                    app.Use(Handle);
                    _serverAddressFeature = () => app.ServerFeatures.Get<IServerAddressesFeature>();
                })
@@ -108,16 +116,96 @@ namespace Meadow.JsonRpc.Server
 
         async Task Handle(HttpContext context, Func<Task> next)
         {
-            if (context.Request.Method != "POST")
+            if (context.WebSockets.IsWebSocketRequest)
+            {
+                await HandleWebSocketRequest(context, next);
+            }
+            else if (context.Request.Method == "POST")
+            {
+                await HandlePostRequest(context, next);
+            }
+            else
             {
                 await next();
                 return;
             }
 
-            // TODO: path validation (should be only root path)
-            var pathName = context.Request.Path;
+        }
 
-            var data = await ReadJsonPostData(context.Request);
+        async Task HandleWebSocketRequest(HttpContext context, Func<Task> next)
+        {
+            var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+
+            var arrayPool = ArrayPool<byte>.Shared;
+            var receiveBuffer = arrayPool.Rent(30000);
+            var memoryStream = new MemoryStream();
+
+            try
+            {
+                while (webSocket.State == WebSocketState.Open)
+                {
+                    memoryStream.Position = 0;
+                    using (var sr = new StreamReader(memoryStream, Encoding.UTF8, false, 1024, leaveOpen: true))
+                    using (var reader = new JsonTextReader(sr))
+                    {
+                        WebSocketReceiveResult receiveResult;
+                        do
+                        {
+                            receiveResult = await webSocket.ReceiveAsync(
+                                new ArraySegment<byte>(receiveBuffer),
+                                CancellationToken.None);
+
+                            memoryStream.Write(receiveBuffer, 0, receiveResult.Count);
+                        }
+                        while (!receiveResult.EndOfMessage);
+
+                        memoryStream.Position = 0;
+                        var readResult = reader.Read();
+                        Debug.Assert(readResult);
+                        Debug.Assert(reader.TokenType == JsonToken.StartObject);
+
+                        var data = JObject.Load(reader);
+                        var requestItem = new RpcRequestItem(data);
+
+                        // We want RPC method handling to be serialized (synchronous)
+                        // but we don't want to block the http server so post
+                        // the request to an ordered async message queue.
+                        _messageQueue.Post(requestItem);
+
+                        // Wait for the queue handler to mark the response as ready.
+                        var response = await requestItem.ResponseTask.Task;
+
+                        // Format response as json data and reply to websocket request.
+                        var responseJson = response.ToString();
+                        var responseBytes = Encoding.UTF8.GetBytes(responseJson);
+
+                        await webSocket.SendAsync(
+                            new ArraySegment<byte>(responseBytes),
+                            WebSocketMessageType.Text,
+                            true,
+                            CancellationToken.None);
+                    }
+                }
+            }
+            catch (OperationCanceledException) { }
+            finally
+            {
+                memoryStream.Dispose();
+                arrayPool.Return(receiveBuffer);
+            }
+        }
+
+        async Task HandlePostRequest(HttpContext context, Func<Task> next)
+        {
+            JObject data;
+
+            // Read http request post data as string then parse as json
+            using (var streamReader = new StreamReader(context.Request.Body, Encoding.UTF8))
+            {
+                var postData = await streamReader.ReadToEndAsync();
+                data = JObject.Parse(postData);
+            }
+
             var requestItem = new RpcRequestItem(data);
 
             // We want RPC method handling to be serialized (synchronous)
@@ -129,19 +217,8 @@ namespace Meadow.JsonRpc.Server
             var response = await requestItem.ResponseTask.Task;
 
             // Format response as json data and reply to http request.
-            var responseJson = response.ToString(Formatting.Indented);
+            var responseJson = response.ToString();
             await context.Response.WriteAsync(responseJson);
-        }
-
-        async Task<JObject> ReadJsonPostData(HttpRequest request)
-        {
-            // Read http request post data as string then parse as json
-            using (var streamReader = new StreamReader(request.Body, Encoding.UTF8))
-            {
-                var postData = await streamReader.ReadToEndAsync();
-                var json = JObject.Parse(postData);
-                return json;
-            }
         }
 
         async Task RpcRequestItemHandler(RpcRequestItem item)

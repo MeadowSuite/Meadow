@@ -1,17 +1,42 @@
 {
-  "name": "meadow.vscode.debugger",
+  "name": "meadow.solidity-debugger",
+  "displayName": "Solidity Debugger",
   "version": "0.0.1",
-  "description": "",
+  "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
+  "categories": [
+    "Debuggers"
+  ],
+  "keywords": [
+    "Solidity",
+    "Ethereum",
+    "Debugger",
+    "Truffle",
+    "Ganache",
+    "Testrpc",
+    "solidity-coverage"
+  ],
   "publisher": "Hosho",
   "author": "Hosho",
+  "homepage": "https://github.com/MeadowSuite/Meadow/blob/master/Meadow.VSCode.Debugger/README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MeadowSuite/Meadow.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MeadowSuite/Meadow/issues"
+  },
   "license": "GPL-3.0",
   "main": "./out/extension",
+  "extensionDependencies": [
+    "ms-vscode.csharp"
+  ],
+  "preview": true,
   "private": true,
   "scripts": {
-    "prepublish": "tsc -p ./src",
+    "vscode:prepublish": "(npm run compile && npm run packageAdapter)",
     "compile": "tsc -p ./src",
-    "tslint": "tslint ./src/**/*.ts",
-    "watch": "tsc -w -p ./src",
+    "watch": "tsc -watch -p ./src",
+    "packageAdapter": "node ./out/packageAdapter.js",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "publish": "vsce publish"
@@ -20,9 +45,6 @@
     "vscode": "^1.26.0",
     "node": "^8.12.0"
   },
-  "categories": [
-    "Debuggers"
-  ],
   "dependencies": {
     "await-notify": "^1.0.1",
     "uuid": "^3.3.2",

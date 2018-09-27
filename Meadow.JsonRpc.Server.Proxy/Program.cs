@@ -24,7 +24,7 @@ namespace Meadow.JsonRpc.Server.Proxy
             Console.WriteLine($"Proxying calls to server at {serverUri}");
 
             Console.WriteLine($"Launching server proxy, listening at {proxyUri}");
-            var rpcServerProxy = new RpcServerProxy(host, proxyServerPort, targetServerPort);
+            var rpcServerProxy = new RpcServerProxy(new Uri(serverUri), proxyServerPort);
             await rpcServerProxy.StartServerAsync();
             Console.WriteLine("Server started and listening...");
 

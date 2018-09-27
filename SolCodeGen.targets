@@ -23,7 +23,8 @@
     <Exec Command="$(SolCodeGenBuild)" Condition="!Exists('$(SolCodeGenFileExe)')" />
 
     <Message Importance="High" Text="Running: $(SolCodeGenFileExe) $(GenerateArgs)" />
-    <Exec Command="dotnet $(SolCodeGenFileExe) $(GenerateArgs)" LogStandardErrorAsError="true" IgnoreExitCode="true">
+    
+    <Exec Command="dotnet $(SolCodeGenFileExe) $(GenerateArgs)">
       <Output TaskParameter="ExitCode" PropertyName="SolCodeGenExitCode" />
     </Exec>
 
@@ -31,7 +32,7 @@
       <Compile Include="$(MSBuildProjectDirectory)/GeneratedContracts/**/*.cs" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(EmbeddedResourceIncludes.Contains('SolcOutputData.sol.resx'))">
+    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(EmbeddedResourceIncludes.Contains('SolcOutputData.sol.resx')) AND Exists('$(MSBuildProjectDirectory)/GeneratedContracts/SolcOutputData.sol.resx')">
       <EmbeddedResource Include="$(MSBuildProjectDirectory)/GeneratedContracts/SolcOutputData.sol.resx" />
     </ItemGroup>
 

@@ -31,7 +31,7 @@
     <Message Importance="High" Text="Generating code for solidity files" />
     <Message Importance="High" Text="Running: $(SolCodeGenFileExe) $(GenerateArgs)" />
 
-    <Exec Command="$(SolCodeGenFileExe) $(GenerateArgs)" LogStandardErrorAsError="true" IgnoreExitCode="true">
+    <Exec Command="$(SolCodeGenFileExe) $(GenerateArgs)">
       <Output TaskParameter="ExitCode" PropertyName="SolCodeGenExitCode" />
     </Exec>
 
@@ -39,7 +39,7 @@
       <Compile Include="$(GeneratedFilesDir)/**/*.cs" />
     </ItemGroup>
 
-    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(EmbeddedResourceIncludes.Contains('SolcOutputData.sol.resx'))">
+    <ItemGroup Condition="'$(SolCodeGenExitCode)' == '0' AND !$(EmbeddedResourceIncludes.Contains('SolcOutputData.sol.resx')) AND Exists('$(GeneratedFilesDir)/SolcOutputData.sol.resx')">
       <EmbeddedResource Include="$(GeneratedFilesDir)/SolcOutputData.sol.resx" />
     </ItemGroup>
 

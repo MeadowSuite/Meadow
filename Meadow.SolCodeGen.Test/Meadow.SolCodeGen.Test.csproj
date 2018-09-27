@@ -29,4 +29,10 @@
     <ProjectReference Include="..\Meadow.SolCodeGen\Meadow.SolCodeGen.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="ContractsEmpty\placeholder.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

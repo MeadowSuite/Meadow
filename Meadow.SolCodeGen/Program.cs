@@ -21,13 +21,31 @@ namespace Meadow.SolCodeGen
 {
     public class Program
     {
+        // MSBuild error/warning stderr formatting
+        // https://blogs.msdn.microsoft.com/msbuild/2006/11/02/msbuild-visual-studio-aware-error-messages-and-message-formats/
+        // https://stackoverflow.com/a/48117947/794962
+        // Main.cs(17,20):Command line warning CS0168: The variable 'foo' is declared but never used
+        // -------------- ------------ ------- ------  ----------------------------------------------
+        // Origin         SubCategory  Cat.    Code    Text
+
 
         public static int Main(params string[] args)
         {
-            if (!CommandArgs.TryParse(args, out var appArgs, out var parseException))
+            CommandArgs appArgs = null;
+            Exception parseException = null;
+
+            if (!CommandArgs.TryParse(args, out appArgs, out parseException))
             {
-                Console.Error.WriteLine(parseException);
-                return 1;
+                if (parseException.Data.Contains(CommandArgs.MISSING_SOL_FILES))
+                {
+                    Console.Error.WriteLine("Solidity compiler warning MEADOW1008: No .sol files found in the 'contracts' solidity source directory.");
+                    return 0;
+                }
+                else
+                {
+                    Console.Error.WriteLine($"SolCodeGen:Command arguments error MEADOW1009: {parseException.Message} (see full build output for more details)");
+                    return 0;
+                }
             }
 
             try
@@ -42,33 +60,49 @@ namespace Meadow.SolCodeGen
             {
                 Console.WriteLine(ex);
 
-                IEnumerable<Exception> compilerExceptions = null;
+                IEnumerable<CompilerException> compilerExceptions = null;
                 if (ex is AggregateException aggr && aggr.InnerException is CompilerException)
                 {
-                    compilerExceptions = aggr.InnerExceptions;
+                    compilerExceptions = aggr.InnerExceptions.OfType<CompilerException>();
                 }
                 else if (ex is CompilerException solcEx)
                 {
-                    compilerExceptions = new[] { ex };
+                    compilerExceptions = new[] { solcEx };
                 }
 
-                if (compilerExceptions != null)
+                if (compilerExceptions != null && compilerExceptions.Count() > 0)
                 {
                     foreach (var solcEx in compilerExceptions)
                     {
-                        var errMsg = string.Join(" ", solcEx.Message.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
+                        var err = solcEx.CompileError;
+
+                        var singleLineMsg = string
+                            .Join(" ", err.FormattedMessage.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)
                             .Select(s => s.Trim())
-                            .Where(s => !s.StartsWith("^--", StringComparison.Ordinal)));
-                        Console.Error.WriteLine("Solidity compiler error: " + errMsg + " (see full build output for more details)");
+                            .Where(s => !s.StartsWith("^--", StringComparison.Ordinal)))
+                             + " (see full build output for more details)";
+
+                        string origin;
+
+                        if (!string.IsNullOrEmpty(err?.SourceLocation?.File))
+                        {
+                            origin = $"contracts/{err.SourceLocation.File}({err.SourceLocation.Start},{err.SourceLocation.End})";
+                        }
+                        else
+                        {
+                            origin = "Solc";
+                        }
+
+                        var msbuildError = $"{origin}:{err.Type} error SOLC1001: {singleLineMsg}";
+                        Console.Error.WriteLine(msbuildError);
                     }
                 }
                 else
                 {
                     var exStackTrace = string.Join(" ", ex.StackTrace.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries));
-                    Console.Error.WriteLine(ex.Message + " | StackTrace: " + exStackTrace);
+                    var msg = ex.Message + " | StackTrace: " + exStackTrace;
+                    Console.Error.WriteLine($"SolCodeGen:Exception error MEADOW1010: {msg}");
                 }
-
-                return 1;
             }
 
             return 0;

@@ -39,6 +39,26 @@ namespace Meadow.DebugExampleTests
         }
 
         [TestMethod]
+        public async Task GetArrayStatic()
+        {
+            var res = await _contract.getArrayStatic().Call();
+            Assert.AreEqual(1, res[0]);
+            Assert.AreEqual(-2, res[1]);
+            Assert.AreEqual(29, res[2]);
+            Assert.AreEqual(399, res[3]);
+        }
+
+        [TestMethod]
+        public async Task GetArrayDynamic()
+        {
+            var res = await _contract.getArrayDynamic().Call();
+            Assert.AreEqual(1, res[0]);
+            Assert.AreEqual(-2, res[1]);
+            Assert.AreEqual(29, res[2]);
+            Assert.AreEqual(399, res[3]);
+        }
+
+        [TestMethod]
         public async Task CallAndTransact()
         {
             var (valCounter, tx) = await _contract.incrementValCounter().CallAndTransact();

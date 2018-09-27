@@ -4,6 +4,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject Condition="'$(DISABLE_EXTERNAL_PARALLEL_TESTS)' == 'true'">false</IsTestProject>
+    <StartupObject>Meadow.UnitTestTemplate.ParallelTest.GlobalSetup</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
