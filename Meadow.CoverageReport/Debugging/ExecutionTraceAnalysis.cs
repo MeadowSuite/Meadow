@@ -3,6 +3,7 @@ using Meadow.Core.EthTypes;
 using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables;
+using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
 using Meadow.CoverageReport.Models;
 using Meadow.JsonRpc.Types.Debugging;

@@ -1,5 +1,6 @@
 ﻿using Meadow.CoverageReport.Debugging;
 using Meadow.CoverageReport.Debugging.Variables;
+using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using System;
 using System.Collections.Generic;
@@ -37,7 +38,7 @@ namespace Meadow.DebugAdapterServer
         // reverse: sub-variableReferenceIds -> variableReferenceId
         private Dictionary<int, int> _subVariableReferenceIdToVariableReferenceId;
         // variableReferenceId -> (threadId, variableValuePair)
-        private Dictionary<int, (int threadId, VariableValuePair variableValuePair)> _variableReferenceIdToVariableValuePair;
+        private Dictionary<int, (int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)> _variableReferenceIdToUnderlyingVariableValuePair;
         #endregion
 
         #region Constructor
@@ -55,7 +56,7 @@ namespace Meadow.DebugAdapterServer
 
             _variableReferenceIdToSubVariableReferenceIds = new Dictionary<int, List<int>>();
             _subVariableReferenceIdToVariableReferenceId = new Dictionary<int, int>();
-            _variableReferenceIdToVariableValuePair = new Dictionary<int, (int threadId, VariableValuePair variableValuePair)>();
+            _variableReferenceIdToUnderlyingVariableValuePair = new Dictionary<int, (int threadId, UnderlyingVariableValuePair variableValuePair)>();
         }
         #endregion
 
@@ -134,9 +135,9 @@ namespace Meadow.DebugAdapterServer
             return null;
         }
 
-        public void LinkSubVariableReference(int parentVariableReference, int variableReference, int threadId, VariableValuePair variableValuePair)
+        public void LinkSubVariableReference(int parentVariableReference, int variableReference, int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)
         {
-            _variableReferenceIdToVariableValuePair[variableReference] = (threadId, variableValuePair);
+            _variableReferenceIdToUnderlyingVariableValuePair[variableReference] = (threadId, underlyingVariableValuePair);
 
             // Try to get our variable subreference id, or if a list doesn't exist, create one.
             if (!_variableReferenceIdToSubVariableReferenceIds.TryGetValue(parentVariableReference, out List<int> subVariableReferenceIds))
@@ -155,7 +156,7 @@ namespace Meadow.DebugAdapterServer
         private void UnlinkSubVariableReference(int variableReference)
         {
             // Unlink our variable value pair
-            _variableReferenceIdToVariableValuePair.Remove(variableReference);
+            _variableReferenceIdToUnderlyingVariableValuePair.Remove(variableReference);
 
             // Try to get our list of sub variable references to unlink.
             if (_variableReferenceIdToSubVariableReferenceIds.TryGetValue(variableReference, out var subVariableReferenceIds))
@@ -173,19 +174,19 @@ namespace Meadow.DebugAdapterServer
             }
         }
 
-        public bool ResolveParentVariable(int variableReference, out int threadId, out VariableValuePair variableValuePair)
+        public bool ResolveParentVariable(int variableReference, out int threadId, out UnderlyingVariableValuePair variableValuePair)
         {
             // Try to obtain our thread id and variable value pair.
-            if (!_variableReferenceIdToVariableValuePair.TryGetValue(variableReference, out var result))
+            if (!_variableReferenceIdToUnderlyingVariableValuePair.TryGetValue(variableReference, out var result))
             {
                 threadId = 0;
-                variableValuePair = new VariableValuePair(null, null);
+                variableValuePair = new UnderlyingVariableValuePair(null, null);
                 return false;
             }
 
             // Obtain the thread id and variable value pair for this reference.
             threadId = result.threadId;
-            variableValuePair = result.variableValuePair;
+            variableValuePair = result.underlyingVariableValuePair;
             return true;
         }
 

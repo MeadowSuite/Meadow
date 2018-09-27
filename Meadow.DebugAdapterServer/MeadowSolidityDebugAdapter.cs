@@ -13,6 +13,8 @@ using Meadow.CoverageReport.Debugging.Variables;
 using Meadow.JsonRpc.Types.Debugging;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using System.Globalization;
+using Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes;
+using Meadow.CoverageReport.Debugging.Variables.Pairing;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -551,25 +553,25 @@ namespace Meadow.DebugAdapterServer
             responder.SetResponse(new ScopesResponse(scopeList));
         }
 
-        private bool IsNestedVariableType(VariableValuePair variableValuePair)
+        private bool IsNestedVariableType(VarGenericType genericType)
         {
             // Check the type of variable this is
-            return variableValuePair.Variable.GenericType == VarGenericType.Array ||
-                variableValuePair.Variable.GenericType == VarGenericType.ByteArrayDynamic ||
-                variableValuePair.Variable.GenericType == VarGenericType.ByteArrayFixed ||
-                variableValuePair.Variable.GenericType == VarGenericType.Mapping ||
-                variableValuePair.Variable.GenericType == VarGenericType.Struct;
+            return genericType == VarGenericType.Array ||
+                genericType == VarGenericType.ByteArrayDynamic ||
+                genericType == VarGenericType.ByteArrayFixed ||
+                genericType == VarGenericType.Mapping ||
+                genericType == VarGenericType.Struct;
         }
 
-        private string GetVariableValueString(VariableValuePair variableValuePair)
+        private string GetVariableValueString(UnderlyingVariableValuePair variableValuePair)
         {
             // Determine how to format our value string.
             switch (variableValuePair.Variable.GenericType)
             {
                 case VarGenericType.Array:
-                    return variableValuePair.Variable.BaseType;
+                    return $"{variableValuePair.Variable.BaseType} (size: {((object[])variableValuePair.Value).Length})";
                 case VarGenericType.ByteArrayDynamic:
-                    return $"{variableValuePair.Variable.BaseType} (count: {((Memory<byte>)variableValuePair.Value).Length})";
+                    return $"{variableValuePair.Variable.BaseType} (size: {((Memory<byte>)variableValuePair.Value).Length})";
                 case VarGenericType.ByteArrayFixed:
                     return variableValuePair.Variable.BaseType;
                 case VarGenericType.Mapping:
@@ -592,7 +594,7 @@ namespace Meadow.DebugAdapterServer
             bool isLocalVariableScope = false;
             bool isStateVariableScope = false;
             bool isParentVariableScope = false;
-            VariableValuePair parentVariableValuePair = new VariableValuePair(null, null);
+            UnderlyingVariableValuePair parentVariableValuePair = new UnderlyingVariableValuePair(null, null);
 
             // Try to obtain the variable reference as a local variable scope.
             isLocalVariableScope = ReferenceContainer.ResolveLocalVariable(responder.Arguments.VariablesReference, out threadId, out traceIndex);
@@ -644,6 +646,36 @@ namespace Meadow.DebugAdapterServer
 
                     case VarGenericType.Array:
                         {
+                            // Cast our variable
+                            var arrayVariable = ((VarArray)parentVariableValuePair.Variable);
+
+                            // Cast to an object array.
+                            var arrayValue = (object[])parentVariableValuePair.Value;
+
+                            // Loop for each element
+                            for (int i = 0; i < arrayValue.Length; i++)
+                            {
+                                // Create an underlying variable value pair for this element
+                                var underlyingVariableValuePair = new UnderlyingVariableValuePair(arrayVariable.ElementObject, arrayValue[i]);
+
+                                // Check if this is a nested variable type
+                                bool nestedType = IsNestedVariableType(arrayVariable.ElementObject.GenericType);
+                                int variablePairReferenceId = 0;
+                                if (nestedType)
+                                {
+                                    // Create a new reference id for this variable if it's a nested type.
+                                    variablePairReferenceId = ReferenceContainer.GetUniqueId();
+
+                                    // Link our reference for any nested types.
+                                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, underlyingVariableValuePair);
+                                }
+
+                                // Obtain the value string for this variable and add it to our list.
+                                string variableValueString = GetVariableValueString(underlyingVariableValuePair);
+                                variableList.Add(new Variable($"[{i}]", variableValueString, variablePairReferenceId));
+                            }
+
+
                             break;
                         }
 
@@ -652,11 +684,9 @@ namespace Meadow.DebugAdapterServer
                         {
                             // Cast our to an enumerable type.
                             var bytes = (Memory<byte>)parentVariableValuePair.Value;
-                            int elementIndex = 0;
-                            foreach (byte b in bytes.Span)
+                            for (int i = 0; i < bytes.Length; i++)
                             {
-                                variableList.Add(new Variable($"[{elementIndex}]", b.ToString(CultureInfo.InvariantCulture), 0));
-                                elementIndex++;
+                                variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0));
                             }
 
                             break;
@@ -667,21 +697,24 @@ namespace Meadow.DebugAdapterServer
             // Loop for each local variables
             foreach (VariableValuePair variablePair in variablePairs)
             {
+                // Create an underlying variable value pair for this pair.
+                var underlyingVariableValuePair = new UnderlyingVariableValuePair(variablePair);
+
                 // Check if this is a nested variable type
-                bool nestedType = IsNestedVariableType(variablePair);
+                bool nestedType = IsNestedVariableType(variablePair.Variable.GenericType);
                 int variablePairReferenceId = 0;
                 if (nestedType)
                 {
                     // Create a new reference id for this variable if it's a nested type.
                     variablePairReferenceId = ReferenceContainer.GetUniqueId();
 
-                    // Link our reference for any nested types so we can discover and recursively unlink sub-references for them.
-                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, variablePair);
+                    // Link our reference for any nested types.
+                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, underlyingVariableValuePair);
                 }
 
                 // Obtain the value string for this variable and add it to our list.
-                string variableValueString = GetVariableValueString(variablePair);
-                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString ?? "<unresolved>", variablePairReferenceId));
+                string variableValueString = GetVariableValueString(underlyingVariableValuePair);
+                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString, variablePairReferenceId));
             }
 
             // Respond with our variable list.
