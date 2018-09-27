@@ -55,7 +55,9 @@ export async function launch(debugSessionID: string, debugConfig: debugConfigPro
             request: "launch",
             program: testAssembly,
             cwd: workspaceFolder,
-            env: envOpts
+            env: envOpts,
+            console: "internalConsole",
+            internalConsoleOptions: "openOnSessionStart"
         };
 
         vscode.debug.startDebugging(workspaceFolder, unitTestRunnerDebugConfig);
