@@ -13,7 +13,8 @@ namespace Meadow.JsonRpc.Server.Test
     public class RpcApp : IDisposable
     {
         public readonly MockServerApp Server;
-        public readonly IJsonRpcClient Client;
+        public readonly IJsonRpcClient HttpClient;
+        public readonly IJsonRpcClient WebSocketClient;
 
         public RpcApp()
         {
@@ -21,11 +22,14 @@ namespace Meadow.JsonRpc.Server.Test
             Server.RpcServer.WebHost.Start();
             var port = Server.RpcServer.ServerPort;
 
-            Client = JsonRpcClient.Create(new Uri($"http://{IPAddress.Loopback}:{port}"), ArbitraryDefaults.DEFAULT_GAS_LIMIT, ArbitraryDefaults.DEFAULT_GAS_PRICE);
+            HttpClient = JsonRpcClient.Create(new Uri($"http://{IPAddress.Loopback}:{port}"), ArbitraryDefaults.DEFAULT_GAS_LIMIT, ArbitraryDefaults.DEFAULT_GAS_PRICE);
+            WebSocketClient = JsonRpcClient.Create(new Uri($"ws://{IPAddress.Loopback}:{port}"), ArbitraryDefaults.DEFAULT_GAS_LIMIT, ArbitraryDefaults.DEFAULT_GAS_PRICE);
         }
 
         public void Dispose()
         {
+            HttpClient.Dispose();
+            WebSocketClient.Dispose();
             Task.Run(async () => await Server.RpcServer.WebHost.StopAsync());
             Server.RpcServer.WebHost.Dispose();
         }
@@ -34,12 +38,14 @@ namespace Meadow.JsonRpc.Server.Test
     public class ClientToServerIntegration : IClassFixture<RpcApp>
     {
         public readonly MockServerApp Server;
-        public readonly IJsonRpcClient Client;
+        public readonly IJsonRpcClient HttpClient;
+        public readonly IJsonRpcClient WebSocketClient;
 
         public ClientToServerIntegration(RpcApp rpcApp)
         {
             Server = rpcApp.Server;
-            Client = rpcApp.Client;
+            HttpClient = rpcApp.HttpClient;
+            WebSocketClient = rpcApp.WebSocketClient;
         }
 
         /*
@@ -60,57 +66,70 @@ namespace Meadow.JsonRpc.Server.Test
         [Fact]
         public async Task Syncing()
         {
-            var syncing = await Client.Syncing();
+            await HttpClient.Syncing();
+            await WebSocketClient.Syncing();
         }
 
         [Fact]
         public async Task GetFilterLogs()
         {
-            var filterLogs = await Client.GetFilterLogs(0);
+            await HttpClient.GetFilterLogs(0);
+            await WebSocketClient.GetFilterLogs(0);
         }
 
         [Fact]
         public async Task Mine()
         {
-            await Client.Mine();
+            await HttpClient.Mine();
+            await WebSocketClient.Mine();
         }
 
         [Fact]
         public async Task Version()
         {
-            var ver = await Client.Version();
+            await HttpClient.Version();
+            await WebSocketClient.Version();
         }
 
         [Fact]
         public async Task ProtocolVersion()
         {
-            var protoVer = await Client.ProtocolVersion();
+            await HttpClient.ProtocolVersion();
+            await WebSocketClient.ProtocolVersion();
         }
 
         [Fact]
         public async Task Accounts()
         {
-            var accounts = await Client.Accounts();
+            await HttpClient.Accounts();
+            await WebSocketClient.Accounts();
         }
 
         [Fact]
         public async Task GetBalance()
         {
-            var accounts = await Client.Accounts();
-            var balance = await Client.GetBalance(accounts[0], DefaultBlockParameter.Default);
+            var accounts = await HttpClient.Accounts();
+            await HttpClient.GetBalance(accounts[0], DefaultBlockParameter.Default);
+
+            var accounts2 = await WebSocketClient.Accounts();
+            await WebSocketClient.GetBalance(accounts2[0], DefaultBlockParameter.Default);
         }
 
         [Fact]
         public async Task GetBalance2()
         {
-            var accounts = await Client.Accounts();
-            var balance2 = await Client.GetBalance(accounts[0], 1234);
+            var accounts = await HttpClient.Accounts();
+            await HttpClient.GetBalance(accounts[0], 1234);
+
+            var accounts2 = await WebSocketClient.Accounts();
+            await WebSocketClient.GetBalance(accounts2[0], 1234);
         }
 
         [Fact]
         public async Task BlockNumber()
         {
-            var blockNum = await Client.BlockNumber();
+            await HttpClient.BlockNumber();
+            await WebSocketClient.BlockNumber();
         }
 
 

@@ -76,7 +76,7 @@ namespace Meadow.JsonRpc.Client
         TimeSpan TransactionReceiptPollInterval { get; set; }
     }
 
-    public interface IJsonRpcClient : IRpcControllerMinimal, IRpcController, IJsonRpcClientExtensions
+    public interface IJsonRpcClient : IRpcControllerMinimal, IRpcController, IJsonRpcClientExtensions, IDisposable
     {
 
     }
@@ -114,7 +114,7 @@ namespace Meadow.JsonRpc.Client
 
     public delegate Task<byte[]> RawTransactionSignerDelegate(IJsonRpcClient rpcClient, TransactionParams transactionParams);
 
-    public class JsonRpcClient : DynamicObject, IRpcControllerMinimal, IJsonRpcClientExtensions
+    public class JsonRpcClient : DynamicObject, IRpcControllerMinimal, IJsonRpcClientExtensions, IDisposable
     {
         readonly Uri _serverUri;
 
@@ -540,6 +540,11 @@ namespace Meadow.JsonRpc.Client
             // Call our clear coverage command
             var requestData = CreateRequestObject(RpcApiMethod.testing_clearAllCoverage);
             var (error, result) = await InvokeRpcMethod(requestData);
+        }
+
+        public void Dispose()
+        {
+            _transport?.Dispose();
         }
     }
 }

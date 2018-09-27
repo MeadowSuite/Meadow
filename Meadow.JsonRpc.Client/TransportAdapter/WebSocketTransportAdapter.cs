@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Net.WebSockets;
@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace Meadow.JsonRpc.Client.TransportAdapter
-{    
+{
     // TODO: finish implementing and test
 
     public class WebSocketTransportAdapter : ITransportAdapter
@@ -23,7 +23,7 @@ namespace Meadow.JsonRpc.Client.TransportAdapter
 
         public WebSocketTransportAdapter(Uri endPoint, TimeSpan connectTimeout = default)
         {
-            EndPoint = EndPoint;
+            EndPoint = endPoint;
             _connectTimeout = connectTimeout;
 
             switch (EndPoint.Scheme.ToLowerInvariant())
@@ -81,25 +81,28 @@ namespace Meadow.JsonRpc.Client.TransportAdapter
 
             await EnsureConnected();
             var msgJson = requestObject.ToString();
+
             var msgBytes = Encoding.UTF8.GetBytes(msgJson);
             var arrSegment = new ArraySegment<byte>(msgBytes);
             await _client.SendAsync(arrSegment, WebSocketMessageType.Text, endOfMessage: true, CancellationToken.None);
 
-            var receiveBuffer = new ArraySegment<byte>(new byte[1024]);
-            using (var memoryStream = new MemoryStream())
+            var arrayPool = ArrayPool<byte>.Shared;
+            var receiveBuffer = arrayPool.Rent(30000);
+            try
             {
-                WebSocketReceiveResult response;
-                do
-                {
-                    response = await _client.ReceiveAsync(receiveBuffer, CancellationToken.None);
-                    memoryStream.Write(receiveBuffer.Array, 0, response.Count);
-                }
-                while (!response.EndOfMessage);
-
-                memoryStream.Position = 0;
+                using (var memoryStream = new MemoryStream())
                 using (var sr = new StreamReader(memoryStream, Encoding.UTF8))
                 using (var reader = new JsonTextReader(sr))
                 {
+                    WebSocketReceiveResult response;
+                    do
+                    {
+                        response = await _client.ReceiveAsync(new ArraySegment<byte>(receiveBuffer), CancellationToken.None);
+                        memoryStream.Write(receiveBuffer, 0, response.Count);
+                    }
+                    while (!response.EndOfMessage);
+
+                    memoryStream.Position = 0;
                     var readResult = reader.Read();
                     Debug.Assert(readResult);
                     Debug.Assert(reader.TokenType == JsonToken.StartObject);
@@ -107,12 +110,27 @@ namespace Meadow.JsonRpc.Client.TransportAdapter
                     return jObj;
                 }
             }
+            finally
+            {
+                arrayPool.Return(receiveBuffer);
+            }
         }
 
         public void Dispose()
         {
-            _client?.Dispose();
-            _client = null;
+            if (_client != null)
+            {
+                var clientCopy = _client;
+                _client = null;
+
+                var closeTask = clientCopy.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure,
+                    "close",
+                    new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token);
+
+                closeTask.ContinueWith(t => clientCopy.Dispose());
+            }
+
         }
     }
 }
