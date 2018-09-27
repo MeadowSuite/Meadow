@@ -19,6 +19,7 @@ namespace Meadow.SolCodeGen.Test
         readonly string _outputDir;
         readonly string _assemblyOutputDir;
         readonly string _sourceDir;
+        readonly string _sourceEmptyDir;
         readonly string _legacySolcDir;
         readonly string _namespace;
 
@@ -30,6 +31,7 @@ namespace Meadow.SolCodeGen.Test
             _outputDir = Path.Combine(_tempDir, "GeneratedOutput");
             _assemblyOutputDir = Path.Combine(_tempDir, "GeneratedAssembly");
             _sourceDir = Path.Combine(Directory.GetCurrentDirectory(), "Contracts");
+            _sourceEmptyDir = Path.Combine(Directory.GetCurrentDirectory(), "ContractsEmpty");
 
             _namespace = "Gen" + Guid.NewGuid().ToString().Replace("-", "", StringComparison.Ordinal) + ".Contracts";
 
@@ -190,6 +192,32 @@ namespace Meadow.SolCodeGen.Test
                 Meadow.SolCodeGen.Program.Run(processArgs);
             }
             catch (Exception ex) when (ex.Message.Contains("Could not parse specified solc optimizer", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            throw new Exception("Should have failed test");
+        }
+
+        [Fact]
+        public void MissingContractSources()
+        {
+            var processArgs = new string[]
+            {
+                "--namespace", _namespace,
+                "--source", _sourceEmptyDir,
+                "--generate", "source",
+                "--output", _outputDir,
+                "--solcversion", "0.4.24",
+                "--legacysolc", _legacySolcDir,
+                "--solcoptimizer", "0"
+            };
+
+            try
+            {
+                Meadow.SolCodeGen.Program.Run(processArgs);
+            }
+            catch (Exception ex) when (ex.Message.Contains("directory does not contain any .sol files", StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
