@@ -22,7 +22,7 @@
     "type": "git",
     "url": "https://github.com/MeadowSuite/Meadow.git"
   },
-  "bugs":{
+  "bugs": {
     "url": "https://github.com/MeadowSuite/Meadow/issues"
   },
   "license": "GPL-3.0",
