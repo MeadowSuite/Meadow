@@ -10,38 +10,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Meadow.Cli.psd1">
+    <None Include="Meadow.Cli.psd1">
       <Pack>true</Pack>
       <PackagePath>\</PackagePath>
-    </Content>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Content Include=".\Help\*.md">
+    </None>
+    <None Include=".\Help\*.md">
       <Pack>true</Pack>
       <PackagePath>\Help</PackagePath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include=".\Help\*.xml">
+    </None>
+    <None Include=".\Help\*.xml">
       <Pack>true</Pack>
       <PackagePath>\Help</PackagePath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include=".\Help\en-US\*.xml">
+    </None>
+    <None Include=".\Help\en-US\*.xml">
       <Pack>true</Pack>
       <PackagePath>\Help\en-US</PackagePath>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="\Help\en-US\*.txt">
+    </None>
+    <None Include="\Help\en-US\*.txt">
       <Pack>true</Pack>
       <PackagePath>\Help\en-US</PackagePath>
-    </Content>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
