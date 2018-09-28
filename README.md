@@ -23,7 +23,7 @@ Provides an intuitive framework for writing C# tests against contract deployment
 
 ---
 
-#### Visibility into Solidity revert call stacks
+#### Visibility into Solidity revert / exception call stacks
 
 <img src="/images/screenshot2.png?raw=true" width="700" />
 
