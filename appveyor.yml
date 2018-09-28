@@ -18,6 +18,4 @@ test_script:
 - ps: >-
     Start-Process ganache-cli -PassThru -ArgumentList "--port=7545"
 
-    cd src
-
     dotnet test --no-build --no-restore -c Debug
