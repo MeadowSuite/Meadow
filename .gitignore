@@ -331,12 +331,12 @@ ASALocalRun/
 # Meadow generated files
 *.sol.cs
 *.sol.resx
-Meadow.UnitTestTemplate.Test/Report/
-Meadow.UnitTestTemplate.ParallelTest/Report/
-Meadow.VSCode.Debugger/out/
-Meadow.DebugExampleTests/Report/
-Meadow.DebugExampleTests/debugger_trace.txt
-pwsh_testing/GeneratedAssembly/
-coverage/
-report/
-reportgenerator/
+src/Meadow.UnitTestTemplate.Test/Report/
+src/Meadow.UnitTestTemplate.ParallelTest/Report/
+src/Meadow.VSCode.Debugger/out/
+src/Meadow.DebugExampleTests/Report/
+src/Meadow.DebugExampleTests/debugger_trace.txt
+src/pwsh_testing/GeneratedAssembly/
+src/coverage/
+src/report/
+src/reportgenerator/

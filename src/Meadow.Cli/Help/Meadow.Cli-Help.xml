@@ -1,0 +1,628 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<helpItems schema="maml" xmlns="http://msh">
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!--Command-->
+		<command:details>
+			<command:name>Build-Solidity</command:name>
+			<maml:description>
+				<maml:para>Compiles a solidity contract for use with Meadow.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Build</command:verb>
+			<command:noun>Solidity</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This command will compile a solidity contract for use with the Meadow test server, testnets, or the Etherium network.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!--Parameter Sets-->
+			<command:syntaxItem default="true" parametersetname="Build Parameters">
+				<!--NAME: Build Parameters-->
+				<!--TAG: DEFAULT-->
+				<maml:name>Build-Solidity</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:inputTypes>
+			<!-- Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>You cannot pipe input to this Cmdlet.</maml:para>
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!-- Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>The resulting compiled contract cannot be used as an object in the pipeline.</maml:para>
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!-- Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic usage.</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Build-Solidity</dev:code>
+				<dev:remarks>
+					<maml:para>This will compile the solidity contract for later use.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Usage with common parameters.</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Build-Solidity -Verbose</dev:code>
+				<dev:remarks>
+					<maml:para>This provides verbose output while compiling a solidity contract.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!-- Links-->
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group</maml:linkText>
+				<maml:uri>https://www.hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Deploy-Contract</command:name>
+			<maml:description>
+				<maml:para>Allows deployment of a compiled contract to the configured and running test server, testnet, or Etherium network.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Deploy</command:verb>
+			<command:noun>Contract</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This command will allow you to deploy a contract that you have compiled using Build-CompiledSol to the test server that you configured using New-MeadowConfig, and started successfully with Start-TestServer.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem default="true" parametersetname="Deployment Parameters">
+				<!--NAME: Deployment Parameters-->
+				<!--TAG: DEFAULT-->
+				<maml:name>Deploy-Contract</maml:name>
+				<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="0" aliases="None" dynamic="true">
+					<maml:name>ContractName</maml:name>
+					<maml:description>
+						<maml:para>Specifies the name of the contract to be deployed.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">string</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">EIP20</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">ErrorContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">ExampleContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">FailDeploymentContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">InheritableContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">InheritedContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">MultiFileInheritableContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">MultiFileInheritedContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">OtherContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">VarAnalysisContract</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>string</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue />
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>DefaultFromAddress</maml:name>
+					<maml:description>
+						<maml:para>This defines the address of the account used to deploy the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Address</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>FromAccount</maml:name>
+					<maml:description>
+						<maml:para>This is the account that will be used to deploy the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Address</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>Gas</maml:name>
+					<maml:description>
+						<maml:para>This is the amount of gas that will be used to deploy the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Uint256</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>uint256</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>GasPrice</maml:name>
+					<maml:description>
+						<maml:para>This defines the amount of wei that will be equivalent to a unit of gas that is expended to execute a transaction on the test server.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>uint256</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>Nonce</maml:name>
+					<maml:description>
+						<maml:para>This is the value representing the sequential number of transactions executed with the caller and the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>uint64</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!-- All Parameters-->
+			<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="0" aliases="None" dynamic="true">
+				<maml:name>ContractName</maml:name>
+				<maml:description>
+					<maml:para>Specifies the name of the contract to be deployed.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">string</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">EIP20</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">ErrorContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">ExampleContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">FailDeploymentContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">InheritableContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">InheritedContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">MultiFileInheritableContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">MultiFileInheritedContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">OtherContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">VarAnalysisContract</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>string</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue />
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>DefaultFromAddress</maml:name>
+				<maml:description>
+					<maml:para>This defines the address of the account used to deploy the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Address</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>FromAccount</maml:name>
+				<maml:description>
+					<maml:para>This is the account that will be used to deploy the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Address</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>Gas</maml:name>
+				<maml:description>
+					<maml:para>This is the amount of gas that will be used to deploy the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Uint256</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>uint256</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>GasPrice</maml:name>
+				<maml:description>
+					<maml:para>This defines the amount of wei that will be equivalent to a unit of gas that is expended to execute a transaction on the test server.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>uint256</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>Nonce</maml:name>
+				<maml:description>
+					<maml:para>This is the value representing the sequential number of transactions executed with the caller and the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>uint64</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!-- Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not take input from the pipeline.</maml:para>
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!-- Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not provide output for piping to other commands.</maml:para>
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!-- Examples-->
+			<command:example>
+				<maml:title></maml:title>
+				<maml:introduction>
+					<maml:para>Basic Example</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Deploy-Contract -ContractName 'ExampleContract' -FromAccount &lt;AccountAddress&gt; -Gas 1500 -GasPrice 20000000 -Nonce 0</dev:code>
+				<dev:remarks>
+					<maml:para>This shows a very simplisitc use of the deploy command.  Every use case may be very different, and will require an in depth knowledge pertaining to your specific deployment needs.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!-- Links-->
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group</maml:linkText>
+				<maml:uri>https://www.hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Start-TestServer</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet will start an instance of the test server.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Start</command:verb>
+			<command:noun>TestServer</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet will allow you to start a local instance of the RPC test server for use in testing solidity contracts.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Start Server Parameters" default="true">
+				<!--TAG: DEFAULT-->
+				<!--NAME: Start Server Parameters-->
+				<maml:name>Start-TestServer</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:inputTypes>
+			<!-- Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not take input from the pipeline.</maml:para>
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!-- Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not provide output for piping to other commands.</maml:para>
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!-- Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic Example</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Start-TestServer</dev:code>
+				<dev:remarks>
+					<maml:para>This Cmdlet uses the previously defined values from the Initialize-Workspace Cmdlet (or the default values if none were provided) so no additional information is required to start the server.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group</maml:linkText>
+				<maml:uri>https://www.hosho.io</maml:uri>
+			</maml:navigationLink>
+			<!-- Links-->
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!-- Command-->
+		<command:details>
+			<command:name>Watch-Solidity</command:name>
+			<maml:description>
+				<maml:para />
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Watch</command:verb>
+			<command:noun>Solidity</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para />
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem>
+				<maml:name>Watch-Solidity</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!-- Command-->
+		<command:details>
+			<command:name>New-Accounts</command:name>
+			<maml:description>
+				<maml:para />
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>New</command:verb>
+			<command:noun>Accounts</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para />
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem>
+				<maml:name>New-Accounts</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!-- Command-->
+		<command:details>
+			<command:name>Read-Accounts</command:name>
+			<maml:description>
+				<maml:para />
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Read</command:verb>
+			<command:noun>Accounts</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para />
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem>
+				<maml:name>Read-Accounts</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!-- Command-->
+		<command:details>
+			<command:name>Write-Accounts</command:name>
+			<maml:description>
+				<maml:para />
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Write</command:verb>
+			<command:noun>Accounts</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para />
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem>
+				<maml:name>Write-Accounts</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Update-Config</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet builds a configuration for the test server to use during startup.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Update</command:verb>
+			<command:noun>Config</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet builds the configuration for the test server to use during startup.  After defining all of the parameters, the Start-TestServer command will check  this configuration before starting.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Update Parameters" default="true">
+				<!--TAG: DEFAULT-->
+				<!--NAME: Update Parameters-->
+				<maml:name>Update-Config</maml:name>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named">
+					<maml:name>Parameter1</maml:name>
+					<maml:description />
+					<dev:type>
+						<maml:name />
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue />
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!-- All Parameters-->
+			<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named">
+				<maml:name>Parameter1</maml:name>
+				<maml:description />
+				<dev:type>
+					<maml:name />
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue />
+			</command:parameter>
+		</command:parameters>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!-- Command-->
+		<command:details>
+			<command:name>Initialize-Workspace</command:name>
+			<maml:description>
+				<maml:para />
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Initialize</command:verb>
+			<command:noun>Workspace</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para />
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem>
+				<maml:name>Initialize-Workspace</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!-- Command-->
+		<command:details>
+			<command:name>Watch-Config</command:name>
+			<maml:description>
+				<maml:para />
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Watch</command:verb>
+			<command:noun>Config</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para />
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem>
+				<maml:name>Watch-Config</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+	</command:command>
+	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
+</helpItems>

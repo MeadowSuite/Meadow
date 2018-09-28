@@ -9,6 +9,7 @@ using Meadow.JsonRpc.Types;
 using Microsoft.PowerShell.Commands;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Runtime.InteropServices;
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -26,6 +27,7 @@ using System.Net;
 using System.Reflection;
 using System.Resources;
 using System.Runtime.Loader;
+using System.Security;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -59,7 +61,7 @@ namespace Meadow.Cli.Commands
             {
                 accountDerivation = new HDAccountDerivation(Mnemonic);
             }
-            
+
             var accountKeys = new List<(Address Address, EthereumEcdsa Account)>();
 
             foreach (var account in EthereumEcdsa.Generate(config.AccountCount, accountDerivation))
@@ -82,11 +84,18 @@ namespace Meadow.Cli.Commands
     [Alias("readAccounts")]
     public class LoadAccountsCommand : PSCmdlet
     {
+        
         [Parameter(Mandatory = false, Position = 0)]
         public string FilePath { get; set; } = LocalAccountsUtil.DEFAULT_FILE_NAME;
 
-        [Parameter(Mandatory = false)]
-        public string Password { get; set; }
+        //Changed string to secure string for use in console.  This should prevent the recall of the characters that comprise the password from Std error/Std out/Verbose messages.
+        //I believe it does this by immediately sending the individual characters to a location in unmanaged memory and returning a pointer for retrieval.
+        //This is also prioritized by GC when no longer needed, and called by the dispose method.
+        //to use a secure string as the password -> Read-Accounts -FilePath 'Path/to/file' -Password (ConvertTo-SecureString -String 'password' -AsPlaintext -Force)
+        //In both instances of use, I have had to convert the password and dispose of it immediately, so it does not stay in memory past the single command use and has to be reconverted for further uses.
+
+        [Parameter(Mandatory = false, Position = 2)]
+        public SecureString Password { get; set; }  
 
         protected override void EndProcessing()
         {
@@ -113,17 +122,22 @@ namespace Meadow.Cli.Commands
 
             if (dataJson.TryGetValue(LocalAccountsUtil.JSON_ENCRYPTED_ACCOUNTS_KEY, out var token))
             {
-                if (string.IsNullOrWhiteSpace(Password))
+                if (Password.Length == 0)
                 {
                     Host.UI.WriteErrorLine($"No password parameter specified and accounts are encryped in file {FilePath}");
                     return;
+                }
+                else
+                {
+                    Password.MakeReadOnly();       
                 }
 
                 var encrypedAccounts = token.Value<string>();
                 string decrypedContent;
                 try
                 {
-                    decrypedContent = AesUtil.DecryptString(encrypedAccounts, Password);
+                    decrypedContent = AesUtil.DecryptString(encrypedAccounts, Marshal.PtrToStringAuto(Marshal.SecureStringToBSTR(Password)));
+                    Password.Dispose();
                 }
                 catch (Exception ex)
                 {
@@ -136,7 +150,7 @@ namespace Meadow.Cli.Commands
             }
             else
             {
-                if (!string.IsNullOrWhiteSpace(Password))
+                if (Password != null && Password.Length > 0)
                 {
                     Host.UI.WriteErrorLine($"Password parameter specified but accounts are encryped in file {FilePath}");
                     return;
@@ -167,7 +181,7 @@ namespace Meadow.Cli.Commands
         public string FilePath { get; set; } = LocalAccountsUtil.DEFAULT_FILE_NAME;
 
         [Parameter(Mandatory = false)]
-        public string Password { get; set; }
+        public SecureString Password { get; set; }
 
         [Parameter(Mandatory = false)]
         public bool EncryptData = true;
@@ -190,13 +204,13 @@ namespace Meadow.Cli.Commands
                 filePath = Path.GetFullPath(Path.Join(SessionState.Path.CurrentLocation.Path, FilePath));
             }
 
-            if (EncryptData && string.IsNullOrWhiteSpace(Password))
+            if (EncryptData && (Password == null || Password.Length == 0))
             {
                 Host.UI.WriteErrorLine($"No '{nameof(Password)}' parameter is provided. To write without encryption set the '{nameof(EncryptData)}' parameter to false");
                 return;
             }
 
-            if (!string.IsNullOrWhiteSpace(Password) && !EncryptData)
+            if ((Password != null && Password.Length > 0) && !EncryptData)
             {
                 Host.UI.WriteErrorLine($"The '{nameof(EncryptData)}' parameter is set to false but the '{nameof(Password)}' parameter is provided. Pick one.");
                 return;
@@ -216,8 +230,10 @@ namespace Meadow.Cli.Commands
 
             if (EncryptData)
             {
+                Password.MakeReadOnly();
                 var accountJson = JsonConvert.SerializeObject(accountArrayHex, Formatting.Indented);
-                var encrypedAccountsString = AesUtil.EncryptString(accountJson, Password);
+                var encrypedAccountsString = AesUtil.EncryptString(accountJson, Marshal.PtrToStringAuto(Marshal.SecureStringToBSTR(Password)));
+                Password.Dispose();
                 dataObj[LocalAccountsUtil.JSON_ENCRYPTED_ACCOUNTS_KEY] = encrypedAccountsString;
             }
             else
@@ -229,8 +245,8 @@ namespace Meadow.Cli.Commands
             {
                 var choices = new Collection<ChoiceDescription>(new[] 
                 {
-                    new ChoiceDescription("Cancel"),
-                    new ChoiceDescription("Overwrite")
+                    new ChoiceDescription("&Cancel"),
+                    new ChoiceDescription("&Overwrite")
                 });
                 var overwrite = Host.UI.PromptForChoice($"File already exists at {filePath}", "Continue and overwite existing file?", choices, 0);
                 if (overwrite != 1)

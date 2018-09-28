@@ -1,0 +1,1690 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<helpItems schema="maml" xmlns="http://msh">
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!--Command-->
+		<command:details>
+			<command:name>Build-Solidity</command:name>
+			<maml:description>
+				<maml:para>Compiles a solidity contract for use with Meadow.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Build</command:verb>
+			<command:noun>Solidity</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This command will compile a solidity contract for use with the Meadow test server, testnets, or the Etherium network.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!--Parameter Sets-->
+			<command:syntaxItem default="true" parametersetname="Build Parameters">
+				<!--NAME: Build Parameters-->
+				<!--TAG: DEFAULT-->
+				<maml:name>Build-Solidity</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:inputTypes>
+			<!-- Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>You cannot pipe input to this Cmdlet.</maml:para>
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!-- Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>The resulting compiled contract cannot be used as an object in the pipeline.</maml:para>
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!-- Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Build-Solidity</dev:code>
+				<dev:remarks>
+					<maml:para>This will compile the solidity contract for later use.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Common Parameter use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Build-Solidity -Verbose</dev:code>
+				<dev:remarks>
+					<maml:para>This provides verbose output while compiling a solidity contract.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!-- Links-->
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>http://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Deploy-Contract</command:name>
+			<maml:description>
+				<maml:para>Allows deployment of a compiled contract to the configured and running test server, testnet, or Etherium network.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Deploy</command:verb>
+			<command:noun>Contract</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This command will allow you to deploy a contract that you have compiled using Build-CompiledSol to the test server that you configured using New-MeadowConfig, and started successfully with Start-TestServer.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem default="true" parametersetname="Deployment Parameters">
+				<!--NAME: Deployment Parameters-->
+				<!--TAG: DEFAULT-->
+				<maml:name>Deploy-Contract</maml:name>
+				<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="0" aliases="None" dynamic="true">
+					<maml:name>ContractName</maml:name>
+					<maml:description>
+						<maml:para>Specifies the name of the contract to be deployed.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">string</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">EIP20</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">ErrorContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">ExampleContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">FailDeploymentContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">InheritableContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">InheritedContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">MultiFileInheritableContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">MultiFileInheritedContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">OtherContract</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">VarAnalysisContract</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>string</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue />
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>DefaultFromAddress</maml:name>
+					<maml:description>
+						<maml:para>This defines the address of the account used to deploy the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Address</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>FromAccount</maml:name>
+					<maml:description>
+						<maml:para>This is the account that will be used to deploy the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Address</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>Gas</maml:name>
+					<maml:description>
+						<maml:para>This is the amount of gas that will be used to deploy the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Uint256</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>uint256</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>GasPrice</maml:name>
+					<maml:description>
+						<maml:para>This defines the amount of wei that will be equivalent to a unit of gas that is expended to execute a transaction on the test server.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>uint256</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>Nonce</maml:name>
+					<maml:description>
+						<maml:para>This is the value representing the sequential number of transactions executed with the caller and the contract.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>uint64</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!-- All Parameters-->
+			<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="0" aliases="None" dynamic="true">
+				<maml:name>ContractName</maml:name>
+				<maml:description>
+					<maml:para>Specifies the name of the contract to be deployed.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">string</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">EIP20</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">ErrorContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">ExampleContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">FailDeploymentContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">InheritableContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">InheritedContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">MultiFileInheritableContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">MultiFileInheritedContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">OtherContract</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">VarAnalysisContract</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>string</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue />
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>DefaultFromAddress</maml:name>
+				<maml:description>
+					<maml:para>This defines the address of the account used to deploy the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Address</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>FromAccount</maml:name>
+				<maml:description>
+					<maml:para>This is the account that will be used to deploy the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Address</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Address</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>Gas</maml:name>
+				<maml:description>
+					<maml:para>This is the amount of gas that will be used to deploy the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Uint256</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>uint256</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>GasPrice</maml:name>
+				<maml:description>
+					<maml:para>This defines the amount of wei that will be equivalent to a unit of gas that is expended to execute a transaction on the test server.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">uint256</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>uint256</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>Nonce</maml:name>
+				<maml:description>
+					<maml:para>This is the value representing the sequential number of transactions executed with the caller and the contract.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">uint64</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>uint64</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!-- Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not take input from the pipeline.</maml:para>
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!-- Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not provide output for piping to other commands.</maml:para>
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!-- Examples-->
+			<command:example>
+				<maml:title></maml:title>
+				<maml:introduction>
+					<maml:para>Basic Example</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Deploy-Contract -ContractName 'ExampleContract' -FromAccount &lt;AccountAddress&gt; -Gas 1500 -GasPrice 20000000 -Nonce 0</dev:code>
+				<dev:remarks>
+					<maml:para>This shows a very simplisitc use of the deploy command.  Every use case may be very different, and will require an in depth knowledge pertaining to your specific deployment needs.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!-- Links-->
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Start-TestServer</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet will start an instance of the test server.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Start</command:verb>
+			<command:noun>TestServer</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet will allow you to start a local instance of the RPC test server for use in testing solidity contracts.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Start Server Parameters" default="true">
+				<!--TAG: DEFAULT-->
+				<!--NAME: Start Server Parameters-->
+				<maml:name>Start-TestServer</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:inputTypes>
+			<!-- Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not take input from the pipeline.</maml:para>
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!-- Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri></maml:uri>
+				</dev:type>
+				<maml:description>
+					<maml:para>This command does not provide output for piping to other commands.</maml:para>
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!-- Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Start-TestServer</dev:code>
+				<dev:remarks>
+					<maml:para>This Cmdlet uses the previously defined values from the Initialize-Workspace Cmdlet (or the default values if none were provided) so no additional information is required to start the server.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Common Parameter use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Start-TestServer -Verbose</dev:code>
+				<dev:remarks>
+					<maml:para>Using the Cmdlet with the -Verbose parameter will show any status messages as the server starts.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<!-- Links-->
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Watch-Solidity</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet lets Meadow.Cli look for active changes in your contracts.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Watch</command:verb>
+			<command:noun>Solidity</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet allows Meadow.Cli watch for changes in your solidity contracts and respond live.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Watch Solidity Parameters">
+				<!--NAME: Watch Solidity Parameters-->
+				<maml:name>Watch-Solidity</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Watch-Solidity</dev:code>
+				<dev:remarks>
+					<maml:para>This examples shows how to start the file watcher so that Meadow.Cli can respond to changes in your contracts live.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>New-Accounts</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet creates new accounts for the test server environment.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>New</command:verb>
+			<command:noun>Accounts</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet will generate 100 new accounts for use in the RPC test server environment on your local machine.  These accounts can then be saved to a file for reuse (with the Write-Accounts Cmdlet), read into memory from a file (with the Read-Accounts Cmdlet), or new ones can be created each time you want to test an Etherium contract.  A Mnemonic set will be generated for you unless specified with the -Mnemonic parameter.  Using the common parameter -Verbose will display the Mnemonic set generated by Meadow suite for you.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="New Accounts Parameters" default="true">
+				<!--TAG: DEFAULT-->
+				<!--NAME: New Accounts Parameters-->
+				<maml:name>New-Accounts</maml:name>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named">
+					<maml:name>Mnemonic</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the mnemonic word set to use when generating accounts for your RPC test server environment.  If this parameter is not used, Meadow suite will generate a 12 word mnemonic phrase for you.  If you would like to copy the mnemonic phrase that Meadow creates, please use the -Verbose parameter at the end of the command to display the words in your terminal.</maml:para>
+					</maml:description>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Switch</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named">
+					<maml:name>HDPath</maml:name>
+					<maml:description />
+					<dev:type>
+						<maml:name />
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue />
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!-- All Parameters-->
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named">
+				<maml:name>Mnemonic</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the mnemonic word set to use when generating accounts for your RPC test server environment.  If this parameter is not used, Meadow suite will generate a 12 word mnemonic phrase for you.  If you would like to copy the mnemonic phrase that Meadow creates, please use the -Verbose parameter at the end of the command to display the words in your terminal.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Switch</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Switch</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named">
+				<maml:name>HDPath</maml:name>
+				<maml:description />
+				<dev:type>
+					<maml:name />
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue />
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<!--Notes-->
+			<maml:title>Notes</maml:title>
+			<maml:alert>
+				<maml:para>This Cmdlet works in conjunction with the Write-Accounts and Read-Accounts Cmdlets to create a file that you can use to import accounts into a testing session.</maml:para>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic Usage</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; New-Accounts</dev:code>
+				<dev:remarks>
+					<maml:para>This will create 100 accounts to be used with the RPC test server.  When using no parameters, a mnemonic phrase will be generated for you.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Advanced Usage</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; New-Accounts -Mnemonic  'bone tenant beef zero lab photo wonder more endless poverty swamp remember slight idle lawn soon chalk crop bleak genius subway render dance brass'</dev:code>
+				<dev:remarks>
+					<maml:para>Using the Cmdlet with the -Mnemonic parameter allows you to specify the 12 word mnemonic phrase used in generating the accounts.  The list of words should be enclosed with a single quote at both ends and uses a single space to delimit each word.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 3</maml:title>
+				<maml:introduction>
+					<maml:para>Common Parameter Usage</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; New-Accounts -Verbose</dev:code>
+				<dev:remarks>
+					<maml:para>Using the Cmdlet with the -Verbose parameter will show the mnemonic phrase used to generate the accounts in your terminal.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://www.meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Read-Accounts</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet imports previously generated accounts into your testing session.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Read</command:verb>
+			<command:noun>Accounts</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>Using this Cmdlet allows you to import accounts that have been previously generated and saved to a file into your current testing session.  The accounts file can also be encrypted with a password so that it can not be used without credentials, and this Cmdlet allows you to specify the password used when saving the accounts file.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Read Accounts Parameters" default="true">
+				<!--TAG: DEFAULT-->
+				<!--NAME: Read Accounts Parameters-->
+				<maml:name>Read-Accounts</maml:name>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>FilePath</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the file path where your previously saved account file resides.  It will be read into memory for use in your testing session.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>Password</maml:name>
+					<maml:description>
+						<maml:para>The password parameter allows you to specify the password that was used when writing your accounts file to disk if you used the Password and EncryptData parameters when you wrote it.  If you did not use the Password and EncryptData parameters with the Write-Accounts Cmdlet, this is not needed.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!--All Parameters-->
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>FilePath</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the file path where your previously saved account file resides.  It will be read into memory for use in your testing session.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>Password</maml:name>
+				<maml:description>
+					<maml:para>The password parameter allows you to specify the password that was used when writing your accounts file to disk if you used the Password and EncryptData parameters when you wrote it.  If you did not use the Password and EncryptData parameters with the Write-Accounts Cmdlet, this is not needed.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<!--Notes-->
+			<maml:title>Notes</maml:title>
+			<maml:alert>
+				<maml:para>This account is used in conjunction with the New-Accounts and Write-Accounts Cmdlets to import your previously generated accounts into your testing session.</maml:para>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Read-Accounts -FilePath "$env:USERPROFILE\Documents\Meadow.Cli\Accounts.txt"</dev:code>
+				<dev:remarks>
+					<maml:para>The example above shows how to specify the file path where your previously generated accounts file resides.  In the example $env:USERPROFILE is a global variable that specifies your user home directory.  When used in a Cmdlet, it is interpreted as "C:\Users\Username\Documents\Meadow.Cli\Accounts.txt".  This example assumes that you did not use the Password and EncryptData parameters when Write-Accounts was used to create this file.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Advanced use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Read-Accounts -FilePath "$env:USERPROFILE\Documents\Meadow.Cli\Accoutns.txt" -Password 'My-Password!'</dev:code>
+				<dev:remarks>
+					<maml:para>This example shows the Cmdlet used to specify both a file path where your account file resides and the password used to encrypt the file.  This example assumes that you used the Password and EncryptData parameters when using Write-Accounts to generate the file.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Write-Accounts</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet allows you to save test accounts to a file for use with later testing sessions.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Write</command:verb>
+			<command:noun>Accounts</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet allows you to save the accounts generated with New-Accounts to a file on your local disk.  You can then use this file to import these accounts back intoa later testing session.  This Cmdlet also allows you to encrypt the resulting file to prevent unauthorized use.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Account Writing Parameters" default="true">
+				<!--TAG: DEFAULT-->
+				<!--NAME: Account Writing Parameters-->
+				<maml:name>Write-Accounts</maml:name>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>FilePath</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify a local path where the accounts file can be saved to disk.  This is the path you will need to specify for the Read-Accounts to import these accounts back into a later testing session.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>Password</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify a password to use that will encrypt your accoutns file to prevent unauthorized use.  You will need to specify this password in the Read-Accoutns Cmdlet to import these accounts into a later testing session.  You must also specify the EncryptData parameter if you opt to use the Password parameter.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+					<maml:name>EncryptData</maml:name>
+					<maml:description>
+						<maml:para>This parameter is used to specify that you would like to encrypt the accounts file you want written to disk.  This parameter must be used with the Password parameter to be effective.</maml:para>
+					</maml:description>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">None</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Switch</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!--All Parameters-->
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>FilePath</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify a local path where the accounts file can be saved to disk.  This is the path you will need to specify for the Read-Accounts to import these accounts back into a later testing session.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>Password</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify a password to use that will encrypt your accoutns file to prevent unauthorized use.  You will need to specify this password in the Read-Accoutns Cmdlet to import these accounts into a later testing session.  You must also specify the EncryptData parameter if you opt to use the Password parameter.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>EncryptData</maml:name>
+				<maml:description>
+					<maml:para>This parameter is used to specify that you would like to encrypt the accounts file you want written to disk.  This parameter must be used with the Password parameter to be effective.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Switch</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">None</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Switch</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<!--Notes-->
+			<maml:title>Notes</maml:title>
+			<maml:alert>
+				<maml:para>This Cmdlet is used in conjunction with the New-Accoutns and Read-Accounts Cmdlets to write your test accounts to a file and import them into a later testing session.</maml:para>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Write-Accounts -FilePath "$env:USERPROFILE\Documents\Meadow.Cli\Accounts.txt"</dev:code>
+				<dev:remarks>
+					<maml:para>This example writes the accounts generated with the New-Accounts Cmdlet to a file on your local disk.  In the example $env:USERPROFILE is a global variable that specifies your user home directory.  When used in a Cmdlet, it is interpreted as "C:\Users\Username\Documents\Meadow.Cli\Accounts.txt".  This example will write the file WITHOUT encryption, and no password will need to be used when importing it into a later testing session.</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Advanced use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Write-Accounts -FilePath "$env:USERPROFILE\Documents\Meadow.Cli\Accounts.txt" -Password 'My-Password!' -EncryptData</dev:code>
+				<dev:remarks>
+					<maml:para>This example specifies a path on your local disk to write the accounts file to and also uses a password to encrypt the file to prevent unauthorized use.   In the example $env:USERPROFILE is a global variable that specifies your user home directory.  When used in a Cmdlet, it is interpreted as "C:\Users\Username\Documents\Meadow.Cli\Accounts.txt".  This example will create an encrypted file that will require you to use a password when importing it into a later testing session.  If you specify the Password parameter, you must also specify the EncryptData parameter to have the file written successfully.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>MeadowSuite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Update-Config</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet builds a configuration for the test server to use during startup.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Update</command:verb>
+			<command:noun>Config</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet builds the configuration for the test server to use during startup.  You can specify several parameters for a custom setup of the RPC test server, or run the command with the minimum parameters to use the default configuration.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Update Config Parameters" default="true">
+				<!--NAME: Update Config Parameters-->
+				<!--TAG: DEFAULT-->
+				<maml:name>Update-Config</maml:name>
+				<command:parameter required="true" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None" dynamic="true">
+					<maml:name>Workspace</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify Console or Development as the intilization workspace for the RPC test server.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>Console</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None" dynamic="true">
+					<maml:name>SolcVersion</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify a version of the Solc compiler to use during your testing session.  The default for this parameter is 'Latest', and will use the most recent version of the Solc compiler included in the Meadow suite package.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>Latest</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None" dynamic="true">
+					<maml:name>SolcOptimizer</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the use of the Solc compiler optimizer.  The parameter expects a Uint32 as the value.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Uint32</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>0</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>DefaultGasLimit</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the default gas limit for the deployment of contracts on the RPC test server.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Long</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>6000000</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>DefaultGasPrice</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the default gas price for the processing of transactions on the RPC test server.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Long</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>100000000000</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>AccountCount</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the number of accounts that will reside on the RPC test server.  This parameter should match the value used with the New-Accounts Cmdlet.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Int</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Integer</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Int</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>100</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>AccountBalance</maml:name>
+					<maml:description>
+						<maml:para>Thsi parameter allows you to specify the account balance for each of the accounts that reside on the RPC test server for the processing of transactions.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Long</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>2000</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="true" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>NetworkHost</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the IP address of the RPC test server.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="true" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>NetworkPort</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the network port that the RPC test server will communicate on.  Please be aware that this cannot supercede a network port already in use by another process.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">Uint32</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Uint32</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>None</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>SourceDirectory</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the local file path where you would like this configuration data saved.  If a path is not specified, it will use the current directory from your terminal.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>Current Directory</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>UseLocalAccounts</maml:name>
+					<maml:description>
+						<maml:para>This parameter specifies</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Boolean</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">$true</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">$false</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Boolean</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>$true</dev:defaultValue>
+				</command:parameter>
+				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None">
+					<maml:name>ChainID</maml:name>
+					<maml:description>
+						<maml:para>This parameter allows you to specify the initial ID for the RPC test server chain.</maml:para>
+					</maml:description>
+					<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>Uint32</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>0</dev:defaultValue>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!-- All Parameters-->
+			<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None" dynamic="true">
+				<maml:name>Workspace</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify Console or Development as the intilization workspace for the RPC test server.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>Console</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None" dynamic="true">
+				<maml:name>SolcVersion</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify a version of the Solc compiler to use during your testing session.  The default for this parameter is 'Latest', and will use the most recent version of the Solc compiler included in the Meadow suite package.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>Latest</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None" dynamic="true">
+				<maml:name>SolcOptimizer</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the use of the Solc compiler optimizer.  The parameter expects a Uint32 as the value.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Uint32</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>$true</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>DefaultGasLimit</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the default gas limit for the deployment of contracts on the RPC test server.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Long</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>6000000</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>DefaultGasPrice</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the default gas price for the processing of transactions on the RPC test server.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Long</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>100000000000</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>AccountCount</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the number of accounts that will reside on the RPC test server.  This parameter should match the value used with the New-Accounts Cmdlet.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Int</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Int</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Int</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>100</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>AccountBalance</maml:name>
+				<maml:description>
+					<maml:para>Thsi parameter allows you to specify the account balance for each of the accounts that reside on the RPC test server for the processing of transactions.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Long</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Long</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>2000</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>NetworkHost</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the IP address of the RPC test server.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>NetworkPort</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the network port that the RPC test server will communicate on.  Please be aware that this cannot supercede a network port already in use by another process.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">Uint32</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Uint32</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>None</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>SourceDirectory</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the local file path where you would like this configuration data saved.  If a path is not specified, it will use the current directory from your terminal.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>Current Directory</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>UseLocalAccounts</maml:name>
+				<maml:description>
+					<maml:para>This parameter specifies</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Boolean</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">$true</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">$false</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Boolean</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>$true</dev:defaultValue>
+			</command:parameter>
+			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None">
+				<maml:name>ChainID</maml:name>
+				<maml:description>
+					<maml:para>This parameter allows you to specify the initial ID for the RPC test server chain.</maml:para>
+				</maml:description>
+				<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Uint32</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>Uint32</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>0</dev:defaultValue>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<!--Notes-->
+			<maml:title>Notes</maml:title>
+			<maml:alert>
+				<maml:para>This Cmdlet is used before the Start-TestServer Cmdlet to configure your instance of the RPC test server.  This allows flexibility in your development environment by letting you chose how you would like the server to run.</maml:para>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Update-Config -Workspace Development -NetworkHost '127.0.0.1' -NetworkPort 8080 </dev:code>
+				<dev:remarks>
+					<maml:para>In this example, the least amount of parameters is specified for a default configuration.  The only required parameters are Workspace, NetworkHost, and NetworkPort.  You will need to decide what workspace type you would like to use and give the server an IP address and port to communicate over.  If you run the Cmdlet like this, the resulting configuration would look liek this:</maml:para>
+					<maml:para>SolcVersion      : latest
+						SolcOptimizer    : 0
+						DefaultGasLimit  : 6000000
+						DefaultGasPrice  : 100000000000
+						AccountCount     : 100
+						AccountBalance   : 2000
+						NetworkHost      : 127.0.0.1
+						NetworkPort      : 90090
+						SourceDirectory  : Contracts
+						UseLocalAccounts : True
+						ChainID          : 0</maml:para>
+				</dev:remarks>
+			</command:example>
+			<command:example>
+				<maml:title>EXAMPLE 2</maml:title>
+				<maml:introduction>
+					<maml:para>Advanced use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Update-Config -Workspace development -SolcVersion '0.4.24' -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0</dev:code>
+				<dev:remarks>
+					<maml:para>This example shows a complete custom configuration for the RPC test server.  The resulting configuration from this example would look like this:</maml:para>
+					<maml:para>SolcVersion      : 0.4.24
+						SolcOptimizer    : 0
+						DefaultGasLimit  : 500000
+						DefaultGasPrice  : 100000000
+						AccountCount     : 25
+						AccountBalance   : 1500
+						NetworkHost      : 10.0.0.25
+						NetworkPort      : 90000
+						SourceDirectory  : C:\Users\mmiller\Documents\Meadow.Cli\TestServer
+						UseLocalAccounts : True
+						ChainID          : 0</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Initialize-Workspace</command:name>
+			<maml:description>
+				<maml:para>This Cmdlet invokes the initial setup of the Meadow development environment.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Initialize</command:verb>
+			<command:noun>Workspace</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>Thios Cmdlet helps you get your development environment prepared for the RPC test server instance.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Iniitialization Parameters">
+				<!--NAME: Iniitialization Parameters-->
+				<maml:name>Initialize-Workspace</maml:name>
+				<command:parameter required="true" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None" dynamic="true">
+					<maml:name>Setup</maml:name>
+					<maml:description>
+						<maml:para>This parameter specifies the workspace environment you would like during your development.</maml:para>
+					</maml:description>
+					<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+					<command:parameterValueGroup>
+						<command:parameterValue required="false" variableLength="false">Console</command:parameterValue>
+						<command:parameterValue required="false" variableLength="false">Development</command:parameterValue>
+					</command:parameterValueGroup>
+					<dev:type>
+						<maml:name>String</maml:name>
+						<maml:uri />
+					</dev:type>
+					<dev:defaultValue>Console</dev:defaultValue>
+				</command:parameter>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:parameters>
+			<!--All Parameters-->
+			<command:parameter required="true" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None" dynamic="true">
+				<maml:name>Setup</maml:name>
+				<maml:description>
+					<maml:para>This parameter specifies the workspace environment you would like during your development.</maml:para>
+				</maml:description>
+				<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
+				<command:parameterValueGroup>
+					<command:parameterValue required="false" variableLength="false">Console</command:parameterValue>
+					<command:parameterValue required="false" variableLength="false">Development</command:parameterValue>
+				</command:parameterValueGroup>
+				<dev:type>
+					<maml:name>String</maml:name>
+					<maml:uri />
+				</dev:type>
+				<dev:defaultValue>Console</dev:defaultValue>
+			</command:parameter>
+		</command:parameters>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<!--Notes-->
+			<maml:title>Notes</maml:title>
+			<maml:alert>
+				<maml:para>This Cmdlet is designed to be the first Cmdlet run when starting out with Meadow.Cli.  It sets a baseline for the Update-Config Cmdlet that is used to configure the RPC test server.</maml:para>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Initialize-Workspace -Setup Development</dev:code>
+				<dev:remarks>
+					<maml:para>This example shows how to initialize the workspace for use in a development environment.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
+		<!--TAG: HASCOMMONPARAMETERS-->
+		<!-- Command-->
+		<command:details>
+			<command:name>Watch-Config</command:name>
+			<maml:description>
+				<maml:para>Lets Meadow.Cli check for changes to your RPC test server configuration.</maml:para>
+			</maml:description>
+			<maml:copyright>
+				<maml:para />
+			</maml:copyright>
+			<command:verb>Watch</command:verb>
+			<command:noun>Config</command:noun>
+			<dev:version />
+		</command:details>
+		<maml:description>
+			<maml:para>This Cmdlet allows Meadow.Cli to watch for changes in the server configuration that you created with Update-Config and respond to the changes accordingly.</maml:para>
+		</maml:description>
+		<command:syntax>
+			<!-- Parameter Sets-->
+			<command:syntaxItem parametersetname="Watch Config Parameters">
+				<!--NAME: Watch Config Parameters-->
+				<maml:name>Watch-Config</maml:name>
+			</command:syntaxItem>
+		</command:syntax>
+		<command:inputTypes>
+			<!--Inputs-->
+			<command:inputType>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:inputType>
+		</command:inputTypes>
+		<command:returnValues>
+			<!--Outputs-->
+			<command:returnValue>
+				<dev:type>
+					<maml:name>None</maml:name>
+					<maml:uri />
+				</dev:type>
+				<maml:description>
+					<maml:para />
+				</maml:description>
+			</command:returnValue>
+		</command:returnValues>
+		<maml:alertSet>
+			<!--Notes-->
+			<maml:title>Notes</maml:title>
+			<maml:alert>
+				<maml:para>This allows Meadow.Cli to respond to changes in your RPC test server configuration live.</maml:para>
+			</maml:alert>
+		</maml:alertSet>
+		<command:examples>
+			<!--Examples-->
+			<command:example>
+				<maml:title>EXAMPLE 1</maml:title>
+				<maml:introduction>
+					<maml:para>Basic use</maml:para>
+				</maml:introduction>
+				<dev:code>C:\PS&gt; Watch-Config</dev:code>
+				<dev:remarks>
+					<maml:para>This will start the file watcher for the RPC test server configuration.</maml:para>
+				</dev:remarks>
+			</command:example>
+		</command:examples>
+		<maml:relatedLinks>
+			<!--Links-->
+			<maml:navigationLink>
+				<maml:linkText>Meadow Suite site link:</maml:linkText>
+				<maml:uri>https://meadowsuite.com</maml:uri>
+			</maml:navigationLink>
+			<maml:navigationLink>
+				<maml:linkText>Hosho Group site link:</maml:linkText>
+				<maml:uri>https://hosho.io</maml:uri>
+			</maml:navigationLink>
+		</maml:relatedLinks>
+	</command:command>
+</helpItems>

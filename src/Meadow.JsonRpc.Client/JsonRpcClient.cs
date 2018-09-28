@@ -405,10 +405,8 @@ namespace Meadow.JsonRpc.Client
 
             var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
 
-            if (JsonRpcExecutionAnalysis != null)
-            {
-                await JsonRpcExecutionAnalysis(_thisInterface);
-            }
+            // Invoke our execution analysis hook.
+            await (JsonRpcExecutionAnalysis?.Invoke(_thisInterface) ?? Task.CompletedTask);
 
             if (error != null)
             {
@@ -441,10 +439,8 @@ namespace Meadow.JsonRpc.Client
 
             var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
 
-            if (JsonRpcExecutionAnalysis != null)
-            {
-                await JsonRpcExecutionAnalysis(_thisInterface);
-            }
+            // Invoke our execution analysis hook.
+            await (JsonRpcExecutionAnalysis?.Invoke(_thisInterface) ?? Task.CompletedTask);
 
             if (error != null)
             {

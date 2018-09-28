@@ -1,0 +1,12 @@
+﻿<HelpProject>
+  <Version>1.0</Version>
+  <FileID>44ff33c4-35ba-4b8b-96de-c35bb2b73110</FileID>
+  <Folders>
+    <Folder>en-US</Folder>
+  </Folders>
+  <Files>
+    <File>en-US\about_Meadow.Cli.Help.txt</File>
+    <File>en-US\Meadow.Cli-Help.xml</File>
+  </Files>
+  <SourceModule name="" path="" version="" backup="" refreshmode="0" deployed="" />
+</HelpProject>

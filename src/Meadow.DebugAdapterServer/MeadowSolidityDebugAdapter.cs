@@ -128,79 +128,109 @@ namespace Meadow.DebugAdapterServer
             _processTraceSemaphore.Release();
         }
 
-        private void ContinueExecution(MeadowDebugAdapterThreadState threadState, DesiredControlFlow controlFlow = DesiredControlFlow.Continue)
+        private void ContinueExecution(MeadowDebugAdapterThreadState threadState, DesiredControlFlow controlFlowAction = DesiredControlFlow.Continue, int stepsPriorToAction = 0)
         {
             // Unlink our data for our thread id.
             ReferenceContainer.UnlinkThreadId(threadState.ThreadId);
 
-            // Verify we don't have an exception at this point that we haven't already handled, if we do, break out.
-            if (threadState.LastExceptionTraceIndex != threadState.CurrentStepIndex && HandleExceptions(threadState))
-            {
-                return;
-            }
-
-            // Determine how to continue execution.
+            // Create a variable to track if we have finished stepping through the execution.
             bool finishedExecution = false;
-            switch (controlFlow)
+
+            // Determine the direction to take steps prior to any evaluation.
+            if (stepsPriorToAction >= 0)
             {
-                case DesiredControlFlow.StepOver:
-                // TODO: Implement
-
-                case DesiredControlFlow.StepInto:
+                // Loop for each step to take forward.
+                for (int i = 0; i < stepsPriorToAction; i++)
+                {
+                    // Take a step forward, if we could not, we finished execution, so we can stop looping.
+                    if (!threadState.IncrementStep())
                     {
-                        // Increment our step
-                        finishedExecution = !threadState.IncrementStep();
-
-                        // Signal our breakpoint event has occurred for this thread.
-                        Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
-                        break;
-                    }
-
-                case DesiredControlFlow.StepOut:
-                // TODO: Implement
-
-                case DesiredControlFlow.StepBackwards:
-                    {
-                        // Decrement our step
-                        threadState.DecrementStep();
-
-                        // Signal our breakpoint event has occurred for this thread.
-                        Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
-
-                        // TODO: Check if we couldn't decrement step. Disable step backward if we can.
-                        break;
-                    }
-
-                case DesiredControlFlow.Continue:
-                    {
-                        // Process the execution trace analysis
-                        while (threadState.CurrentStepIndex.HasValue && !Exiting)
-                        {
-                            // Obtain our breakpoints.
-                            bool hitBreakpoint = CheckBreakpointExists(threadState);
-
-                            // If we hit a breakpoint, we can signal our breakpoint and exit this execution method.
-                            if (hitBreakpoint)
-                            {
-                                // Signal our breakpoint event has occurred for this thread.
-                                Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = threadState.ThreadId });
-                                return;
-                            }
-
-                            // Increment our position
-                            bool successfulStep = threadState.IncrementStep();
-
-                            // If we couldn't step, break out of our loop
-                            if (!successfulStep)
-                            {
-                                break;
-                            }
-                        }
-
-                        // If we exited this way, our execution has concluded because we could not step any further (or there were never any steps).
                         finishedExecution = true;
                         break;
                     }
+                }
+            }
+            else
+            {
+                // Loop for each step to take backward
+                for (int i = 0; i > stepsPriorToAction; i--)
+                {
+                    // Take a step backward, if we could not, we can stop early as we won't be able to step backwards anymore.
+                    if (!threadState.DecrementStep())
+                    {
+                        break;
+                    }
+                }
+            }
+
+            // If we haven't finished execution, 
+            if (!finishedExecution)
+            {
+                switch (controlFlowAction)
+                {
+                    case DesiredControlFlow.StepOver:
+                    // TODO: Implement
+
+                    case DesiredControlFlow.StepInto:
+                        {
+                            // Increment our step
+                            finishedExecution = !threadState.IncrementStep();
+
+                            // If we stepped successfully, we evaluate, and if an event is encountered, we stop.
+                            if (!finishedExecution && EvaluateCurrentStep(threadState))
+                            {
+                                return;
+                            }
+
+                            // Signal our breakpoint event has occurred for this thread.
+                            Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
+                            break;
+                        }
+
+                    case DesiredControlFlow.StepOut:
+                    // TODO: Implement
+
+                    case DesiredControlFlow.StepBackwards:
+                        {
+                            // Decrement our step
+                            bool decrementedStep = threadState.DecrementStep();
+
+                            // If we stepped successfully, we evaluate, and if an event is encountered, we stop.
+                            if (decrementedStep && EvaluateCurrentStep(threadState))
+                            {
+                                return;
+                            }
+
+                            // Signal our breakpoint event has occurred for this thread.
+                            Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
+
+                            // TODO: Check if we couldn't decrement step. Disable step backward if we can.
+                            break;
+                        }
+
+                    case DesiredControlFlow.Continue:
+                        {
+                            // Process the execution trace analysis
+                            while (threadState.CurrentStepIndex.HasValue && !Exiting)
+                            {
+                                // If we encountered an event at this point, stop
+                                if (EvaluateCurrentStep(threadState))
+                                {
+                                    return;
+                                }
+
+                                // If we couldn't step forward, this trace has been fully processed.
+                                if (!threadState.IncrementStep())
+                                {
+                                    break;
+                                }
+                            }
+
+                            // If we exited this way, our execution has concluded because we could not step any further (or there were never any steps).
+                            finishedExecution = true;
+                            break;
+                        }
+                }
             }
 
             // If we finished execution, signal our thread
@@ -208,6 +238,12 @@ namespace Meadow.DebugAdapterServer
             {
                 threadState.Semaphore.Release();
             }
+        }
+
+        private bool EvaluateCurrentStep(MeadowDebugAdapterThreadState threadState, bool exceptions = true, bool breakpoints = true)
+        {
+            // Evaluate exceptions and breakpoints at this point in execution.
+            return (exceptions && HandleExceptions(threadState)) || (breakpoints && HandleBreakpoint(threadState));
         }
 
         private bool HandleExceptions(MeadowDebugAdapterThreadState threadState)
@@ -221,9 +257,6 @@ namespace Meadow.DebugAdapterServer
                 // If we have an exception, throw it and return the appropriate status.
                 if (traceException != null)
                 {
-                    // Set our last exception index.
-                    threadState.LastExceptionTraceIndex = threadState.CurrentStepIndex.Value;
-
                     // Send our exception event.
                     var stoppedEvent = new StoppedEvent(StoppedEvent.ReasonValue.Exception)
                     {
@@ -235,14 +268,11 @@ namespace Meadow.DebugAdapterServer
                 }
             }
 
-            // If there was no exception, clear our last exception trace index
-            threadState.LastExceptionTraceIndex = null;
-
             // We did not find an exception here, return false
             return false;
         }
 
-        private bool CheckBreakpointExists(MeadowDebugAdapterThreadState threadState)
+        private bool HandleBreakpoint(MeadowDebugAdapterThreadState threadState)
         {
             // Verify we have a valid step at this point.
             if (!threadState.CurrentStepIndex.HasValue)
@@ -264,6 +294,8 @@ namespace Meadow.DebugAdapterServer
                 bool containsBreakpoint = success && breakpointLines.Any(x => x == sourceLine.LineNumber);
                 if (containsBreakpoint)
                 {
+                    // Signal our breakpoint event has occurred for this thread.
+                    Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = threadState.ThreadId });
                     return true;
                 }
             }
@@ -422,11 +454,11 @@ namespace Meadow.DebugAdapterServer
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
             {
-                // Advance our step from our current position
-                threadState.IncrementStep();
-
-                // Continue executing
-                ContinueExecution(threadState, DesiredControlFlow.Continue);
+                // Continue executing, taking one step before continuing, as evaluation occurs before steps occur, and we want
+                // to ensure we advanced position from our last and don't re-evaluate the same trace point. We only do this on
+                // startup since we want the initial trace point to be evaluated. After that, we want to force advancement by
+                // at least one step before continuation/re-evaluation.
+                ContinueExecution(threadState, DesiredControlFlow.Continue, 1);
             }
         }
 

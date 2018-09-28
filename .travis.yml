@@ -8,6 +8,7 @@ env:
 install:
   - npm install -g ganache-cli
 script:
+  - cd src
   - dotnet restore --configfile Nuget.Config
   - dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
   - dotnet test -c Debug --no-build --no-restore

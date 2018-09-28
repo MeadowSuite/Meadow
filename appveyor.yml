@@ -7,15 +7,17 @@ install:
     Install-Product node $env:nodejs_version
 
     npm install -g ganache-cli
-cache:
-  - packages -> **\packages.config
 build_script:
 - ps: >-
+    cd src
+
     dotnet restore --configfile Nuget.Config --ignore-failed-sources
 
     dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
 test_script:
 - ps: >-
     Start-Process ganache-cli -PassThru -ArgumentList "--port=7545"
+
+    cd src
 
     dotnet test --no-build --no-restore -c Debug

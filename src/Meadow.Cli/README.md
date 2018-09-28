@@ -75,7 +75,7 @@ Once local accounts and network configuration have been setup, the workspace can
 
 ```pwsh
 PS> Initialize-Workspace console
-# RPC client connected to server https://kovan.infura.io:443. Network version: 42
+# RPC client connected to server https://rinkeby.infura.io:443. Network version: 4
 # Watching for file changes in source directory: Contracts
 ```
 

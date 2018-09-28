@@ -1,0 +1,99 @@
+﻿<head>
+<META http-equiv="Content-Type" content="text/html; charset=utf-16">
+<title>Write-Accounts</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+<div class="headerbar"><a href="#Name">NAME</a> | <a href="#Synopsis">SYNOPSIS</a> | <a href="#Syntax">SYNTAX</a> | <a href="#DetailedDescription">DESCRIPTION</a> | <a href="#Examples">EXAMPLES</a> | <a href="#Parameters">PARAMETERS</a> | <a href="#InputType">INPUTS</a> | <a href="#ReturnType">OUTPUTS</a> | <a href="#Notes">NOTES</a> | <a href="#RelatedLinks">RELATED LINKS</a></div>
+<p><a name="Name"></a></p>
+<h4 id="Name"></h4>
+<p class="title">Write-Accounts</p>
+<h4 id="Synopsis"><a name="Synopsis"></a>SYNOPSIS</h4>
+<p>This Cmdlet allows you to save test accounts to a file for use with later testing sessions.</p>
+<h4 id="Syntax"><a name="Syntax"></a>SYNTAX</h4>
+<p class="subheading">Account Writing Parameters (Default)</p>
+<div class="codeSnippetContainerCodeContainer">
+<div class="codeSnippetContainerCode">
+Write-Accounts [-FilePath [&lt;String&gt;]] [-Password [&lt;String&gt;]] [-EncryptData] [&lt;CommonParameters&gt;]
+</div>
+</div>
+<h4 id="DetailedDescription"><a name="DetailedDescription"></a>DESCRIPTION</h4>
+<p>This Cmdlet allows you to save the accounts generated with New-Accounts to a file on your local disk.  You can then use this file to import these accounts back intoa later testing session.  This Cmdlet also allows you to encrypt the resulting file to prevent unauthorized use.</p>
+<h4 id="Examples"><a name="Examples"></a>EXAMPLES</h4>
+<p class="subheading">EXAMPLE 1</p>
+<p>Basic use</p>
+<div class="codeSnippetContainerCodeContainer">
+<div class="codeSnippetContainerCode">
+<pre>
+C:\PS> Write-Accounts -FilePath "$env:USERPROFILE\Documents\Meadow.Cli\Accounts.txt"
+</pre>
+</div>
+</div>
+<p>This example writes the accounts generated with the New-Accounts Cmdlet to a file on your local disk.  In the example $env:USERPROFILE is a global variable that specifies your user home directory.  When used in a Cmdlet, it is interpreted as &quot;C:\Users\Username\Documents\Meadow.Cli\Accounts.txt&quot;.  This example will write the file WITHOUT encryption, and no password will need to be used when importing it into a later testing session.</p>
+<p class="subheading">EXAMPLE 2</p>
+<p>Advanced use</p>
+<div class="codeSnippetContainerCodeContainer">
+<div class="codeSnippetContainerCode">
+<pre>
+C:\PS> Write-Accounts -FilePath "$env:USERPROFILE\Documents\Meadow.Cli\Accounts.txt" -Password 'My-Password!' -EncryptData
+</pre>
+</div>
+</div>
+<p>This example specifies a path on your local disk to write the accounts file to and also uses a password to encrypt the file to prevent unauthorized use.   In the example $env:USERPROFILE is a global variable that specifies your user home directory.  When used in a Cmdlet, it is interpreted as &quot;C:\Users\Username\Documents\Meadow.Cli\Accounts.txt&quot;.  This example will create an encrypted file that will require you to use a password when importing it into a later testing session.  If you specify the Password parameter, you must also specify the EncryptData parameter to have the file written successfully.</p>
+<h4 id="Parameters"><a name="Parameters"></a>PARAMETERS</h4>
+<p class="subheading" id="parameter:FilePath">-FilePath &lt;String&gt;
+</p><p>This parameter allows you to specify a local path where the accounts file can be saved to disk.  This is the path you will need to specify for the Read-Accounts to import these accounts back into a later testing session.</p>
+<table>
+<tr><td><p>Parameter Sets:</p></td><td><p>Account Writing Parameters</p></td></tr>
+<tr><td><p>Aliases:</p></td><td><p>None</p></td></tr>
+<tr><td><p>Required:</p></td><td><p>false</p></td></tr>
+<tr><td><p>Position:</p></td><td><p>named</p></td></tr>
+<tr><td><p>Default Value:</p></td><td><p>None</p></td></tr>
+<tr><td><p>Accepted Values:</p></td><td><p>String<br/>
+</p></td></tr>
+<tr><td><p>Pipeline Input:</p></td><td><p>False</p></td></tr>
+</table>
+<br/>
+<p class="subheading" id="parameter:Password">-Password &lt;String&gt;
+</p><p>This parameter allows you to specify a password to use that will encrypt your accoutns file to prevent unauthorized use.  You will need to specify this password in the Read-Accoutns Cmdlet to import these accounts into a later testing session.  You must also specify the EncryptData parameter if you opt to use the Password parameter.</p>
+<table>
+<tr><td><p>Parameter Sets:</p></td><td><p>Account Writing Parameters</p></td></tr>
+<tr><td><p>Aliases:</p></td><td><p>None</p></td></tr>
+<tr><td><p>Required:</p></td><td><p>false</p></td></tr>
+<tr><td><p>Position:</p></td><td><p>named</p></td></tr>
+<tr><td><p>Default Value:</p></td><td><p>None</p></td></tr>
+<tr><td><p>Accepted Values:</p></td><td><p>String<br/>
+</p></td></tr>
+<tr><td><p>Pipeline Input:</p></td><td><p>False</p></td></tr>
+</table>
+<br/>
+<p class="subheading" id="parameter:EncryptData">-EncryptData &lt;Switch&gt;
+</p><p>This parameter is used to specify that you would like to encrypt the accounts file you want written to disk.  This parameter must be used with the Password parameter to be effective.</p>
+<table>
+<tr><td><p>Parameter Sets:</p></td><td><p>Account Writing Parameters</p></td></tr>
+<tr><td><p>Aliases:</p></td><td><p>None</p></td></tr>
+<tr><td><p>Required:</p></td><td><p>false</p></td></tr>
+<tr><td><p>Position:</p></td><td><p>named</p></td></tr>
+<tr><td><p>Default Value:</p></td><td><p>None</p></td></tr>
+<tr><td><p>Accepted Values:</p></td><td><p>None<br/>
+</p></td></tr>
+<tr><td><p>Pipeline Input:</p></td><td><p>False</p></td></tr>
+</table>
+<br/>
+<p class="subheading">&lt;CommonParameters&gt;</p><p>
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see about_CommonParameters (<a href="http://go.microsoft.com/fwlink/?LinkID=113216">http://go.microsoft.com/fwlink/?LinkID=113216</a>).</p>
+<h4 id="InputType"><a name="InputType"></a>INPUTS</h4>
+<p class="subheading">None</p>
+<h4 id="ReturnType"><a name="ReturnType"></a>OUTPUTS</h4>
+<p class="subheading">None</p>
+<h4 id="Notes"><a name="Notes"></a>NOTES</h4>
+<p class="subheading">Notes</p>
+<p>This Cmdlet is used in conjunction with the New-Accoutns and Read-Accounts Cmdlets to write your test accounts to a file and import them into a later testing session.</p>
+<BR/>
+<h4 id="RelatedLinks"><a name="RelatedLinks"></a>RELATED LINKS</h4>
+<a href="https://meadowsuite.com">MeadowSuite site link:</a><br/>
+<a href="https://hosho.io">Hosho Group site link:</a><br/>
+
+</body>
+</html>
+<!--Generated by: PowerShell HelpWriter 2018 v2.2.40-->
