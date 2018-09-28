@@ -7,8 +7,7 @@
         <add key="DefaultGasPrice" value="100000000" />
         <add key="AccountCount" value="25" />
         <add key="AccountBalance" value="1500" />
-        <add key="NetworkHost" value="10.0.0.25" />
+        <add key="NetworkHost" value="https://rinkeby.infura.io:443" />
         <add key="NetworkPort" value="90000" />
-        <add key="SourceDirectory" value="C:\Users\mmiller\Documents\Meadow.Cli\TestServer" />
     </appSettings>
 </configuration>

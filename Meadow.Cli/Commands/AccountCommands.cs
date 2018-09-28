@@ -150,7 +150,7 @@ namespace Meadow.Cli.Commands
             }
             else
             {
-                if (Password.Length != 0)
+                if (Password != null && Password.Length > 0)
                 {
                     Host.UI.WriteErrorLine($"Password parameter specified but accounts are encryped in file {FilePath}");
                     return;
@@ -204,13 +204,13 @@ namespace Meadow.Cli.Commands
                 filePath = Path.GetFullPath(Path.Join(SessionState.Path.CurrentLocation.Path, FilePath));
             }
 
-            if (EncryptData && Password.Length == 0)
+            if (EncryptData && (Password == null || Password.Length == 0))
             {
                 Host.UI.WriteErrorLine($"No '{nameof(Password)}' parameter is provided. To write without encryption set the '{nameof(EncryptData)}' parameter to false");
                 return;
             }
 
-            if (Password.Length != 0 && !EncryptData)
+            if ((Password != null && Password.Length > 0) && !EncryptData)
             {
                 Host.UI.WriteErrorLine($"The '{nameof(EncryptData)}' parameter is set to false but the '{nameof(Password)}' parameter is provided. Pick one.");
                 return;

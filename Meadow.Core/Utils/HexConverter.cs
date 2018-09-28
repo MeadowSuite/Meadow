@@ -45,62 +45,62 @@ namespace Meadow.Core.Utils
         {
             Span<byte> bytes = stackalloc byte[sizeof(byte)];
             bytes[0] = s;
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in sbyte s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(sbyte)];
             bytes[0] = unchecked((byte)s);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in short s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(short)];
             BinaryPrimitives.WriteInt16BigEndian(bytes, s);
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in ushort s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(ushort)];
             BinaryPrimitives.WriteUInt16BigEndian(bytes, s);
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in int s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(int)];
             BinaryPrimitives.WriteInt32BigEndian(bytes, s);
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in uint s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(uint)];
             BinaryPrimitives.WriteUInt32BigEndian(bytes, s);
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in long s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(long)];
             BinaryPrimitives.WriteInt64BigEndian(bytes, s);
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in ulong s, bool hexPrefix = false)
         {
             Span<byte> bytes = stackalloc byte[sizeof(ulong)];
             BinaryPrimitives.WriteUInt64BigEndian(bytes, s);
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
         public static string GetHexFromInteger(in UInt256 s, bool hexPrefix = false)
@@ -115,11 +115,11 @@ namespace Meadow.Core.Utils
                 bytes.Reverse();
             }
 
-            StripLeadingZeros(ref bytes);
-            return GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            StripLeadingZeroBytes(ref bytes);
+            return GetZeroStrippedHexFromBytes(bytes, hexPrefix: hexPrefix);
         }
 
-        static void StripLeadingZeros(ref Span<byte> span)
+        static void StripLeadingZeroBytes(ref Span<byte> span)
         {
             int startIndex = 0;
             for (; startIndex < span.Length && span[startIndex] == 0x0; startIndex++) { }
@@ -128,6 +128,33 @@ namespace Meadow.Core.Utils
                 span = span.Slice(startIndex);
             }
         }
+
+
+        static string GetZeroStrippedHexFromBytes(ReadOnlySpan<byte> bytes, bool hexPrefix)
+        {
+            // Strips a leading 0 hex char from a hex sequence.
+            // Example: 0x0fff -> 0xfff
+            // This is a stupid work-around for geth which throws exceptions trying to parse an integer from (valid) hex string
+            // that begins has a single 0 after the 0x prefix.
+            var hex = GetHexFromBytes(bytes, hexPrefix: hexPrefix);
+            if (hexPrefix)
+            {
+                if (hex.Length > 2 && hex[2] == '0')
+                {
+                    hex = "0x" + hex.Substring(3);
+                }
+            }
+            else
+            {
+                if (hex.Length > 0 && hex[0] == '0')
+                {
+                    hex = hex.Substring(1);
+                }
+            }
+
+            return hex;
+        }
+
 
         public static string GetHex<T>(in T s, bool hexPrefix = false) where T : unmanaged
         {
