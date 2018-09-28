@@ -128,7 +128,8 @@ namespace Meadow.CoverageReport.Debugging
             ParseStateVariableDeclarations();
 
             // Parse our entire execution trace.
-            ParseScopes(0, 0, 0, null);
+            SourceMapEntry? lastEntry = null;
+            ParseScopes(0, 0, 0, null, ref lastEntry);
         }
         #endregion
 
@@ -776,14 +777,11 @@ namespace Meadow.CoverageReport.Debugging
         /// <param name="callDepth">The depth of calls at this point in the scan. This refers to the EVM message depth at this point in execution.</param>
         /// <param name="parentScope">References the immediate parent scope which contains this scope. Can be null (for root).</param>
         /// <returns>Returns the next trace index to continue from for the calling scope.</returns>
-        private int ParseScopes(int traceIndex, int scopeDepth, int callDepth, ExecutionTraceScope parentScope)
+        private int ParseScopes(int traceIndex, int scopeDepth, int callDepth, ExecutionTraceScope parentScope, ref SourceMapEntry? lastEntry)
         {
             // Backup our scope start and create an entry in our dictionary (some properties of which we'll populate later)
             int scopeStartIndex = traceIndex;
             ExecutionTraceScope currentScope = new ExecutionTraceScope(scopeStartIndex, scopeDepth, callDepth, parentScope);
-
-            // The last map entry obtained in the loop. 
-            SourceMapEntry? lastEntry = null;
 
             // Loop until the end of the trace
             while (traceIndex < ExecutionTrace.Tracepoints.Length)
@@ -831,16 +829,23 @@ namespace Meadow.CoverageReport.Debugging
                     significantStep = true;
                 }
 
-                // If an exception occurred at this step, it's a significant step
-                if (_exceptionLookup.ContainsKey(traceIndex))
+                // If an exception occurred at this step, it's a significant step. If we 
+                // didn't already mark this as a significant step, it means this line is 
+                // represented in our last trace index. We remove the last trace index,
+                // and mark this step as significant so it is added instead.
+                if (!significantStep && _exceptionLookup.ContainsKey(traceIndex))
                 {
+                    // Remove the last step from our significant step index, and set this
+                    // one as significant so it is used instead.
+                    SignificantStepIndices.RemoveAt(SignificantStepIndices.Count - 1);
                     significantStep = true;
                 }
 
-                // If this is a significant step, add it to our list
+                // If this is a significant step, add it to our list, and set the last entry.
                 if (significantStep)
                 {
                     SignificantStepIndices.Add(traceIndex);
+                    lastEntry = currentEntry;
                 }
 
                 // Determine if we're in an external call
@@ -869,7 +874,7 @@ namespace Meadow.CoverageReport.Debugging
                     int childScopeDepth = scopeDepth + 1;
 
                     // Parse our child scope and set our (potentially) advanced trace index
-                    traceIndex = ParseScopes(childStartIndex, childScopeDepth, childCallDepth, currentScope);
+                    traceIndex = ParseScopes(childStartIndex, childScopeDepth, childCallDepth, currentScope, ref lastEntry);
                 }
                 else if (exitingScope)
                 {
@@ -883,9 +888,6 @@ namespace Meadow.CoverageReport.Debugging
                     // Parse definitions at this level. (We are not entering or exiting a scope).
                     ParseScopeTracepoint(traceIndex, currentEntry, currentScope);
                 }
-
-                // Set our last entry
-                lastEntry = currentEntry;
 
                 // Increment our trace index
                 traceIndex++;

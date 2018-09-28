@@ -12,7 +12,6 @@ namespace Meadow.DebugAdapterServer
     {
         #region Fields
         private int _significantStepIndexIndex;
-        public int? LastExceptionTraceIndex;
         #endregion
 
         #region Properties
