@@ -52,6 +52,7 @@ namespace Meadow.UnitTestTemplate
             _debugSessionID = debugSessionID;
             _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             _debugAdapter = new MeadowSolidityDebugAdapter();
+            _debugAdapter.OnExiting += TeardownRpcDebuggingHook;
         }
 
         public void InitializeDebugConnection()
@@ -74,7 +75,20 @@ namespace Meadow.UnitTestTemplate
 
         public void SetupRpcDebuggingHook()
         {
+            // Set our method to execute for our hook.
             JsonRpcClient.JsonRpcExecutionAnalysis = RpcExecutionCallback;
+        }
+        
+        public void TeardownRpcDebuggingHook()
+        {
+            // Teardown our hook by setting the target as null.
+            TeardownRpcDebuggingHook(null);
+        }
+
+        private void TeardownRpcDebuggingHook(MeadowSolidityDebugAdapter debugAdapter)
+        {
+            // Teardown our hook by setting the target as null.
+            JsonRpcClient.JsonRpcExecutionAnalysis = null;
         }
 
         public async Task RpcExecutionCallback(IJsonRpcClient client)
