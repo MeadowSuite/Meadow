@@ -51,7 +51,6 @@ namespace Meadow.DebugAdapterServer
         private System.Threading.SemaphoreSlim _processTraceSemaphore = new System.Threading.SemaphoreSlim(SIMULTANEOUS_TRACE_COUNT, SIMULTANEOUS_TRACE_COUNT);
 
         readonly ConcurrentDictionary<string, int[]> _sourceBreakpoints = new ConcurrentDictionary<string, int[]>();
-
         #endregion
 
         #region Properties
@@ -59,6 +58,12 @@ namespace Meadow.DebugAdapterServer
         public SolidityMeadowConfigurationProperties ConfigurationProperties { get; private set; }
         public ConcurrentDictionary<int, MeadowDebugAdapterThreadState> ThreadStates { get; }
         public ReferenceContainer ReferenceContainer;
+        public bool Exiting { get; private set; }
+        #endregion
+
+        #region Events
+        public delegate void ExitingEventHandler(MeadowSolidityDebugAdapter sender);
+        public event ExitingEventHandler OnExiting;
         #endregion
 
         #region Constructor
@@ -97,23 +102,27 @@ namespace Meadow.DebugAdapterServer
             // Set the thread state in our lookup
             ThreadStates[threadId] = threadState;
 
-            // Send an event that our thread has exited.
-            Protocol.SendEvent(new ThreadEvent(ThreadEvent.ReasonValue.Started, threadState.ThreadId));
+            // If we're not exiting, step through our 
+            if (!Exiting)
+            {
+                // Send an event that our thread has exited.
+                Protocol.SendEvent(new ThreadEvent(ThreadEvent.ReasonValue.Started, threadState.ThreadId));
 
-            // Continue our execution.
-            ContinueExecution(threadState, DesiredControlFlow.Continue);
+                // Continue our execution.
+                ContinueExecution(threadState, DesiredControlFlow.Continue);
 
-            // Lock execution is complete.
-            await threadState.Semaphore.WaitAsync();
+                // Lock execution is complete.
+                await threadState.Semaphore.WaitAsync();
+
+                // Send an event that our thread has exited.
+                Protocol.SendEvent(new ThreadEvent(ThreadEvent.ReasonValue.Exited, threadState.ThreadId));
+            }
 
             // Remove the thread from our lookup.
             ThreadStates.Remove(threadId, out _);
 
             // Unlink our data for our thread id.
             ReferenceContainer.UnlinkThreadId(threadId);
-
-            // Send an event that our thread has exited.
-            Protocol.SendEvent(new ThreadEvent(ThreadEvent.ReasonValue.Exited, threadState.ThreadId));
 
             // Release the semaphore for processing a trace.
             _processTraceSemaphore.Release();
@@ -165,7 +174,7 @@ namespace Meadow.DebugAdapterServer
                 case DesiredControlFlow.Continue:
                     {
                         // Process the execution trace analysis
-                        while (threadState.CurrentStepIndex.HasValue)
+                        while (threadState.CurrentStepIndex.HasValue && !Exiting)
                         {
                             // Obtain our breakpoints.
                             bool hitBreakpoint = CheckBreakpointExists(threadState);
@@ -320,6 +329,23 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleDisconnectRequestAsync(IRequestResponder<DisconnectArguments> responder)
         {
+            // Set our exiting status
+            Exiting = true;
+
+            // Loop for each thread
+            foreach (var threadStateKeyValuePair in ThreadStates)
+            {
+                // Release the execution lock on this thread state.
+                // NOTE: This already happens when setting exiting status,
+                // but only if the thread is currently stepping/continuing,
+                // and not paused. This will allow it to continue if stopped.
+                threadStateKeyValuePair.Value.Semaphore.Release();
+            }
+
+            // If we have an event, invoke it
+            OnExiting?.Invoke(this);
+
+            // Set our response to the disconnect request.
             responder.SetResponse(new DisconnectResponse());
             Protocol.SendEvent(new TerminatedEvent());
             Protocol.SendEvent(new ExitedEvent(0));
