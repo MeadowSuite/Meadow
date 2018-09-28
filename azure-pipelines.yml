@@ -1,0 +1,17 @@
+# ASP.NET Core
+# Build and test ASP.NET Core projects targeting .NET Core.
+# Add steps that run tests, create a NuGet package, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+pool:
+  vmImage: 'Ubuntu 16.04'
+
+variables:
+  buildConfiguration: 'Release'
+
+steps:
+- script: >-
+    dotnet restore --configfile Nuget.Config --ignore-failed-sources
+
+    dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
+  displayName: 'dotnet build'
