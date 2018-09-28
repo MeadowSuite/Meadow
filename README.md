@@ -12,14 +12,14 @@
 
 # Meadow
 
-An Ethereum implementation geared towards Solidity testing and development. Written in fully cross platform C# with .NET Core. Use Meadow in VSCode, Visual Studio, and JetBrains Rider.
+An Ethereum implementation geared towards Solidity testing and development. Written completely in cross-platform C# with .NET Core. Use may use Meadow in VSCode, Visual Studio, and JetBrains Rider.
 
 
 #### Powerful Solidity contract development, deployment, and interaction
 
 <img src="/images/screenshot1.png?raw=true" width="700" />
 
-Provides an intuitive framework for writing C# tests against contract deployments and interactions. Includes a personal Ethereum test node that is automatically setup during test executions.
+Provides an intuitive framework for writing C# tests against contract deployments and interactions. Includes a personal Ethereum test node that automatically is setup during test executions.
 
 ---
 
@@ -29,7 +29,7 @@ Provides an intuitive framework for writing C# tests against contract deployment
 
 ---
 
-#### Solidity debugging with breakpoints, stepping, rewinding, variable inspection, etc
+#### Solidity debugging with breakpoints, stepping, rewinding, variable inspection, et cetera
 
 <img src="/images/screenshot3.png?raw=true" width="800" />
 
@@ -55,7 +55,7 @@ Provides an intuitive framework for writing C# tests against contract deployment
 
 | Library | Package   |  |
 |---------|-----------|-------------|
-| [Meadow.EVM](Meadow.EVM) | [![nuget](https://img.shields.io/nuget/v/Meadow.EVM.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.EVM) | An Ethereum Virtual Machine that includes: <ul><li>Instructions/opcodes, calling conventions/messages/return values, memory/stack, logs/events, gas, charges/limits, precompiles, contract creation logic. <li>Core Ethereum components: account storage, transaction receipts, transaction pool, blocks, world state, snapshoting/reverting, chain, mining/consensus mechanism/scoring/difficulty/uncles. <li>Underlying dependencies: configuration/genesis block/fork/versioning/chain ID support, modified Merkle Patricia Tries, bloom filters, elliptic curve signing + public key recovery, Ethash, in-memory storage database.</ul> |
+| [Meadow.EVM](Meadow.EVM) | [![nuget](https://img.shields.io/nuget/v/Meadow.EVM.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.EVM) | An Ethereum Virtual Machine that includes: <ul><li>Instructions/opcodes, calling conventions/messages/return values, memory/stack, logs/events, gas, charges/limits, precompiles, contract creation logic. <li>Core Ethereum components: account storage, transaction receipts, transaction pool, blocks, world state, snapshoting/reverting, chain, mining/consensus mechanism/scoring/difficulty/uncles. <li>Underlying dependencies: configuration/genesis block/fork/versioning/chain ID support, modified Merkle Patricia Trees, bloom filters, elliptic curve signing + public key recovery, Ethash, in-memory storage database.</ul> |
 | [Meadow.TestNode](Meadow.TestNode) | [![nuget](https://img.shields.io/nuget/v/Meadow.TestNode.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.TestNode) | Ethereum "personal blockchain" / "test node" / "RPC Server" / "Ethereum client". Ran as either a standalone server or via programmatic setup / teardown during unit test execution. Supports several non-standard RPC methods for debugging, testing, and coverage report generation. |
 | [Meadow.SolCodeGen](Meadow.SolCodeGen) | [![nuget](https://img.shields.io/nuget/v/Meadow.SolCodeGen.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.SolCodeGen) | Tool that compiles Solidity source files and generates a C# class for each contract. All public methods and events in the contract ABI are translated to corresponding idiomatic C# methods and event log classes. Solidity NatSpec comments / docs are also translated to IntelliSense / code-completion tooltips. This nuget package can be simply added to a project and Solidity files in the project `contracts` directory are automatically compiled. |
 | [Meadow.CoverageReport](Meadow.CoverageReport) | [![nuget](https://img.shields.io/nuget/v/Meadow.CoverageReport.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.CoverageReport) | Generates HTML and JSON code coverage reports for Solidity source files. Uses execution trace data from the EVM. |
