@@ -100,7 +100,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     protected override string ContractBytecodeHash => CONTRACT_BYTECODE_HASH;
                     protected override string ContractBytecodeDeployedHash => CONTRACT_BYTECODE_DEPLOYED_HASH;
 
-                    private {_contractName}({JsonRpcClientType} rpcClient, Address address, Address defaultFromAccount)
+                    private {_contractName}({JsonRpcClientType} rpcClient, {typeof(Address).FullName} address, {typeof(Address).FullName} defaultFromAccount)
                         : base(rpcClient, address, defaultFromAccount)
                     {{ 
                         {typeof(EventLogUtil).FullName}.{nameof(EventLogUtil.RegisterDeployedContractEventTypes)}(
@@ -110,7 +110,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
                     }}
 
-                    public static async Task<{_contractName}> At({JsonRpcClientType} rpcClient, Address address, Address? defaultFromAccount = null)
+                    public static async Task<{_contractName}> At({JsonRpcClientType} rpcClient, {typeof(Address).FullName} address, {typeof(Address).FullName}? defaultFromAccount = null)
                     {{
                         defaultFromAccount = defaultFromAccount ?? (await rpcClient.Accounts())[0];
                         return new {_contractName}(rpcClient, address, defaultFromAccount.Value);
@@ -237,10 +237,10 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     public static async Task<{_contractName}> Deploy(
                             {inputConstructorArg}
                             {JsonRpcClientType} rpcClient,
-                            TransactionParams transactionParams = null,
-                        Address? defaultFromAccount = null)
+                            {typeof(TransactionParams).FullName} transactionParams = null,
+                            {typeof(Address).FullName}? defaultFromAccount = null)
                     {{
-                        transactionParams = transactionParams ?? new TransactionParams();
+                        transactionParams = transactionParams ?? new {typeof(TransactionParams).FullName}();
                         defaultFromAccount = defaultFromAccount ?? transactionParams.From ?? (await rpcClient.Accounts())[0];
                         transactionParams.From = transactionParams.From ?? defaultFromAccount;
                     
@@ -255,8 +255,8 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     public static ContractDeployer<{_contractName}> New(
                             {inputConstructorArg}
                             {JsonRpcClientType} rpcClient,
-                            TransactionParams transactionParams = null,
-                        Address? defaultFromAccount = null)
+                            {typeof(TransactionParams).FullName} transactionParams = null,
+                            {typeof(Address).FullName}? defaultFromAccount = null)
                     {{
                         {encodedParamsLine}
 
