@@ -14,4 +14,8 @@ steps:
     dotnet restore --configfile Nuget.Config --ignore-failed-sources
 
     dotnet msbuild -p:Configuration=Debug /maxcpucount:1 /nodeReuse:false
+    
+    dotnet test --configuration Debug --no-build --no-restore 
   displayName: 'dotnet build'
+  env:
+    DISABLE_EXTERNAL_PARALLEL_TESTS: "true"
