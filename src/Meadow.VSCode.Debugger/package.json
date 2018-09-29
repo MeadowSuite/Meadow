@@ -15,7 +15,7 @@
   ],
   "publisher": "hosho",
   "author": "Hosho",
-  "homepage": "https://github.com/MeadowSuite/Meadow/blob/master/Meadow.VSCode.Debugger/README.md",
+  "homepage": "https://github.com/MeadowSuite/Meadow/blob/master/src/Meadow.VSCode.Debugger/README.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/MeadowSuite/Meadow.git"
@@ -44,9 +44,10 @@
     "node": "^8.12.0"
   },
   "dependencies": {
+    "semver": "^5.5.1",
     "uuid": "^3.3.2",
-    "vscode-debugadapter": "1.31.0",
-    "vscode-debugprotocol": "1.31.0"
+    "vscode-debugadapter": "^1.31.0",
+    "vscode-debugprotocol": "^1.31.0"
   },
   "devDependencies": {
     "@types/node": "^8.10.0",
