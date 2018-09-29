@@ -15,6 +15,7 @@ using Pipelines.Sockets.Unofficial;
 using System.IO.Pipelines;
 using System.Buffers.Text;
 using McMaster.Extensions.CommandLineUtils.Abstractions;
+using System.Collections.Generic;
 
 namespace Meadow.DebugAdapterProxy
 {
@@ -104,7 +105,7 @@ namespace Meadow.DebugAdapterProxy
                 {
                     // If verbose logging is enabled, setup interception streams for both the input & output of the debugger
                     // protocol stream. 
-                    Task verboseProxyLogTask = Task.CompletedTask;
+                    List<Task> streamTasks = new List<Task>();
                     Stream proxyStreamInput = null;
                     Stream proxyStreamOutput = null;
                     if (_args.Trace)
@@ -115,9 +116,10 @@ namespace Meadow.DebugAdapterProxy
                         var proxyPipeOutput = new Pipe();
                         proxyStreamOutput = StreamConnection.GetDuplex(proxyPipeOutput.Reader, proxyPipeOutput.Writer);
 
-                        verboseProxyLogTask = Task.WhenAll(
+                        var verboseProxyLogTask = Task.WhenAll(
                             CreateVerboseProxyLogger("-> ", proxyPipeInput.Reader, cancellationToken),
                             CreateVerboseProxyLogger("<- ", proxyPipeOutput.Reader, cancellationToken));
+                        streamTasks.Add(verboseProxyLogTask);
                     }
 
                     var pipeInputTask = NamedPipes.ConnectStream(stdIn, pipeClient, proxyStreamInput, cancellationToken);
@@ -131,7 +133,9 @@ namespace Meadow.DebugAdapterProxy
                         }
                     });
 
-                    var completedTask = await Task.WhenAny(checkClosedTask, pipeInputTask, pipeOutputTask, verboseProxyLogTask);
+                    streamTasks.AddRange(new[] { checkClosedTask, pipeInputTask, pipeOutputTask });
+
+                    var completedTask = await Task.WhenAny(streamTasks.ToArray());
 
                     if (completedTask.IsFaulted)
                     {

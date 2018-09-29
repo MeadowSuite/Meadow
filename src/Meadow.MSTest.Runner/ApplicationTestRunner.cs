@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Xml;
 
 namespace Meadow.MSTest.Runner
@@ -44,7 +45,7 @@ namespace Meadow.MSTest.Runner
             return runner;
         }
 
-        public static void RunAllTests(Assembly scanAssembly = null)
+        public static void RunAllTests(Assembly scanAssembly = null, CancellationToken cancellationToken = default)
         {
             var assemblies = new HashSet<Assembly>();
             if (scanAssembly != null)
@@ -56,7 +57,7 @@ namespace Meadow.MSTest.Runner
             assemblies.Add(Assembly.GetCallingAssembly());
 
             var applicationTestRunner = CreateFromAssemblies(assemblies.ToArray());
-            applicationTestRunner.RunTests();
+            applicationTestRunner.RunTests(cancellationToken);
         }
 
         public static void RunSpecificTests(Assembly assembly, params string[] fullyQualifiedTestNames)
@@ -85,7 +86,7 @@ namespace Meadow.MSTest.Runner
             runner.RunTests();
         }
 
-        public void RunTests()
+        public void RunTests(CancellationToken cancellationToken = default)
         {
             var runContext = new MyRunContext(_testCases);
             var frameworkHandler = new MyFrameworkHandle(GetConsoleLogger());
@@ -115,6 +116,11 @@ namespace Meadow.MSTest.Runner
             var testExecutorType = msTestAdapterAssembly.GetType(MSTEST_EXECUTOR_TYPE, throwOnError: true);
 
             dynamic testExecutor = Activator.CreateInstance(testExecutorType);
+
+            cancellationToken.Register(() =>
+            {
+                testExecutor.Cancel();
+            });
 
             testExecutor.RunTests(_assemblies, runContext, frameworkHandler);
 
