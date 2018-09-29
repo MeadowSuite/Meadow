@@ -8,6 +8,8 @@ import { Logger } from './logger';
 import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, SOLIDITY_MEADOW_TYPE } from './constants';
 import { resolveMeadowDebugAdapter } from './debugAdapterExecutable';
 import * as common from './common';
+import * as child_process from 'child_process';
+
 
 export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigurationProvider {
 
@@ -84,21 +86,12 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 			throw new Error("TODO..");
 		}
 
+		let workspaceRoot = common.getWorkspaceFolder().uri.fsPath;
+
+		common.validateDotnetVersion();
+
 		let checksReady = false;
-
 		if (checksReady) {
-
-			// TODO: ensure omnisharp extension is install, if not prompt to install link
-			let omnisharpInstalled = false;
-			if (!omnisharpInstalled) {
-				throw new Error("TODO..");
-			}
-
-			// TODO: ensure "dotnet" sdk of min version is installed, if not prompt to download link
-			let dotnetSdkOkay = false;
-			if (!dotnetSdkOkay) {
-				throw new Error("TODO..");
-			}
 
 			// TODO: ensure a main .csproj file exists, if not prompt to setup
 			let workspaceHasCsproj = false;
@@ -114,17 +107,8 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 			}
 
 		}
+		
 
-
-		/*
-		if (!config.program) {
-			return vscode.window.showInformationMessage("Cannot find a program to debug").then(_ => {
-				return undefined;	// abort launch
-			});
-		}
-		*/
-
-		let workspaceRoot = common.getWorkspaceFolder().uri.fsPath;
 		debugConfig.workspaceDirectory = workspaceRoot;
 
 		for (let pathProp of ['debugAdapterFile', 'testAssembly', 'logFile']) {

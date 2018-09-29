@@ -2,6 +2,7 @@
 using Meadow.Core.EthTypes;
 using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
+using Meadow.CoverageReport.Debugging.Callstack;
 using Meadow.CoverageReport.Debugging.Variables;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
@@ -133,58 +134,6 @@ namespace Meadow.CoverageReport.Debugging
         }
         #endregion
 
-        #region TODO: Move elsewhere and cleanup
-        public SourceFileLine[] GetSourceLines()
-        {
-            // Obtain our lines for the current point in execution.
-            return GetSourceLines(ExecutionTrace.Tracepoints.Length - 1);
-        }
-
-        public SourceFileLine[] GetSourceLines(int traceIndex)
-        {
-            // Loop backwards from our trace index
-            for (int i = traceIndex; i >= 0; i--)
-            {
-                // Obtain our source map entry and instruction number for this point inthe execution trace.
-                (int instructionIndex, SourceMapEntry sourceMapEntry) = GetInstructionAndSourceMap(i);
-
-                // Obtain the lines corresponding to this source map entry.
-                var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps);
-
-                // If our lines could not be obtained, skip to the previous trace index
-                if (lines == null)
-                {
-                    continue;
-                }
-
-                // Return all obtained lines.
-                return lines.ToArray();
-            }
-
-            // Throw our exception.
-            throw new Exception("Could not resolve source lines for the given trace index. Attempt to walk backwards to the last resolvable lines have also failed. Please report this.");
-        }
-
-        public SourceFileLine[] GetSourceLines(AstNode node)
-        {
-            // Obtain our source lines and return them.
-            SourceFileLine[] lines = SourceLineMatching.GetSourceFileLinesContainingAstNode(node, _sourceFileMaps).OrderBy(k => k.Offset).ToArray();
-
-            // Return all obtained lines.
-            return lines;
-        }
-
-        public SourceFileLine[] GetSourceLines(SourceMapEntry sourceMapEntry)
-        {
-            // Obtain our source lines and return them.
-            var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps) ?? Array.Empty<SourceFileLine>();
-            lines = lines.OrderBy(k => k.Offset);
-
-            // Return all obtained lines.
-            return lines.ToArray();
-        }
-        #endregion
-
         #region Functions
         /// <summary>
         /// Fills in values that are marked as unchanged from the last known values (to save memory in deserialization).
@@ -263,6 +212,89 @@ namespace Meadow.CoverageReport.Debugging
                     lastKnownStorage = tracePoint.Storage;
                 }
             }
+        }
+
+        /// <summary>
+        /// Obtain source lines at the last trace point in our execution trace.
+        /// </summary>
+        /// <returns>Returns source lines at the last point in execution in this trace.</returns>
+        public SourceFileLine[] GetSourceLines()
+        {
+            // Obtain our lines for the current point in execution.
+            return GetSourceLines(ExecutionTrace.Tracepoints.Length - 1);
+        }
+
+        /// <summary>
+        /// Obtain source lines at the given trace point in our execution trace, or if none exist, step backward until source lines can be obtained.
+        /// </summary>
+        /// <param name="traceIndex">The index into our execution trace to obtain source lines at.</param>
+        /// <returns>Returns the source lines at the given trace index.</returns>
+        public SourceFileLine[] GetSourceLines(int traceIndex)
+        {
+            return GetSourceLines(traceIndex, out _);
+        }
+
+        /// <summary>
+        /// Obtain source lines at the given trace point in our execution trace, or if none exist, step backward until source lines can be obtained.
+        /// </summary>
+        /// <param name="traceIndex">The index into our execution trace to obtain source lines at.</param>
+        /// <param name="resultingTraceIndex">The index into our execution trace where the source lines ended up being grabbed from.</param>
+        /// <returns>Returns the source lines at the given trace index.</returns>
+        public SourceFileLine[] GetSourceLines(int traceIndex, out int resultingTraceIndex)
+        {
+            // Loop backwards from our trace index
+            for (int i = traceIndex; i >= 0; i--)
+            {
+                // Obtain our source map entry and instruction number for this point inthe execution trace.
+                (int instructionIndex, SourceMapEntry sourceMapEntry) = GetInstructionAndSourceMap(i);
+
+                // Obtain the lines corresponding to this source map entry.
+                var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps);
+
+                // If our lines could not be obtained, skip to the previous trace index
+                if (lines == null)
+                {
+                    continue;
+                }
+
+                // Set our resulting trace index for these lines
+                resultingTraceIndex = i;
+
+                // Return all obtained lines.
+                return lines.ToArray();
+            }
+
+            // Throw our exception.
+            throw new Exception("Could not resolve source lines for the given trace index. Attempt to walk backwards to the last resolvable lines have also failed. Please report this.");
+        }
+
+        /// <summary>
+        /// Obtains the source lines corresponding to the given AST node.
+        /// </summary>
+        /// <param name="node">The AST node to obtain source lines for.</param>
+        /// <returns>Returns the lines that contain this AST node.</returns>
+        public SourceFileLine[] GetSourceLines(AstNode node)
+        {
+            // Obtain our source lines and return them.
+            SourceFileLine[] lines = SourceLineMatching.GetSourceFileLinesContainingAstNode(node, _sourceFileMaps).OrderBy(k => k.Offset).ToArray();
+
+            // Return all obtained lines.
+            return lines;
+        }
+
+        /// <summary>
+        /// Obtains the source lines corresponding to the given source map entry.
+        /// </summary>
+        /// <param name="sourceMapEntry">The source map entry to obtain source lines for.</param>
+        /// <returns>Returns the lines contained by this source map entry.</returns>
+        public SourceFileLine[] GetSourceLines(SourceMapEntry sourceMapEntry)
+        {
+            // Obtain our source lines and return them.
+            var lines = SourceLineMatching.GetSourceFileLinesFromSourceMapEntry(sourceMapEntry, _sourceFileMaps) ?? Array.Empty<SourceFileLine>();
+            lines = lines.OrderBy(k => k.Offset);
+
+            // Return all obtained lines.
+            return lines.ToArray();
         }
 
         /// <summary>
@@ -378,10 +410,10 @@ namespace Meadow.CoverageReport.Debugging
         /// Obtains all execution trace scopes, starting from the current scope, ending with the entry point.
         /// </summary>
         /// <returns>Returns an array of execution trace scopes, starting from most recent scopes entered, to earliest.</returns>
-        public ExecutionTraceScope[] GetCallStack()
+        public ExecutionTraceScope[] GetCallStackScopes()
         {
             // Obtain the callstack for our last point in our trace.
-            return GetCallStack(ExecutionTrace.Tracepoints.Length - 1);
+            return GetCallStackScopes(ExecutionTrace.Tracepoints.Length - 1);
         }
 
         /// <summary>
@@ -389,7 +421,7 @@ namespace Meadow.CoverageReport.Debugging
         /// </summary>
         /// <param name="traceIndex">The trace point index which we'd like to obtain the callstack for.</param>
         /// <returns>Returns an array of execution trace scopes, starting from most recent scopes entered, to earliest.</returns>
-        public ExecutionTraceScope[] GetCallStack(int traceIndex)
+        public ExecutionTraceScope[] GetCallStackScopes(int traceIndex)
         {
             // Verify our bounds, if we fail, return a blank scope array.
             if (traceIndex < 0 || traceIndex >= ExecutionTrace.Tracepoints.Length)
@@ -417,6 +449,81 @@ namespace Meadow.CoverageReport.Debugging
 
             // Return our scopes
             return callScopes;
+        }
+
+        /// <summary>
+        /// Obtains an array of stack frames representing a callstack at the last executed location in this trace.
+        /// </summary>
+        /// <returns>Returns an array of stack frames, starting from most recent scopes entered, to earliest.</returns>
+        public ExecutionTraceStackFrame[] GetCallStack()
+        {
+            // Obtain the callstack for our last point in our trace.
+            return GetCallStack(ExecutionTrace.Tracepoints.Length - 1);
+        }
+
+        /// <summary>
+        /// Obtains an array of stack frames representing a callstack at the provided location in this trace.
+        /// </summary>
+        /// <param name="traceIndex">The trace point index which we'd like to obtain the callstack for.</param>
+        /// <returns>Returns an array of stack frames, starting from most recent scopes entered, to earliest.</returns>
+        public ExecutionTraceStackFrame[] GetCallStack(int traceIndex)
+        {
+            // Obtain our callstack scopes.
+            var callstackScopes = GetCallStackScopes(traceIndex);
+
+            // Create an array of our stack frames
+            ExecutionTraceStackFrame[] stackFrames = new ExecutionTraceStackFrame[callstackScopes.Length];
+
+            // Loop for each item in our 
+            for (int i = 0; i < callstackScopes.Length; i++)
+            {
+                // Grab our current call frame
+                var currentScope = callstackScopes[i];
+
+                // We obtain our relevant source lines for this call stack frame.
+                SourceFileLine[] lines = null;
+                int lastTraceIndex = -1;
+
+                // If it's the most recent frame, we obtain the lines at the current trace index.
+                bool error = false;
+                if (i == 0)
+                {
+                    // Obtain the lines at the given trace index since this is the current frame.
+                    lines = GetSourceLines(traceIndex, out lastTraceIndex);
+                }
+                else
+                {
+                    // This is not the most recent call frame.
+
+                    // Obtain the next most recent call frame's parent function call (to obtain our current position for this frame).
+                    var laterScope = callstackScopes[i - 1];
+                    if (laterScope.ParentFunctionCall != null)
+                    {
+                        lines = GetSourceLines(laterScope.ParentFunctionCall);
+                        lastTraceIndex = laterScope.ParentFunctionCallIndex.Value;
+                    }
+                    else
+                    {
+                        // If we couldn't obtain this frame's current position using the later scope's parent function call, we work
+                        // backwards from the last trace index for this scope until we hit the first line we see.
+                        if (currentScope.FunctionDefinition != null)
+                        {
+                            // Obtain source lines for this scope, working backward.
+                            lines = GetSourceLines(laterScope.StartIndex - 1, out lastTraceIndex);
+                        }
+                        else
+                        {
+                            error = true;
+                        }
+                    }
+                }
+
+                // Initialize our stack frame using the information obtained.
+                stackFrames[i] = new ExecutionTraceStackFrame(currentScope, lines, lastTraceIndex, error);
+            }
+
+            // Return our stack frames
+            return stackFrames;
         }
 
         /// <summary>
@@ -490,39 +597,31 @@ namespace Meadow.CoverageReport.Debugging
                 for (int i = 0; i < callstack.Length; i++)
                 {
                     // Grab our current call frame
-                    var currentCallFrame = callstack[i];
+                    var currentStackFrame = callstack[i];
 
-                    // We obtain our relevant source lines for this call stack frame.
-                    SourceFileLine[] lines = null;
-
-                    // If it's the most recent call, we obtain the line for the current trace.
-                    if (i == 0)
+                    // Verify we could resolve the current position.
+                    if (currentStackFrame.Error)
                     {
-                        lines = GetSourceLines(traceException.TraceIndex.Value);
+                        message.AppendLine("-> <error: could not resolve stack frame>");
+                        continue;
                     }
-                    else
+
+                    // Verify we could resolve the function we're in
+                    if (!currentStackFrame.ResolvedFunction)
                     {
-                        var previousCallFrame = callstack[i - 1];
-                        if (previousCallFrame.ParentFunctionCall != null)
-                        {
-                            lines = GetSourceLines(previousCallFrame.ParentFunctionCall);
-                        }
-                        else
-                        {
-                            message.AppendLine("-> <an error occurred preventing callstack resolving for this frame>");
-                            continue;
-                        }
+                        message.AppendLine($"-> at <code outside of mapped function>");
+                        continue;
                     }
 
                     // Obtain method descriptor information if possible
                     string methodDescriptor = null;
-                    if (currentCallFrame.FunctionDefinition?.IsConstructor == true)
+                    if (currentStackFrame.IsFunctionConstructor)
                     {
-                        methodDescriptor = $"'{currentCallFrame.ContractDefinition?.Name ?? unresolved}' constructor";
+                        methodDescriptor = $"'{currentStackFrame.FunctionName ?? unresolved}' constructor";
                     }
                     else
                     {
-                        methodDescriptor = $"method '{currentCallFrame.FunctionDefinition?.Name ?? unresolved}'";
+                        methodDescriptor = $"method '{currentStackFrame.FunctionName ?? unresolved}'";
                     }
 
 
@@ -530,22 +629,15 @@ namespace Meadow.CoverageReport.Debugging
                     string lineFirstLine = "<unresolved code line>";
                     long lineNumber = -1;
                     string lineFileName = "<unresolved filename>";
-                    if (lines.Length > 0)
+                    if (currentStackFrame.CurrentPositionLines.Length > 0)
                     {
-                        lineFirstLine = lines[0].LiteralSourceCodeLine.Trim();
-                        lineNumber = lines[0].LineNumber;
-                        lineFileName = lines[0].SourceFileMapParent.SourceFilePath;
+                        lineFirstLine = currentStackFrame.CurrentPositionLines[0].LiteralSourceCodeLine.Trim();
+                        lineNumber = currentStackFrame.CurrentPositionLines[0].LineNumber;
+                        lineFileName = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFilePath;
                     }
 
                     // Else, we obtain the line for the previous' call.
-                    if (currentCallFrame.FunctionDefinition != null)
-                    {
-                        message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
-                    }
-                    else
-                    {
-                        message.AppendLine($"-> at <code outside of mapped function>");
-                    }
+                    message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
                 }
             }
 
@@ -802,7 +894,8 @@ namespace Meadow.CoverageReport.Debugging
                 // Obtain our instruction number and source map
                 (int instructionNumber, SourceMapEntry currentEntry) = GetInstructionAndSourceMap(traceIndex);
 
-                // If we have no entry or 
+                // Verify our line numbers have changed so that we can mark this as a significant step to log.
+                var currentLines = GetSourceLines(currentEntry);
                 bool significantStep = false;
                 if (lastEntry.HasValue)
                 {
@@ -811,7 +904,6 @@ namespace Meadow.CoverageReport.Debugging
                     {
                         // Verify our lines or files don't match the previous, if so, mark them as significant.
                         var lastLines = GetSourceLines(lastEntry.Value);
-                        var currentLines = GetSourceLines(currentEntry);
                         if (currentLines.Length > 0 && lastLines.Length > 0)
                         {
                             significantStep = currentLines[0].SourceFileMapParent.SourceFilePath != lastLines[0].SourceFileMapParent.SourceFilePath ||
@@ -828,6 +920,8 @@ namespace Meadow.CoverageReport.Debugging
                     // If the last entry wasn't set, this step is a significant one.
                     significantStep = true;
                 }
+
+
 
                 // If an exception occurred at this step, it's a significant step. If we 
                 // didn't already mark this as a significant step, it means this line is 
@@ -916,7 +1010,7 @@ namespace Meadow.CoverageReport.Debugging
             // If the scope is null, return null. Otherwise, we can also assume our trace index is valid.
             if (currentScope == null)
             {
-                return null;
+                return Array.Empty<VariableValuePair>();
             }
 
             // Obtain our tracepoint
@@ -966,9 +1060,9 @@ namespace Meadow.CoverageReport.Debugging
             ExecutionTraceScope currentScope = GetScope(traceIndex);
 
             // If the scope is null, return null. Otherwise, we can also assume our trace index is valid.
-            if (currentScope == null)
+            if (currentScope == null || currentScope.ContractDefinition == null)
             {
-                return null;
+                return Array.Empty<VariableValuePair>();
             }
 
             // Obtain our tracepoint

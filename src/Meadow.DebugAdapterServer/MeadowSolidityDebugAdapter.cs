@@ -502,44 +502,26 @@ namespace Meadow.DebugAdapterServer
                 for (int i = 0; i < callstack.Length; i++)
                 {
                     // Grab our current call frame
-                    var currentCallFrame = callstack[i];
+                    var currentStackFrame = callstack[i];
 
-                    // If the scope is invalid, then we skip it.
-                    if (currentCallFrame.FunctionDefinition == null)
+                    // If the scope could not be resolved within a function, and no lines could be resolved, skip to the next frame.
+                    // as this is not a code section we can describe in any meaningful way.
+                    if (!currentStackFrame.ResolvedFunction && currentStackFrame.CurrentPositionLines.Length == 0)
+                    {
+                         continue;
+                    }
+
+                    // If we couldn't resolve the current position or there were no lines representing it
+                    if (currentStackFrame.Error || currentStackFrame.CurrentPositionLines.Length == 0)
                     {
                         continue;
                     }
 
-                    // We obtain our relevant source lines for this call stack frame.
-                    SourceFileLine[] lines = null;
-
-                    // If it's the most recent call, we obtain the line for the current trace.
-                    int traceIndex = -1;
-                    if (i == 0)
-                    {
-                        traceIndex = threadState.CurrentStepIndex.Value;
-                        lines = threadState.ExecutionTraceAnalysis.GetSourceLines(traceIndex);
-                    }
-                    else
-                    {
-                        // If it's not the most recent call, we obtain the position at our 
-                        var previousCallFrame = callstack[i - 1];
-                        if (previousCallFrame.ParentFunctionCall != null)
-                        {
-                            traceIndex = previousCallFrame.ParentFunctionCallIndex.Value;
-                            lines = threadState.ExecutionTraceAnalysis.GetSourceLines(previousCallFrame.ParentFunctionCall);
-                        }
-                        else
-                        {
-                            throw new Exception("TODO: Stack Trace could not be generated because previous call frame's function call could not be resolved. Update behavior in this case.");
-                        }
-                    }
-
                     // Obtain the method name we are executing in.
-                    string frameName = currentCallFrame.FunctionDefinition.Name;
+                    string frameName = currentStackFrame.FunctionName;
                     if (string.IsNullOrEmpty(frameName))
                     {
-                        frameName = currentCallFrame.FunctionDefinition.IsConstructor ? $".ctor ({currentCallFrame.ContractDefinition.Name})" : "<unresolved>";
+                        frameName = "<undefined>";
                     }
 
                     // Determine the bounds of our stack frame.
@@ -549,10 +531,10 @@ namespace Meadow.DebugAdapterServer
                     int endColumn = 0;
 
                     // Loop through all of our lines for this position.
-                    for (int x = 0; x < lines.Length; x++)
+                    for (int x = 0; x < currentStackFrame.CurrentPositionLines.Length; x++)
                     {
                         // Obtain our indexed line.
-                        SourceFileLine line = lines[x];
+                        SourceFileLine line = currentStackFrame.CurrentPositionLines[x];
 
                         // Set our start position if relevant.
                         if (x == 0 || line.LineNumber <= startLine)
@@ -575,7 +557,7 @@ namespace Meadow.DebugAdapterServer
                     }
 
                     // Format agnostic path to platform specific path
-                    var sourceFilePath = lines[0].SourceFileMapParent.SourceFilePath;
+                    var sourceFilePath = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFilePath;
                     if (Path.DirectorySeparatorChar == '\\')
                     {
                         sourceFilePath = sourceFilePath.Replace('/', Path.DirectorySeparatorChar);
@@ -584,7 +566,7 @@ namespace Meadow.DebugAdapterServer
                     // Create our source object
                     Source stackFrameSource = new Source()
                     {
-                        Name = lines[0].SourceFileMapParent.SourceFileName,
+                        Name = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFileName,
                         Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, _contractsDirectory, sourceFilePath)
                     };
                     
@@ -600,7 +582,7 @@ namespace Meadow.DebugAdapterServer
                     };
 
                     // Add the stack frame to our reference list
-                    ReferenceContainer.LinkStackFrame(threadState.ThreadId, stackFrame, traceIndex);
+                    ReferenceContainer.LinkStackFrame(threadState.ThreadId, stackFrame, currentStackFrame.CurrentPositionTraceIndex);
                     
                     // Add our stack frame to the result list
                     stackFrames.Add(stackFrame);
