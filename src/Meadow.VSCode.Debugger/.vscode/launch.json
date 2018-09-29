@@ -16,6 +16,13 @@
 				"${workspaceFolder}/out/**/*.js"
 			],
 			"preLaunchTask": "npm: watch"
+		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Prepare Package",
+			"preLaunchTask": "npm: watch",
+			"program": "${workspaceFolder}/out/preparePackage.js"
 		}
 	]
 }

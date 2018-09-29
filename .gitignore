@@ -340,3 +340,4 @@ src/pwsh_testing/GeneratedAssembly/
 src/coverage/
 src/report/
 src/reportgenerator/
+src/Meadow.VSCode.Debugger/solidity-debugger*.vsix

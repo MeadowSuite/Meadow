@@ -9,12 +9,14 @@ using System.Diagnostics;
 using System.IO.Pipes;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Meadow.UnitTestTemplate
 {
     public class Debugging : IDisposable
     {
+
         public static void Launch()
         {
             var debugSessionID = Environment.GetEnvironmentVariable("DEBUG_SESSION_ID");
@@ -36,8 +38,21 @@ namespace Meadow.UnitTestTemplate
                     debuggingInstance.InitializeDebugConnection();
                     debuggingInstance.SetupRpcDebuggingHook();
 
+                    var cancelToken = new CancellationTokenSource();
+
+                    debuggingInstance.OnDebuggerDisconnect += () => 
+                    {
+                        // If the C# debugger is not attached, we don't care about running the rest of the tests
+                        // so exit program
+                        if (!Debugger.IsAttached)
+                        {
+                            cancelToken.Cancel();
+                            Environment.Exit(0);
+                        }
+                    };
+
                     // Run all tests (blocking)
-                    ApplicationTestRunner.RunAllTests(Assembly.GetExecutingAssembly());
+                    ApplicationTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken.Token);
                     Console.WriteLine("Tests completed");
                 }
             }
@@ -47,12 +62,17 @@ namespace Meadow.UnitTestTemplate
         readonly NamedPipeServerStream _pipeServer;
         readonly MeadowSolidityDebugAdapter _debugAdapter;
 
+#pragma warning disable CA1710 // Identifiers should have correct suffix
+        public event Action OnDebuggerDisconnect;
+#pragma warning restore CA1710 // Identifiers should have correct suffix
+
         private Debugging(string debugSessionID)
         {
             _debugSessionID = debugSessionID;
             _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
             _debugAdapter = new MeadowSolidityDebugAdapter();
-            _debugAdapter.OnExiting += TeardownRpcDebuggingHook;
+            _debugAdapter.OnDebuggerDisconnect += DebugAdapter_OnDebuggerDisconnect;
+            _debugAdapter.OnDebuggerDisconnect += TeardownRpcDebuggingHook;
         }
 
         public void InitializeDebugConnection()
@@ -89,7 +109,16 @@ namespace Meadow.UnitTestTemplate
         {
             // Teardown our hook by setting the target as null.
             JsonRpcClient.JsonRpcExecutionAnalysis = null;
+
+
         }
+
+        private void DebugAdapter_OnDebuggerDisconnect(MeadowSolidityDebugAdapter sender)
+        {
+            TeardownRpcDebuggingHook(sender);
+            OnDebuggerDisconnect?.Invoke();
+        }
+
 
         public async Task RpcExecutionCallback(IJsonRpcClient client)
         {

@@ -1,5 +1,5 @@
 {
-  "name": "meadow.solidity-debugger",
+  "name": "solidity-debugger",
   "displayName": "Solidity Debugger",
   "version": "0.0.1",
   "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
@@ -9,13 +9,11 @@
   "keywords": [
     "Solidity",
     "Ethereum",
-    "Debugger",
     "Truffle",
     "Ganache",
-    "Testrpc",
     "solidity-coverage"
   ],
-  "publisher": "Hosho",
+  "publisher": "hosho",
   "author": "Hosho",
   "homepage": "https://github.com/MeadowSuite/Meadow/blob/master/Meadow.VSCode.Debugger/README.md",
   "repository": {
@@ -33,10 +31,10 @@
   "preview": true,
   "private": true,
   "scripts": {
-    "vscode:prepublish": "(npm run compile && npm run packageAdapter)",
+    "vscode:prepublish": "(npm run compile && npm run preparePackage)",
     "compile": "tsc -p ./src",
     "watch": "tsc -watch -p ./src",
-    "packageAdapter": "node ./out/packageAdapter.js",
+    "preparePackage": "node ./out/preparePackage.js",
     "postinstall": "node ./node_modules/vscode/bin/install",
     "package": "vsce package",
     "publish": "vsce publish"
@@ -46,7 +44,6 @@
     "node": "^8.12.0"
   },
   "dependencies": {
-    "await-notify": "^1.0.1",
     "uuid": "^3.3.2",
     "vscode-debugadapter": "1.31.0",
     "vscode-debugprotocol": "1.31.0"
@@ -55,9 +52,10 @@
     "@types/node": "^8.10.0",
     "tslint": "^5.11.0",
     "typescript": "^3.0.3",
-    "vsce": "^1.48.0",
+    "vsce": "^1.51.0",
     "vscode": "^1.1.21",
-    "vscode-debugadapter-testsupport": "^1.31.0"
+    "vscode-debugadapter-testsupport": "^1.31.0",
+    "trash": "^4.3.0"
   },
   "activationEvents": [
     "onDebug",
@@ -146,14 +144,12 @@
         },
         "configurationSnippets": [
           {
-            "label": "Solidity Meadow Debug: Launch",
-            "description": "A new configuration for 'debugging' solidity with Meadow.",
+            "label": "Solidity Debug: Launch",
+            "description": "A new configuration for debugging Solidity with Meadow via unit test run.",
             "body": {
               "type": "solidityMeadow",
               "request": "launch",
-              "name": "Run Tests",
-              "program": "^\"\\${workspaceFolder}/\"",
-              "stopOnEntry": true
+              "name": "Debug Solidity (via unit test run)"
             }
           }
         ]

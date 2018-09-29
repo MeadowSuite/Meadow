@@ -10,14 +10,7 @@
   </PropertyGroup>
  
   <ItemGroup>
-    <EmbeddedResource Include="Resources\WordLists\wordlist_chinese_simplified.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_chinese_traditional.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_english.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_french.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_italian.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_japanese.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_korean.txt" />
-    <EmbeddedResource Include="Resources\WordLists\wordlist_spanish.txt" />
+    <EmbeddedResource Include="Resources\WordLists\*.txt" />
   </ItemGroup>
   
   <ItemGroup>
