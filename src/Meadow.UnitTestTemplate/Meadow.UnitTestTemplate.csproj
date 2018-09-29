@@ -18,7 +18,7 @@
     <ProjectReference Include="..\Meadow.CoverageReport\Meadow.CoverageReport.csproj" />
     <ProjectReference Include="..\Meadow.DebugAdapterServer\Meadow.DebugAdapterServer.csproj" />
     <ProjectReference Include="..\Meadow.MSTest.Runner\Meadow.MSTest.Runner.csproj" />
-    <ProjectReference Include="..\Meadow.SolCodeGen\Meadow.SolCodeGen.csproj" />
+    <ProjectReference Include="..\Meadow.SolCodeGen\Meadow.SolCodeGen.csproj" PrivateAssets="none" />
     <ProjectReference Include="..\Meadow.TestNode\Meadow.TestNode.csproj" />
   </ItemGroup>
 
