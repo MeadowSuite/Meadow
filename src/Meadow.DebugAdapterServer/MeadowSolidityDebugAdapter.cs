@@ -63,7 +63,7 @@ namespace Meadow.DebugAdapterServer
 
         #region Events
         public delegate void ExitingEventHandler(MeadowSolidityDebugAdapter sender);
-        public event ExitingEventHandler OnExiting;
+        public event ExitingEventHandler OnDebuggerDisconnect;
         #endregion
 
         #region Constructor
@@ -374,14 +374,14 @@ namespace Meadow.DebugAdapterServer
                 threadStateKeyValuePair.Value.Semaphore.Release();
             }
 
-            // If we have an event, invoke it
-            OnExiting?.Invoke(this);
-
             // Set our response to the disconnect request.
             responder.SetResponse(new DisconnectResponse());
             Protocol.SendEvent(new TerminatedEvent());
             Protocol.SendEvent(new ExitedEvent(0));
             _terminatedTcs.TrySetResult(null);
+
+            // If we have an event, invoke it
+            OnDebuggerDisconnect?.Invoke(this);
         }
 
         public void SendTerminateAndExit()

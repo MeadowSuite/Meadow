@@ -7,6 +7,11 @@
         {
             "type": "solidityMeadow",
             "request": "launch",
+            "name": "Debug Solidity (via unit test run)"
+        },
+        {
+            "type": "solidityMeadow",
+            "request": "launch",
             "name": "Solidity Meadow",
             "program": "${workspaceFolder}/test.sol",
             "stopOnEntry": false,

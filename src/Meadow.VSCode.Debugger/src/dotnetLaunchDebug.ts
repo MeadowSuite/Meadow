@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import * as child_process from "child_process";
 import * as util from 'util';
 import * as debugConfigProvider from './debugConfigProvider';
+import { ISolidityMeadowDebugConfig } from './constants';
 import { Logger } from './logger';
+import * as common from './common';
 
-export async function launch(debugSessionID: string, debugConfig: debugConfigProvider.ISolidityMeadowDebugConfig) {
+export async function launch(debugSessionID: string, debugConfig: ISolidityMeadowDebugConfig) {
 
     // let activeDebugSession = vscode.debug.activeDebugSession;
     // let responseTest = await e.customRequest("customRequestExample", { sessionID: debugSessionID });
-
-    const EXTERNAL_UNIT_TEST_DEBUG = true;
 
     let envOpts = { 
         "DEBUG_SESSION_ID": debugSessionID,
@@ -20,7 +20,6 @@ export async function launch(debugSessionID: string, debugConfig: debugConfigPro
     }
 
     const meadowDotnetDebugName = "Meadow: MSTest Runner";
-    let workspaceFolder = getWorkspaceFolder();
 
     let testAssembly : string;
     if (debugConfig.testAssembly) {
@@ -49,12 +48,14 @@ export async function launch(debugSessionID: string, debugConfig: debugConfigPro
     }
     else {
 
+        let workspaceFolder = common.getWorkspaceFolder();
+
         let unitTestRunnerDebugConfig: vscode.DebugConfiguration = {
             name: meadowDotnetDebugName,
             type: "coreclr",
             request: "launch",
             program: testAssembly,
-            cwd: workspaceFolder,
+            cwd: workspaceFolder.uri.fsPath,
             env: envOpts,
             console: "internalConsole",
             internalConsoleOptions: "openOnSessionStart"
@@ -66,19 +67,8 @@ export async function launch(debugSessionID: string, debugConfig: debugConfigPro
 
 
 
-function getWorkspaceFolder() : vscode.WorkspaceFolder {
-    let workspaceFolder: vscode.WorkspaceFolder;
-    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        workspaceFolder = vscode.workspace.workspaceFolders[0];
-    }
-    else {
-        throw new Error("bad workspace");
-    }
-    return workspaceFolder;
-}
-
 async function getDotnetTestAssemblies() : Promise<string[]> {
-    let workspaceFolder = getWorkspaceFolder();
+    let workspaceFolder = common.getWorkspaceFolder();
     let dotnetTestResult: { stderr: string, stdout: string };
     try {
         let testRunArgs = ["test", "-t", "-v=q"];

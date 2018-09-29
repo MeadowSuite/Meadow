@@ -33,6 +33,8 @@ Provides an intuitive framework for writing C# tests against contract deployment
 
 <img src="/images/screenshot3.png?raw=true" width="800" />
 
+See [Solidity Debugger](#solidity-debugger).
+
 ---
 
 #### Solidity unit test code coverage HTML reports
@@ -51,6 +53,14 @@ Provides an intuitive framework for writing C# tests against contract deployment
 
 ---
 
+# Solidity Debugger
+
+[![vs marketplace](https://img.shields.io/vscode-marketplace/v/hosho.solidity-debugger.svg)](https://marketplace.visualstudio.com/items?itemName=hosho.solidity-debugger)
+
+Solidity debugger extension for VSCode supporting beakpoints, stepping, rewinding, call stacks, local & state variable inspection.
+
+---
+
 # Components
 
 | Library | Package   |  |
@@ -61,7 +71,6 @@ Provides an intuitive framework for writing C# tests against contract deployment
 | [Meadow.CoverageReport](src/Meadow.CoverageReport) | [![nuget](https://img.shields.io/nuget/v/Meadow.CoverageReport.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.CoverageReport) | Generates HTML and JSON code coverage reports for Solidity source files. Uses execution trace data from the EVM. |
 | [Meadow.UnitTestTemplate](src/Meadow.UnitTestTemplate) | [![nuget](https://img.shields.io/nuget/v/Meadow.UnitTestTemplate.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.UnitTestTemplate) | Test harness providing seamless integration between MSTest and Solidity contracts. Provides a simple workflow where Solidity source files are dropped into a unit test project and C# contract code is automatically generated. C# unit tests can easily deploy/call/transact with contracts. RPC test node servers & clients are automatically boostrapped and provided to unit tests. Code coverage reports are automatically generated after unit tests are ran. |
 | [Meadow.Cli](src/Meadow.Cli) | [![nuget](https://img.shields.io/nuget/v/Meadow.Cli.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.Cli) | Tool that allows contract deployments and interaction through the command line. Solidity source files are live-compiled using a file system watcher. Can be ran against a automatically bootstrapped test RPC node or an externally configured node. Leverages PowerShell Core to a provide cross platform REPL-like environment with powerful tab-completion when interacting with contracts. |
-| [Meadow.VSCode.Debugger](src/Meadow.VSCode.Debugger) | TODO.. | Solidity debugger extension for VSCode supporting beakpoints, stepping, rewinding, call stacks, local & state variable inspection. |
 | [Meadow.Core](src/Meadow.Core) | [![nuget](https://img.shields.io/nuget/v/Meadow.Core.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.Core) | <ul><li>RLP and ABI encoding & decoding utils. <li>Implementations of Ethereum / solidity types such as Address, UInt256, Hash, etc. <li>BIP32, BIP39, BIP44, HD account derivation implementation. <li>Fast managed Keccak hashing. <li> ECDSA / secp256k1 utils.</ul> |
 | [Meadow.JsonRpc](src/Meadow.JsonRpc) | [![nuget](https://img.shields.io/nuget/v/Meadow.JsonRpc.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.JsonRpc) | <ul><li>.NET types for the Ethereum JSON-RPC request & response data structures. <li>.NET interface for all RPC methods. <li>Serialization for JSON/hex object formats <-> Solidity/.NET types.</ul> |
 | [Meadow.JsonRpc.Client](src/Meadow.JsonRpc.Client) | [![nuget](https://img.shields.io/nuget/v/Meadow.JsonRpc.Client.svg?colorB=blue)](https://www.nuget.org/packages/Meadow.JsonRpc.Client) | JSON-RPC client implementation, supported transports: http, WebSocket, and IPC. |

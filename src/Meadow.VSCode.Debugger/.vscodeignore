@@ -2,6 +2,7 @@
 .vscode-test/**
 out/test/**
 out/**/*.map
+out/preparePackage.js
 src/**
 tsconfig.json
 tslint.json
