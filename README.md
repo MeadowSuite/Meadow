@@ -24,13 +24,11 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 
 ---
 
-#### Powerful Solidity contract development, deployment, and interaction
+## Powerful Solidity contract development, deployment, and interaction
 
 <img src="/images/screenshot1.png?raw=true" width="700" />
 
 Provides an intuitive framework for writing C# to perform contract deployments, transactions, function calls, RPC requests, and more. Solidity source files are automatically compiled and exposed as C# classes with all contract methods, events, and natspec documentation. Includes a personal Ethereum test node that automatically is setup during test executions.
-
----
 
 #### Visibility into Solidity revert / exception call stacks
 
@@ -40,11 +38,11 @@ Better understanding and investigation of Solidity execution problems.
 
 ---
 
-#### Solidity unit test code coverage HTML reports
+# Solidity Coverage Reports
 
 <img src="/images/screenshot4.png?raw=true" width="600" />
 
-Perform thorough testing of Solidity codebases. See .sol source code coverage for line, branch, and function execution.
+Perform thorough testing of Solidity codebases. Generate HTML and JSON code coverage reports showing .sol source code coverage for line, branch, and function execution. 
 
 ---
 
