@@ -8,12 +8,20 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 [![AppVeyor Tests](https://img.shields.io/appveyor/tests/Meadow/Meadow/master.svg?label=AppVeyor%20Tests)](https://ci.appveyor.com/project/Meadow/meadow/branch/master) 
 [![Gitter](https://img.shields.io/gitter/room/MeadowSuite/Meadow.svg?label=Chat)](https://gitter.im/MeadowSuite/Lobby)
 
-| Platform | Build |
-|----------|-------|
-| Windows x64 | [![Build Status](https://ci.appveyor.com/api/projects/status/nauu7pmvu9q2b2xd/branch/master?svg=true)](https://ci.appveyor.com/project/Meadow/meadow/branch/master) |
-| Linux x64 | [![Build Status](https://img.shields.io/teamcity/https/teamcity.meadowsuite.com/e/Meadow_MeadowSuiteTest.svg)](https://teamcity.meadowsuite.com/viewType.html?buildTypeId=Meadow_MeadowSuiteTest&guest=1)  |
-| MacOS x64 | [![Build Status](https://travis-ci.com/MeadowSuite/Meadow.svg?branch=master)](https://travis-ci.com/MeadowSuite/Meadow) |
 
+<table>
+  <tr>
+    <td rowspan="2">Builds</td>
+    <td>Windows Status</td>
+    <td>Linux Status</td>
+    <td>MacOS Status</td>
+  </tr>
+  <tr>
+    <td><a href="https://ci.appveyor.com/project/Meadow/meadow/branch/master"><img src="https://ci.appveyor.com/api/projects/status/nauu7pmvu9q2b2xd/branch/master?svg=true"></a></td>
+    <td><a href="https://teamcity.meadowsuite.com/viewType.html?buildTypeId=Meadow_MeadowSuiteTest&guest=1"><img src="https://img.shields.io/teamcity/https/teamcity.meadowsuite.com/e/Meadow_MeadowSuiteTest.svg"></a></td>
+    <td><a href="https://travis-ci.com/MeadowSuite/Meadow"><img src="https://travis-ci.com/MeadowSuite/Meadow.svg?branch=master"></a></td>
+  </tr>
+</table>
 
 ## Quick start / guides
 
