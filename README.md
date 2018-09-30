@@ -12,36 +12,7 @@
 
 # Meadow
 
-An Ethereum implementation geared towards Solidity testing and development. Written completely in cross-platform C# with .NET Core. Use may use Meadow in VSCode, Visual Studio, and JetBrains Rider.
-
-
-#### Powerful Solidity contract development, deployment, and interaction
-
-<img src="/images/screenshot1.png?raw=true" width="700" />
-
-Provides an intuitive framework for writing C# tests against contract deployments and interactions. Includes a personal Ethereum test node that automatically is setup during test executions.
-
----
-
-#### Visibility into Solidity revert / exception call stacks
-
-<img src="/images/screenshot2.png?raw=true" width="700" />
-
----
-
-#### Solidity debugging with breakpoints, stepping, rewinding, variable inspection, et cetera
-
-<img src="/images/screenshot3.png?raw=true" width="800" />
-
-See [Solidity Debugger](#solidity-debugger).
-
----
-
-#### Solidity unit test code coverage HTML reports
-
-<img src="/images/screenshot4.png?raw=true" width="600" />
-
----
+An integrated Ethereum implementation and tool suite focused on Solidity testing and development. Written completely in cross-platform C# with .NET Core. Meadow can be used in VSCode, Visual Studio, and JetBrains Rider.
 
 ## Quick start / guides
 
@@ -53,11 +24,37 @@ See [Solidity Debugger](#solidity-debugger).
 
 ---
 
+#### Powerful Solidity contract development, deployment, and interaction
+
+<img src="/images/screenshot1.png?raw=true" width="700" />
+
+Provides an intuitive framework for writing C# to perform contract deployments, transactions, function calls, RPC requests, and more. Solidity source files are automatically compiled and exposed as C# classes with all contract methods, events, and natspec documentation. Includes a personal Ethereum test node that automatically is setup during test executions.
+
+---
+
+#### Visibility into Solidity revert / exception call stacks
+
+<img src="/images/screenshot2.png?raw=true" width="700" />
+
+Better understanding and investigation of Solidity execution problems. 
+
+---
+
+#### Solidity unit test code coverage HTML reports
+
+<img src="/images/screenshot4.png?raw=true" width="600" />
+
+Perform thorough testing of Solidity codebases. See .sol source code coverage for line, branch, and function execution.
+
+---
+
 # Solidity Debugger
 
 [![vs marketplace](https://img.shields.io/vscode-marketplace/v/hosho.solidity-debugger.svg)](https://marketplace.visualstudio.com/items?itemName=hosho.solidity-debugger)
 
-Solidity debugger extension for VSCode supporting beakpoints, stepping, rewinding, call stacks, local & state variable inspection.
+<img src="/images/screenshot3.png?raw=true" width="800" />
+
+Solidity debugger extension for Visual Studio Code supporting beakpoints, stepping, rewinding, call stacks, local & state variable inspection.
 
 ---
 
