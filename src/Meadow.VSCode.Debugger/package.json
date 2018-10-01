@@ -28,7 +28,7 @@
   "extensionDependencies": [
     "ms-vscode.csharp"
   ],
-  "icon": "https://github.com/MeadowSuite/Meadow/raw/master/images/meadow-icon-256x256.png?raw=true",
+  "icon": "meadow-icon-256x256.png",
   "preview": true,
   "private": true,
   "scripts": {
@@ -54,7 +54,7 @@
     "@types/node": "^8.10.0",
     "tslint": "^5.11.0",
     "typescript": "^3.0.3",
-    "vsce": "^1.51.0",
+    "vsce": "^1.51.1",
     "vscode": "^1.1.21",
     "vscode-debugadapter-testsupport": "^1.31.0",
     "trash": "^4.3.0"
