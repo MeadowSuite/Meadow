@@ -25,10 +25,10 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             Type = type;
 
             // Obtain the components of our type and set them.
-            BaseType = VarTypes.ParseTypeComponents(type.TypeDescriptions.TypeString).baseType;
+            BaseType = VarParser.ParseTypeComponents(type.TypeDescriptions.TypeString).baseType;
 
             // Obtain our generic type.
-            GenericType = VarTypes.GetGenericType(BaseType);
+            GenericType = VarParser.GetGenericType(BaseType);
         }
         #endregion
 

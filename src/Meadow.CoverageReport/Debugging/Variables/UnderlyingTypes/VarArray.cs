@@ -23,13 +23,13 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public VarArray(AstArrayTypeName type, VarLocation location) : base(type)
         {
             // Obtain our array size
-            ArraySize = VarTypes.ParseArrayTypeComponents(BaseType).arraySize;
+            ArraySize = VarParser.ParseArrayTypeComponents(BaseType).arraySize;
 
             // Set our type name
             ArrayTypeName = type;
 
             // Set our element parser with the given array element/base type.
-            ElementObject = VarTypes.GetVariableObject(ArrayTypeName.BaseType, location);
+            ElementObject = VarParser.GetVariableObject(ArrayTypeName.BaseType, location);
 
             // Define our bounds variables
             int storageSlotCount = 1;

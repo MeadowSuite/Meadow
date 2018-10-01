@@ -51,9 +51,9 @@ namespace Meadow.CoverageReport.Debugging.Variables
         {
             // Set our properties
             Declaration = declaration;
-            BaseType = VarTypes.ParseTypeComponents(Declaration.TypeName.TypeDescriptions.TypeString).baseType;
-            GenericType = VarTypes.GetGenericType(BaseType);
-            ValueParser = VarTypes.GetVariableObject(Declaration.TypeName, VariableLocation);
+            BaseType = VarParser.ParseTypeComponents(Declaration.TypeName.TypeDescriptions.TypeString).baseType;
+            GenericType = VarParser.GetGenericType(BaseType);
+            ValueParser = VarParser.GetVariableObject(Declaration.TypeName, VariableLocation);
         }
         #endregion
 

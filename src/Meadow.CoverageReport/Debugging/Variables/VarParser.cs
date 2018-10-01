@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace Meadow.CoverageReport.Debugging.Variables
 {
-    public abstract class VarTypes
+    public abstract class VarParser
     {
         #region Constants
         /// <summary>

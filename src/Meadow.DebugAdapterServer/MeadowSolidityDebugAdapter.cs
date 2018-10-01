@@ -845,7 +845,7 @@ namespace Meadow.DebugAdapterServer
             // Obtain our internal path from a vs code path
             var relativeFilePath = ConvertVSCodePathToInternalPath(responder.Arguments.Source.Path);
 
-            _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
+                     _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
             
             responder.SetResponse(new SetBreakpointsResponse());
         }

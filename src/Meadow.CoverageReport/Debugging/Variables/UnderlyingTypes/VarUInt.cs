@@ -13,7 +13,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public VarUInt(AstElementaryTypeName type) : base(type)
         {
             // Obtain our size in bytes
-            int sizeBytes = VarTypes.GetIntegerSizeInBytes(BaseType, GenericType);
+            int sizeBytes = VarParser.GetIntegerSizeInBytes(BaseType, GenericType);
 
             // Initialize our bounds
             InitializeBounds(1, sizeBytes);

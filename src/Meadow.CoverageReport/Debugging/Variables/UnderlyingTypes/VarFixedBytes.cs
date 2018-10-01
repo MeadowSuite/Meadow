@@ -11,7 +11,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public VarFixedBytes(AstElementaryTypeName type) : base(type)
         {
             // Determine the size of our fixed array.
-            int sizeBytes = VarTypes.GetFixedArraySizeInBytes(BaseType);
+            int sizeBytes = VarParser.GetFixedArraySizeInBytes(BaseType);
 
             // Initialize our bounds
             InitializeBounds(1, sizeBytes);
