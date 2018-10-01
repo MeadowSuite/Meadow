@@ -40,7 +40,7 @@
     from MSTest.TestAdapter inside this package. 
     TODO: Try to find a cleaner way to exclude these files from the package. 
   -->
-  <Import Project="reference-mstest-adapter.targets" Condition="'$(Configuration)' == 'Release'" />
+  <Import Project="reference-mstest-adapter.targets" />
   <Target Name="ExlcudeTestAdapterPackageContent" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>
       <Content Update="*" Condition="$([System.String]::Copy('%(Content.Link)').StartsWith('Microsoft.VisualStudio.TestPlatform'))">
