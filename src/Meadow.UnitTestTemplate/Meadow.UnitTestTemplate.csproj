@@ -2,14 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
+    <IsTestProject>false</IsTestProject>
     <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="ExposedObject" Version="1.3.0" />
     <PackageReference Include="Microsoft.UnitTestFramework.Extensions" Version="2.0.0" />
-    <PackageReference Include="MSTest.TestAdapter" Version="1.3.2" IncludeAssets="contentFiles" />
     <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
+    <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="15.8.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
   </ItemGroup>
 
@@ -17,7 +18,6 @@
     <ProjectReference Include="..\Meadow.Contract\Meadow.Contract.csproj" />
     <ProjectReference Include="..\Meadow.CoverageReport\Meadow.CoverageReport.csproj" />
     <ProjectReference Include="..\Meadow.DebugAdapterServer\Meadow.DebugAdapterServer.csproj" />
-    <ProjectReference Include="..\Meadow.MSTest.Runner\Meadow.MSTest.Runner.csproj" />
     <ProjectReference Include="..\Meadow.SolCodeGen\Meadow.SolCodeGen.csproj" PrivateAssets="none" />
     <ProjectReference Include="..\Meadow.TestNode\Meadow.TestNode.csproj" />
   </ItemGroup>
@@ -32,6 +32,21 @@
       <PackagePath>build</PackagePath>
     </None>
   </ItemGroup>
-
-
+  
+    
+  <!--
+    We include a reference to the MSTest.TestAdapter package as a transitive dependency
+    so consumers of this project have it. But we don't want to bundle the content files
+    from MSTest.TestAdapter inside this package. 
+    TODO: Try to find a cleaner way to exclude these files from the package. 
+  -->
+  <Import Project="reference-mstest-adapter.targets" Condition="'$(Configuration)' == 'Release'" />
+  <Target Name="ExlcudeTestAdapterPackageContent" BeforeTargets="BeforeBuild" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <Content Update="*" Condition="$([System.String]::Copy('%(Content.Link)').StartsWith('Microsoft.VisualStudio.TestPlatform'))">
+         <Pack>false</Pack>
+      </Content>
+    </ItemGroup>
+  </Target>
+    
 </Project>

@@ -11,35 +11,35 @@ using System.Reflection;
 using System.Threading;
 using System.Xml;
 
-namespace Meadow.MSTest.Runner
+namespace Meadow.UnitTestTemplate
 {
-    public class ApplicationTestRunner
+    public class MSTestRunner
     {
         string[] _assemblies;
         (string FullyQualifiedTestName, string SourceAssembly)[] _testCases;
 
-        private ApplicationTestRunner()
+        private MSTestRunner()
         {
 
         }
 
-        public static ApplicationTestRunner CreateFromAssemblies(params Assembly[] assemblies)
+        public static MSTestRunner CreateFromAssemblies(params Assembly[] assemblies)
         {
-            var runner = new ApplicationTestRunner();
+            var runner = new MSTestRunner();
             runner._assemblies = assemblies.Select(a => a.Location).ToArray();
             return runner;
         }
 
-        public static ApplicationTestRunner CreateFromAssemblies(params string[] assemblies)
+        public static MSTestRunner CreateFromAssemblies(params string[] assemblies)
         {
-            var runner = new ApplicationTestRunner();
+            var runner = new MSTestRunner();
             runner._assemblies = assemblies;
             return runner;
         }
 
-        public static ApplicationTestRunner CreateFromSpecificTests(params (string FullyQualifiedTestName, string SourceAssembly)[] testCases)
+        public static MSTestRunner CreateFromSpecificTests(params (string FullyQualifiedTestName, string SourceAssembly)[] testCases)
         {
-            var runner = new ApplicationTestRunner();
+            var runner = new MSTestRunner();
             runner._assemblies = testCases.Select(t => t.SourceAssembly).Distinct().ToArray();
             runner._testCases = testCases;
             return runner;

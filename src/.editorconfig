@@ -9,3 +9,7 @@ indent_size = 4
 [*.cs]
 indent_style = space
 indent_size = 4
+
+[*.{xml,csproj,targets,props}]
+indent_syle = space
+indent_size = 2
