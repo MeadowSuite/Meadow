@@ -29,7 +29,7 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 
 * [Using the CLI](src/Meadow.Cli/README.md) - contract deployment and interaction against testnode or production.
 
-* [VSCode Solidity Debugger](TODO)
+* [VSCode Solidity Debugger](https://github.com/MeadowSuite/Meadow/wiki/Using-the-VSCode-Solidity-Debugger)
 
 ---
 
