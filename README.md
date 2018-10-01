@@ -31,7 +31,7 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 
 * [VSCode Solidity Debugger](https://github.com/MeadowSuite/Meadow/wiki/Using-the-VSCode-Solidity-Debugger)
 
-* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, tesing reverts, etc..
+* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, testing reverts, etc..
 ---
 
 ## Powerful Solidity contract development, deployment, and interaction
