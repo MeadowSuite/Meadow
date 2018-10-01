@@ -27,6 +27,10 @@
       <Pack>true</Pack>
       <PackagePath>build</PackagePath>
     </None>
+    <None Update="Meadow.UnitTestTemplate.targets">
+      <Pack>true</Pack>
+      <PackagePath>build</PackagePath>
+    </None>
     <None Include="RunnerEntryPoint.cs">
       <Pack>true</Pack>
       <PackagePath>build</PackagePath>
