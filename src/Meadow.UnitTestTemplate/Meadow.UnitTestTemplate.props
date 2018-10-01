@@ -4,6 +4,7 @@
   <PropertyGroup>
     <StartupObject>Meadow.UnitTestTemplate.RunnerEntryPoint</StartupObject>
     <NoWarn>$(NoWarn);NU1603;NU1701</NoWarn>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   
   <ItemGroup>
