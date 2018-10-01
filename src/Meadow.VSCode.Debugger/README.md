@@ -1,6 +1,6 @@
 Solidity debugger extension for Visual Studio Code supporting beakpoints, stepping, rewinding, call stacks, local & state variable inspection.
 
-<img src="/images/screenshot3.png?raw=true" width="800" />
+<img src="https://github.com/MeadowSuite/Meadow/raw/master/images/screenshot3.png?raw=true" width="800" />
 
 
 ### Documentation
