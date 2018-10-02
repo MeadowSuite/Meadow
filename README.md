@@ -62,7 +62,7 @@ Perform thorough testing of Solidity codebases. Generate HTML and JSON code cove
 
 <img src="/images/screenshot3.png?raw=true" width="800" />
 
-Solidity debugger extension for Visual Studio Code supporting beakpoints, stepping, rewinding, call stacks, local & state variable inspection.
+Solidity debugger extension for Visual Studio Code supporting breakpoints, stepping, rewinding, call stacks, local & state variable inspection.
 
 ---
 
