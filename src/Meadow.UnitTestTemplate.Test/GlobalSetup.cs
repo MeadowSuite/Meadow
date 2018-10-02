@@ -16,8 +16,8 @@ namespace Meadow.UnitTestTemplate.Test
         [AssemblyInitialize]
         public static async Task Init(TestContext testContext)
         {
-            await Global.Init(testContext);
             Global.HideSolidityFromReport("mocks", "IgnoreContract.sol");
+            await Task.CompletedTask;
         }
 
         [AssemblyCleanup]

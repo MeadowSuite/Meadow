@@ -13,6 +13,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -20,6 +21,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -102,8 +104,6 @@ namespace Meadow.UnitTestTemplate
         /// </summary>
         public static TestServices ExternalNodeTestServices { get; private set; }
 
-        public static bool IsInitialized { get; private set; } = false;
-
         //static readonly Dictionary<string, string[]> AppConfigValues = new Dictionary<string, string[]>();
         static (string Key, string Value)[] appConfigValues;
 
@@ -114,17 +114,37 @@ namespace Meadow.UnitTestTemplate
             TestServicesPool = new AsyncObjectPool<TestServices>(CreateTestServicesInstance);
             CoverageMaps = new ConcurrentBag<(CompoundCoverageMap Coverage, SolcBytecodeInfo Contract)[]>();
             UnitTestResults = new ConcurrentBag<UnitTestResult>();
+
+           
+            var thisAsm = Assembly.GetExecutingAssembly().GetName().Name;
+            var unitTestAssembly = AppDomain.CurrentDomain
+                .GetAssemblies()
+                .Where(a => !a.IsDynamic && !a.GlobalAssemblyCache)
+                .Where(a => a.Location.EndsWith(".dll", StringComparison.Ordinal))
+                .Where(a => File.Exists(a.Location + ".config"))
+                .Where(a => a.GetReferencedAssemblies().Any(r => r.Name == thisAsm))
+                .FirstOrDefault();
+
+            ParseAppConfigSettings(unitTestAssembly);
+
         }
 
         static void ParseAppConfigSettings(Assembly callingAssembly)
         {
-            var assemblyConfig = ConfigurationManager.OpenExeConfiguration(callingAssembly.Location);
+            if (callingAssembly != null)
+            {
+                var assemblyConfig = ConfigurationManager.OpenExeConfiguration(callingAssembly.Location);
 
-            appConfigValues = assemblyConfig.AppSettings
-                .Settings
-                .Cast<KeyValueConfigurationElement>()
-                .Select(s => (s.Key, s.Value))
-                .ToArray();
+                appConfigValues = assemblyConfig.AppSettings
+                    .Settings
+                    .Cast<KeyValueConfigurationElement>()
+                    .Select(s => (s.Key, s.Value))
+                    .ToArray();
+            }
+            else
+            {
+                appConfigValues = Array.Empty<(string Key, string Value)>();
+            }
 
             var configValueList = appConfigValues.ToList();
 
@@ -345,21 +365,10 @@ namespace Meadow.UnitTestTemplate
             return aggregateException;
         }
 
-
-        public static async Task Init(TestContext testContext)
+        [Obsolete("This no longer needs to be called.")]
+        public static Task Init(TestContext testContext)
         {
-            var unitTestAssembly = AppDomain.CurrentDomain.GetAssemblies()
-                .Where(a => !a.IsDynamic)
-                .Select(a => a.GetType(testContext.FullyQualifiedTestClassName))
-                .Where(t => t != null)
-                .Select(t => t.Assembly)
-                .First();
-
-            ParseAppConfigSettings(unitTestAssembly);
-
-            IsInitialized = true;
-
-            await Task.CompletedTask;
+            return Task.CompletedTask;
         }
 
         static readonly ConcurrentBag<string> _reportBlacklist = new ConcurrentBag<string>();
@@ -375,8 +384,23 @@ namespace Meadow.UnitTestTemplate
             }
         }
 
+        static readonly object _cleanupSyncRoot = new object();
+        static bool _didCleanup = false;
+
         public static async Task Cleanup([CallerFilePath]string callerFilePath = null)
         {
+            lock (_cleanupSyncRoot)
+            {
+                if (_didCleanup)
+                {
+                    return;
+                }
+                else
+                {
+                    _didCleanup = true;
+                }
+            }
+
             var reportGeneratorExceptions = new List<Exception>();
             try
             {
