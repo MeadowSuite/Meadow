@@ -329,47 +329,26 @@ namespace Meadow.TestNode
             // Snapshot our state at this height in block
             ulong snapshotID = Snapshot().Result;
 
-            // Create our default parameters
-            Meadow.EVM.Data_Types.Addressing.Address to = new Meadow.EVM.Data_Types.Addressing.Address(0);
-            if (callParams.To.HasValue)
+            // Process the transaction and obtain the transaction hash.
+            var transactionHash = SendTransaction(new TransactionParams()
             {
-                to = new Meadow.EVM.Data_Types.Addressing.Address(callParams.To.Value.GetBytes());
-            }
-
-            // Obtain some information which helps us build our contract and determine deployment address if deploying.
-            var sender = new Meadow.EVM.Data_Types.Addressing.Address(callParams.From.Value.GetBytes());
-            var targetInformation = GetTransactionTargetInformation(sender, to);
-
-            // Create our transaction using the provided parameters and some fallback options.
-            Meadow.EVM.Data_Types.Transactions.Transaction transaction = new Meadow.EVM.Data_Types.Transactions.Transaction(
-                targetInformation.senderNonce,
-                (BigInteger?)callParams.GasPrice ?? TestChain.MinimumGasPrice,
-                (BigInteger?)callParams.Gas ?? GasDefinitions.CalculateGasLimit(TestChain.Chain.GetHeadBlock().Header, TestChain.Chain.Configuration),
-                to,
-                (BigInteger?)callParams.Value ?? 0,
-                callParams.Data ?? Array.Empty<byte>());
-
-            // Obtain the provided accounts keypair
-            EthereumEcdsa keypair = AccountDictionary[callParams.From.Value];
-
-            // If we're past the spurious dragon fork, we begin using chain ID.
-            EthereumChainID? chainID = null;
-            if (TestChain.Chain.Configuration.Version >= EthereumRelease.SpuriousDragon)
-            {
-                chainID = TestChain.Chain.Configuration.ChainID;
-            }
-
-            // Sign the transaction with this account's keypair
-            transaction.Sign(keypair, chainID);
-
-            // Process the transaction and return the result
-            var transactionHash = ProcessTransactionInternal(transaction, targetInformation.deploying, targetInformation.targetDeployedAddress).Result;
+                From = callParams.From,
+                To = callParams.To,
+                Data = callParams.Data,
+                Gas = callParams.Gas,
+                GasPrice = callParams.GasPrice,
+                Nonce = null,
+                Value = callParams.Value
+            }).Result;
 
             // Obtain our transaction receipt.
             var transactionReceipt = GetTransactionReceipt(transactionHash).Result;
 
             // Revert to our previous state
             Revert(snapshotID);
+
+            // Remove the snapshot from our lookup
+            Snapshots.Remove(snapshotID);
 
             // Return our gas used.
             return Task.FromResult((UInt256)transactionReceipt.GasUsed);
