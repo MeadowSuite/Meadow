@@ -329,26 +329,45 @@ namespace Meadow.TestNode
             // Snapshot our state at this height in block
             ulong snapshotID = Snapshot().Result;
 
-            // Process the transaction and obtain the transaction hash.
-            var transactionHash = SendTransaction(new TransactionParams()
-            {
-                From = callParams.From,
-                To = callParams.To,
-                Data = callParams.Data,
-                Gas = callParams.Gas,
-                GasPrice = callParams.GasPrice,
-                Nonce = null,
-                Value = callParams.Value
-            }).Result;
+            // Define our resulting transaction receipt and exception (in case one occurs)
+            TransactionReceipt transactionReceipt = null;
+            Exception transactionException = null;
 
-            // Obtain our transaction receipt.
-            var transactionReceipt = GetTransactionReceipt(transactionHash).Result;
+            // Try to process our transaction and obtain the receipt.
+            try
+            {
+                // Process the transaction and obtain the transaction hash.
+                var transactionHash = SendTransaction(new TransactionParams()
+                {
+                    From = callParams.From,
+                    To = callParams.To,
+                    Data = callParams.Data,
+                    Gas = callParams.Gas,
+                    GasPrice = callParams.GasPrice,
+                    Nonce = null,
+                    Value = callParams.Value
+                }).Result;
+
+                // Obtain our transaction receipt.
+                transactionReceipt = GetTransactionReceipt(transactionHash).Result;
+            }
+            catch (Exception ex)
+            {
+                // An exception occurred, so we set our transaction exception.
+                transactionException = ex;
+            }
 
             // Revert to our previous state
             Revert(snapshotID);
 
             // Remove the snapshot from our lookup
             Snapshots.Remove(snapshotID);
+
+            // If our exception is not null, return it
+            if (transactionException != null)
+            {
+                return Task.FromException<UInt256>(transactionException);
+            }
 
             // Return our gas used.
             return Task.FromResult((UInt256)transactionReceipt.GasUsed);
@@ -1062,7 +1081,7 @@ namespace Meadow.TestNode
                 return TestChain.Chain.GetHeadBlock().Header.BlockNumber;
             }
             else if (blockParameter.ParameterType == BlockParameterType.Pending)
-            { 
+            {
                 // TODO: verify this..
                 // Test node instantly mine blocks so there is no pending block, use latest block instead
                 return TestChain.Chain.GetHeadBlock().Header.BlockNumber;
