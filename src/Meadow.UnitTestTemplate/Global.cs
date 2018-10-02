@@ -387,7 +387,7 @@ namespace Meadow.UnitTestTemplate
         static readonly object _cleanupSyncRoot = new object();
         static bool _didCleanup = false;
 
-        public static async Task Cleanup([CallerFilePath]string callerFilePath = null)
+        public static async Task Cleanup()
         {
             lock (_cleanupSyncRoot)
             {
@@ -404,6 +404,20 @@ namespace Meadow.UnitTestTemplate
             var reportGeneratorExceptions = new List<Exception>();
             try
             {
+                var callerFilePath = Directory.GetCurrentDirectory();
+                var normalizedPath = callerFilePath.Replace('\\', '/');
+                const string OUTPUT_DIR_DEBUG = "bin/Debug/netcoreapp2.1";
+                const string OUTPUT_DIR_RELEASE = "bin/Release/netcoreapp2.1";
+
+                if (normalizedPath.EndsWith(OUTPUT_DIR_DEBUG, StringComparison.OrdinalIgnoreCase))
+                {
+                    callerFilePath = callerFilePath.Substring(0, callerFilePath.Length - OUTPUT_DIR_DEBUG.Length);
+                }
+                else if (normalizedPath.EndsWith(OUTPUT_DIR_RELEASE, StringComparison.OrdinalIgnoreCase))
+                {
+                    callerFilePath = callerFilePath.Substring(0, callerFilePath.Length - OUTPUT_DIR_RELEASE.Length);
+                }
+
                 _callerFilePath = callerFilePath;
                 await CleanupInternal(reportGeneratorExceptions);
             }
