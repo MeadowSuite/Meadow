@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading;
 using System.Xml;
 
@@ -140,17 +141,41 @@ namespace Meadow.UnitTestTemplate
             yield return Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
         }
 
-        Action<string> GetConsoleLogger()
+        Action<TestResult> GetConsoleLogger()
         {
-            //var output = Console.OpenStandardOutput();
-            //var sw = new StreamWriter(output);
-            return msg =>
+            var stdout = Console.OpenStandardOutput();
+            var stderr = Console.OpenStandardError();
+            var stdoutWriter = new StreamWriter(stdout);
+            var stderrWriter = new StreamWriter(stderr);
+
+            var syncRoot = new object();
+            return testResult =>
             {
-                return;
-                //sw.WriteLine(msg);
-                //sw.Flush();
-                //Debug.WriteLine(msg);
-                //Trace.WriteLine(msg);
+                lock (syncRoot)
+                {
+                    var resultMsg = $"{testResult.TestCase.ToString()} - {testResult.Outcome} [{Math.Round(testResult.Duration.TotalMilliseconds)} ms]";
+                    if (testResult.Outcome == TestOutcome.Passed || testResult.Outcome == TestOutcome.Skipped)
+                    {
+                        stdoutWriter.WriteLine(resultMsg);
+                        stdoutWriter.Flush();
+                    }
+                    else
+                    {
+                        stderrWriter.WriteLine(resultMsg);
+
+                        if (!string.IsNullOrEmpty(testResult.ErrorMessage))
+                        {
+                            stderrWriter.WriteLine(testResult.ErrorMessage);
+                        }
+
+                        if (!string.IsNullOrEmpty(testResult.ErrorStackTrace))
+                        {
+                            stderrWriter.WriteLine(testResult.ErrorStackTrace);
+                        }
+
+                        stderrWriter.Flush();
+                    }
+                }
             };
         }
 
@@ -221,9 +246,9 @@ namespace Meadow.UnitTestTemplate
         {
             public bool EnableShutdownAfterTestRun { get; set; } = true;
 
-            readonly Action<string> _logger;
+            readonly Action<TestResult> _logger;
 
-            public MyFrameworkHandle(Action<string> logger)
+            public MyFrameworkHandle(Action<TestResult> logger)
             {
                 _logger = logger;
             }
@@ -243,7 +268,8 @@ namespace Meadow.UnitTestTemplate
 
             public void RecordResult(TestResult testResult)
             {
-                _logger?.Invoke($"{testResult.DisplayName} - {testResult.Outcome}");
+
+                _logger?.Invoke(testResult);
             }
 
             public void RecordStart(TestCase testCase)
