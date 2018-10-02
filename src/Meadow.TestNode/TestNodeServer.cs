@@ -177,23 +177,6 @@ namespace Meadow.TestNode
             return Task.FromResult(new UInt256(TestChain.MinimumGasPrice));
         }
 
-        public Task<UInt256> EstimateGas(CallParams callParams, DefaultBlockParameter blockParameter)
-        {
-            // Obtain a state from this block parameter.
-            State postBlockState = GetStateFromBlockParameters(blockParameter);
-            if (postBlockState == null)
-            {
-                postBlockState = TestChain.Chain.State;
-            }
-
-            // We execute our call on the current state and obtain our result
-            var result = HandleCall(callParams, postBlockState);
-
-            // Return our result.
-            var gasState = result.EVM.GasState;
-            return Task.FromResult((UInt256)(gasState.InitialGas - gasState.Gas));
-        }
-
         public Task<Address> Coinbase()
         {
             // Return our address
@@ -327,6 +310,69 @@ namespace Meadow.TestNode
 
             // Process the transaction and return the result
             return ProcessTransactionInternal(transaction, targetInformation.deploying, targetInformation.targetDeployedAddress);
+        }
+
+        public Task<UInt256> EstimateGas(CallParams callParams, DefaultBlockParameter blockParameter)
+        {
+            // Verify our block parameters are for the latest block.
+            if (blockParameter.ParameterType == BlockParameterType.Earliest ||
+                blockParameter.ParameterType == BlockParameterType.Pending)
+            {
+                return Task.FromException<UInt256>(new NotImplementedException("EstimateGas does not support estimations at earlier or pending points in the chain."));
+            }
+
+            if (blockParameter.ParameterType == BlockParameterType.BlockNumber && TestChain.Chain.State.CurrentBlock.Header.BlockNumber != blockParameter.BlockNumber)
+            {
+                return Task.FromException<UInt256>(new NotImplementedException("EstimateGas only supports estimations at the current block number in the chain."));
+            }
+
+            // Snapshot our state at this height in block
+            ulong snapshotID = Snapshot().Result;
+
+            // Create our default parameters
+            Meadow.EVM.Data_Types.Addressing.Address to = new Meadow.EVM.Data_Types.Addressing.Address(0);
+            if (callParams.To.HasValue)
+            {
+                to = new Meadow.EVM.Data_Types.Addressing.Address(callParams.To.Value.GetBytes());
+            }
+
+            // Obtain some information which helps us build our contract and determine deployment address if deploying.
+            var sender = new Meadow.EVM.Data_Types.Addressing.Address(callParams.From.Value.GetBytes());
+            var targetInformation = GetTransactionTargetInformation(sender, to);
+
+            // Create our transaction using the provided parameters and some fallback options.
+            Meadow.EVM.Data_Types.Transactions.Transaction transaction = new Meadow.EVM.Data_Types.Transactions.Transaction(
+                targetInformation.senderNonce,
+                (BigInteger?)callParams.GasPrice ?? TestChain.MinimumGasPrice,
+                (BigInteger?)callParams.Gas ?? GasDefinitions.CalculateGasLimit(TestChain.Chain.GetHeadBlock().Header, TestChain.Chain.Configuration),
+                to,
+                (BigInteger?)callParams.Value ?? 0,
+                callParams.Data ?? Array.Empty<byte>());
+
+            // Obtain the provided accounts keypair
+            EthereumEcdsa keypair = AccountDictionary[callParams.From.Value];
+
+            // If we're past the spurious dragon fork, we begin using chain ID.
+            EthereumChainID? chainID = null;
+            if (TestChain.Chain.Configuration.Version >= EthereumRelease.SpuriousDragon)
+            {
+                chainID = TestChain.Chain.Configuration.ChainID;
+            }
+
+            // Sign the transaction with this account's keypair
+            transaction.Sign(keypair, chainID);
+
+            // Process the transaction and return the result
+            var transactionHash = ProcessTransactionInternal(transaction, targetInformation.deploying, targetInformation.targetDeployedAddress).Result;
+
+            // Obtain our transaction receipt.
+            var transactionReceipt = GetTransactionReceipt(transactionHash).Result;
+
+            // Revert to our previous state
+            Revert(snapshotID);
+
+            // Return our gas used.
+            return Task.FromResult((UInt256)transactionReceipt.GasUsed);
         }
 
         public Task<Hash> SendTransaction(TransactionParams transactionParams)
