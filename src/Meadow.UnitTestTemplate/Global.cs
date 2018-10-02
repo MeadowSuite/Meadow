@@ -110,6 +110,15 @@ namespace Meadow.UnitTestTemplate
 
         static Global()
         {
+            // Hook onto events for after tests have ran so we can call
+            // cleanup which does report generation.
+            // Its unclear which of these may or may not work in any given
+            // execution context and operating system, so hook to both.
+            // HOWEVER, neither seem to be called while running
+            // tests through test panels or `dotnet test`
+            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
+            AssemblyLoadContext.Default.Unloading += Default_Unloading;
+
             // Initialize our test variables.
             TestServicesPool = new AsyncObjectPool<TestServices>(CreateTestServicesInstance);
             CoverageMaps = new ConcurrentBag<(CompoundCoverageMap Coverage, SolcBytecodeInfo Contract)[]>();
@@ -127,6 +136,20 @@ namespace Meadow.UnitTestTemplate
 
             ParseAppConfigSettings(unitTestAssembly);
 
+        }
+
+        private static void Default_Unloading(AssemblyLoadContext obj)
+        {
+            // Perform report generation on progrma exit.
+            // (The cleanup method handles itself when being called multiple times).
+            Cleanup().GetAwaiter().GetResult();
+        }
+
+        private static void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            // Perform report generation on progrma exit.
+            // (The cleanup method handles itself when being called multiple times).
+            Cleanup().GetAwaiter().GetResult();
         }
 
         static void ParseAppConfigSettings(Assembly callingAssembly)
