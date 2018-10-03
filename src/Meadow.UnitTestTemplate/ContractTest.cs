@@ -9,7 +9,6 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -18,7 +17,7 @@ using System.Threading.Tasks;
 namespace Meadow.UnitTestTemplate
 {
 
-    [TestClass]
+    [MeadowTestClass]
     public abstract class ContractTest
     {
         #region Fields
@@ -66,6 +65,7 @@ namespace Meadow.UnitTestTemplate
         {
             try
             {
+
                 // With parallel tests, all code should execute in pairs (main vs. external for every test)
                 // so we need to ensure sequential execution to avoid issues with other tests running and trying
                 // to snapshot, execute, restore on the external node, ending up with a race condition.
@@ -155,7 +155,7 @@ namespace Meadow.UnitTestTemplate
                 }
 
                 // Revert the node chain for the next unit test to start with a clean slate.
-                await TestServices.TestNodeClient.Revert(_baseSnapshotID);
+                await TestServices.TestNodeClient.Revert(_baseSnapshotID.Value);
 
                 // Calculate our time elapsed.
                 var testDuration = (InternalTestState.EndTime - InternalTestState.StartTime);
@@ -170,23 +170,20 @@ namespace Meadow.UnitTestTemplate
                     var testOutcome = new UnitTestResult
                     {
                         Namespace = TestContext.FullyQualifiedTestClassName,
-                        TestName = TestContext.TestName,
+                        TestName = InternalTestState.CustomDisplayName ?? TestContext.TestName,
                         Passed = TestContext.CurrentTestOutcome == UnitTestOutcome.Passed,
                         Duration = testDuration
                     };
 
                     // Add the test to our global testing result test output.
                     Global.UnitTestResults.Add(testOutcome);
-
+                    
                     // As this is our built in node, we put the test services back in the pool.
                     await Global.TestServicesPool.PutAsync(TestServices);
                 }
 
                 // Blank out the local test services after the test has completed.
                 TestServices = null;
-
-                // Set our cleanup as a success
-                InternalTestState.CleanupSuccess = true;
 
                 // If we are running an external node, we'll want to make tests run sequentially.
                 if (Global.ExternalNodeTestServices != null)
@@ -200,7 +197,8 @@ namespace Meadow.UnitTestTemplate
             }
             finally
             {
-
+                // Reset test state so its not reused in another test.
+                InternalTestState = null;
             }
         }
 

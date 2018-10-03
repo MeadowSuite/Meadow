@@ -28,10 +28,8 @@ namespace Meadow.UnitTestTemplate
         /// Indicates whether test initialization occurred without error.
         /// </summary>
         internal bool InitializationSuccess { get; set; }
-        /// <summary>
-        /// Indicates whether test cleanup occurred without error.
-        /// </summary>
-        internal bool CleanupSuccess { get; set; }
+
+        internal string CustomDisplayName { get; set; }
         #endregion
     }
 }

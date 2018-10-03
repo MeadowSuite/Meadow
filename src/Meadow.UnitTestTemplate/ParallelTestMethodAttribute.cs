@@ -1,5 +1,4 @@
-﻿using ExposedObject;
-using Meadow.Core.Utils;
+﻿using Meadow.Core.Utils;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
@@ -7,6 +6,7 @@ using System.Text;
 
 namespace Meadow.UnitTestTemplate
 {
+
     public class ParallelTestMethodAttribute : TestMethodAttribute
     {
         #region Fields
@@ -25,22 +25,11 @@ namespace Meadow.UnitTestTemplate
         #endregion
 
         #region Functions
-        private TestContext GetTestContext(ITestMethod testMethod)
-        {
-            // Obtain our test method options
-            var testMethodOptions = Exposed.From(testMethod).TestMethodOptions;
-
-            // Obtain our test context.
-            var testContext = Exposed.From(testMethodOptions).TestContext as TestContext;
-
-            // Return the test context
-            return testContext;
-        }
 
         public override TestResult[] Execute(ITestMethod testMethod)
         {
             // Get our test context
-            TestContext testContext = GetTestContext(testMethod);
+            TestContext testContext = testMethod.GetTestContext();
 
             // Create a new internal test state.
             InternalTestState internalTestState = testContext.ResetInternalTestState();
