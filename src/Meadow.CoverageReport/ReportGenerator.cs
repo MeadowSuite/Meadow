@@ -262,7 +262,7 @@ namespace Meadow.CoverageReport
                     sourceFileLine.LiteralSourceCodeLine = lines[lineNum];
                     sourceFileLine.LineNumber = lineNum + 1;
                     sourceFileLine.Offset = charCount;
-                    sourceFileLine.Length = sourceFileLine.LiteralSourceCodeLine.Length;
+                    sourceFileLine.Length = UTF8.GetByteCount(sourceFileLine.LiteralSourceCodeLine);
 
                     sourceFileLine.CorrelatedAstNodes = SourceLineMatching.MatchAstNodesToSourceFileLine(analysis, sourceFileLine).ToArray();
 
