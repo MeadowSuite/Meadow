@@ -21,6 +21,10 @@ namespace Meadow.EVM.Debugging.Tracing
         /// The last memory change count we had recorded.
         /// </summary>
         private ulong _lastMemoryChangeCount;
+        /// <summary>
+        /// Indicates if the last tracepoint had changed storage, so it is known to be included for the current step.
+        /// </summary>
+        private bool _lastStorageChanged;
         #endregion
 
         #region Properties
@@ -42,6 +46,7 @@ namespace Meadow.EVM.Debugging.Tracing
             Exceptions = new List<ExecutionTraceException>();
             _lastContractAddress = null;
             _lastMemoryChangeCount = 0;
+            _lastStorageChanged = false;
         }
         #endregion
 
@@ -69,12 +74,9 @@ namespace Meadow.EVM.Debugging.Tracing
             _lastContractAddress = deployedAddress;
             _lastMemoryChangeCount = evm.ExecutionState.Memory.ChangeCount;
 
-            // Determine if our storage changed
-            bool storageChanged = instruction is InstructionStorageStore;
-
             // Determine our storage we will have for this point (null if unchanged, otherwise set)
             Dictionary<Memory<byte>, byte[]> storage = null;
-            if (contextChanged || storageChanged)
+            if (contextChanged || _lastStorageChanged)
             {
                 // Obtain our storage dictionary.
                 var account = evm.State.GetAccount(evm.Message.To);
@@ -97,6 +99,9 @@ namespace Meadow.EVM.Debugging.Tracing
                     }
                 }
             }
+
+            // Determine if our storage changed this step and mark it for our next step.
+            _lastStorageChanged = instruction is InstructionStorageStore;
 
             // If our context changed, we want to include code hash.
             byte[] codeSegment = null;
