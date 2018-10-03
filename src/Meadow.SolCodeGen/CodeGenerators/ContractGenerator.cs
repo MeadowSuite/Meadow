@@ -370,12 +370,14 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 decoderStr = "this, callData";
             }
 
+            var methodName = ReservedKeywords.EscapeIdentifier(methodAbi.Name);
+
             var (summaryDoc, paramsDoc) = GetSummaryXmlDoc(methodAbi);
 
             return $@"
                 /// <summary>{summaryDoc}</summary>
                 {paramsDoc}
-                public EthFunc{returnType} {methodAbi.Name}({inputConstructorArg})
+                public EthFunc{returnType} {methodName}({inputConstructorArg})
                 {{
                     var callData = {typeof(EncoderUtil).FullName}.GetFunctionCallBytes({callDataString});
 
@@ -600,9 +602,11 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
             string eventSignatureHash = AbiSignature.GetSignatureHash(eventAbi);
 
+            var eventName = ReservedKeywords.EscapeIdentifier(eventAbi.Name);
+
             return $@"
                 [{typeof(EventSignatureAttribute).FullName}(SIGNATURE)]
-                public class {eventAbi.Name} : {typeof(EventLog).FullName}
+                public class {eventName} : {typeof(EventLog).FullName}
                 {{
                     public override string EventName => ""{eventAbi.Name}"";
                     public override string EventSignature => SIGNATURE;
