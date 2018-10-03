@@ -21,7 +21,7 @@ namespace Meadow.UnitTestTemplate
     public abstract class ContractTest
     {
         #region Fields
-        private ulong _baseSnapshotID;
+        private ulong? _baseSnapshotID;
         private static Semaphore _sequentialExecutionSemaphore = new Semaphore(1, 1);
         #endregion
 
@@ -98,7 +98,10 @@ namespace Meadow.UnitTestTemplate
                 InternalTestState.StartTime = DateTimeOffset.UtcNow;
 
                 // Create a snapshot to revert to when test is completed.
-                _baseSnapshotID = await TestServices.TestNodeClient.Snapshot();
+                if (!_baseSnapshotID.HasValue)
+                {
+                    _baseSnapshotID = await TestServices.TestNodeClient.Snapshot();
+                }
 
                 // Determine what message to log
                 if (InternalTestState.InExternalNodeContext)
