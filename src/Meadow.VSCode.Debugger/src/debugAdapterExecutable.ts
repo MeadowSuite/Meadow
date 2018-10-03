@@ -6,6 +6,8 @@ import { Logger } from './logger';
 
 export async function resolveMeadowDebugAdapter(context: vscode.ExtensionContext, debugSessionID: string, debugConfig?: ISolidityMeadowDebugConfig): Promise<IDebugAdapterExecutable> {
 
+	Logger.log("Resolving debug adapter execution info.");
+
 	let debugServerFilePath: string;
 
 	if (debugConfig && debugConfig.debugAdapterFile) {
@@ -26,9 +28,6 @@ export async function resolveMeadowDebugAdapter(context: vscode.ExtensionContext
 	if (debugConfig && debugConfig.logFile) {
 		args.push("--log_file", debugConfig.logFile);
 	}
-	else if (context["logPath"]) {
-		args.push("--log_file", context["logPath"]);
-	}
 
 	if (debugConfig && debugConfig.trace) {
 		args.push("--trace");
@@ -40,9 +39,13 @@ export async function resolveMeadowDebugAdapter(context: vscode.ExtensionContext
 
 	args.push("--session", debugSessionID);
 
-	return {
+	let launchInfo = {
 		command: "dotnet",
 		args: args,
 		env: { "DEBUG_SESSION_ID": debugSessionID }
-	}
+	};
+
+	Logger.log(`Launching debug adapter with: ${JSON.stringify(launchInfo)}`);
+
+	return launchInfo;
 }
