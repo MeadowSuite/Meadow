@@ -33,7 +33,7 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 
 * [Solidity Coverage Report](https://github.com/MeadowSuite/Meadow/wiki/Coverage-Report)
 
-* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, tesing reverts, etc..
+* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, testing reverts, etc..
 ---
 
 ## Powerful Solidity contract development, deployment, and interaction
