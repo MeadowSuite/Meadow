@@ -23,7 +23,7 @@ namespace Meadow.SolCodeGen
         {
             if (RESERVED.Contains(name))
             {
-                return "_" + name;
+                return "@" + name;
             }
 
             return name;
