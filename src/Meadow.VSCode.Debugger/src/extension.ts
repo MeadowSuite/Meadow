@@ -9,6 +9,8 @@ import { SOLIDITY_MEADOW_TYPE } from './constants';
 
 export function activate(context: vscode.ExtensionContext) {
 
+	Logger.log("Extension activation.");
+
 	// TODO: is it reasonable to support debugging a single .sol file - how would it work with deployments and interaction?
 
 	context.subscriptions.push(vscode.commands.registerCommand('extension.meadow.vscode.debugger.getDebuggerPath', async (config) => {
@@ -28,14 +30,11 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.debug.onDidReceiveDebugSessionCustomEvent(e => {
 		Logger.log("custom event", e);
 	});
-	*/
 
 	context.subscriptions.push(vscode.debug.onDidStartDebugSession(async (e) => {
 		Logger.log("onDidStartDebugSession", e);
-		//if (e.type === debugConfigProvider.SOLIDITY_MEADOW_TYPE) {
-		//	let debugSessionID = e.id!;
-		//}
 	}));
+	*/
 
 	// register a configuration provider for the debug type
 	const provider = new debugConfigProvider.SolidityMeadowConfigurationProvider(context);
