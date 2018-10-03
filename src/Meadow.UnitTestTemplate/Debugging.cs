@@ -1,7 +1,6 @@
 ﻿using Meadow.CoverageReport.Debugging;
 using Meadow.DebugAdapterServer;
 using Meadow.JsonRpc.Client;
-using Meadow.MSTest.Runner;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using System;
 using System.Collections.Generic;
@@ -22,7 +21,7 @@ namespace Meadow.UnitTestTemplate
             var debugSessionID = Environment.GetEnvironmentVariable("DEBUG_SESSION_ID");
             if (string.IsNullOrWhiteSpace(debugSessionID))
             {
-                ApplicationTestRunner.RunAllTests(Assembly.GetExecutingAssembly());
+                MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly());
             }
             else
             {
@@ -52,7 +51,7 @@ namespace Meadow.UnitTestTemplate
                     };
 
                     // Run all tests (blocking)
-                    ApplicationTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken.Token);
+                    MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken.Token);
                     Console.WriteLine("Tests completed");
                 }
             }

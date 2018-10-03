@@ -18,6 +18,7 @@ namespace Meadow.UnitTestTemplate.Test
         }
 
         [TestMethod]
+        [Ignore]
         public async Task ArrayOfBytes32()
         {
             List<byte[]> arr1 = new List<byte[]>
@@ -53,6 +54,7 @@ namespace Meadow.UnitTestTemplate.Test
         }
 
         [TestMethod]
+        [Ignore]
         public async Task ArrayOfUInt256()
         {
             List<UInt256> arr1 = new List<UInt256> { 1, 2, 3 };

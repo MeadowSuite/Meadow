@@ -14,7 +14,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
         [AssemblyInitialize]
         public static async Task Init(TestContext testContext)
         {
-            await Global.Init(testContext);
+            await Task.CompletedTask;
         }
 
         [AssemblyCleanup]

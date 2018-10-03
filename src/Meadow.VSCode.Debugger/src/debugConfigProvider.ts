@@ -66,6 +66,8 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 	 */
 	resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration> {
 
+		Logger.log(`Resolving debug configuration: ${JSON.stringify(config)}`);
+
 		// if launch.json is missing or empty
 		if (!config.type && !config.request && !config.name) {
 			const editor = vscode.window.activeTextEditor;
@@ -125,6 +127,7 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 			}
 		}
 	
+		Logger.log(`Using debug configuration: ${JSON.stringify(debugConfig)}`);
 
 		this._debugConfig = debugConfig
 		return debugConfig;

@@ -723,7 +723,7 @@ namespace Meadow.CoverageReport.Debugging
 
         /// <summary>
         /// Parses a single tracepoint in <see cref="ExecutionTrace"/> which
-        /// (This function is a helper to <see cref="ParseScopes(int, int, int, ExecutionTraceScope)"/> which handles parsing at the same level, not entering or executing scope.
+        /// (This function is a helper to <see cref="ParseScopes"/> which handles parsing at the same level, not entering or executing scope.
         /// </summary>
         /// <param name="traceIndex"></param>
         /// <param name="currentEntry"></param>

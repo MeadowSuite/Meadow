@@ -66,12 +66,6 @@ namespace Meadow.UnitTestTemplate
         {
             try
             {
-
-                if (!Global.IsInitialized)
-                {
-                    throw new Exception("Test harness has not been initialized. Ensure \"Global.Init()\" has been called from a [AssemblyInitialize] method.");
-                }
-
                 // With parallel tests, all code should execute in pairs (main vs. external for every test)
                 // so we need to ensure sequential execution to avoid issues with other tests running and trying
                 // to snapshot, execute, restore on the external node, ending up with a race condition.

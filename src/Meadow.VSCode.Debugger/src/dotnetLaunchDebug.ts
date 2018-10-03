@@ -36,6 +36,9 @@ export async function launch(debugSessionID: string, debugConfig: ISolidityMeado
         testAssembly = testAssemblies[0];
     }
 
+    
+    Logger.log(`Using dotnet test assembly: ${testAssembly}`)
+
     // TODO: run dotnet build before this
 
     if (debugConfig.disableUnitTestDebugging) {
@@ -43,7 +46,7 @@ export async function launch(debugSessionID: string, debugConfig: ISolidityMeado
             env: envOpts
         };
         child_process.execFile("dotnet", [testAssembly], externalOpts, (err, stdout, stderr) => {
-            Logger.log("run finished");
+            Logger.log("dotnet test execution finished.");
         });
     }
     else {
@@ -61,6 +64,8 @@ export async function launch(debugSessionID: string, debugConfig: ISolidityMeado
             internalConsoleOptions: "openOnSessionStart"
         };
 
+        Logger.log(`Launching dotnet debugger for: ${JSON.stringify(unitTestRunnerDebugConfig)}`);
+
         vscode.debug.startDebugging(workspaceFolder, unitTestRunnerDebugConfig);
     }
 }
@@ -68,6 +73,9 @@ export async function launch(debugSessionID: string, debugConfig: ISolidityMeado
 
 
 async function getDotnetTestAssemblies() : Promise<string[]> {
+
+    Logger.log("Resolving dotnet test assemblies.");
+
     let workspaceFolder = common.getWorkspaceFolder();
     let dotnetTestResult: { stderr: string, stdout: string };
     try {
@@ -92,5 +100,6 @@ async function getDotnetTestAssemblies() : Promise<string[]> {
         }
     }
     while (testAssemblyRegexMatch);
+
     return testAssemblies;
 }

@@ -177,23 +177,6 @@ namespace Meadow.TestNode
             return Task.FromResult(new UInt256(TestChain.MinimumGasPrice));
         }
 
-        public Task<UInt256> EstimateGas(CallParams callParams, DefaultBlockParameter blockParameter)
-        {
-            // Obtain a state from this block parameter.
-            State postBlockState = GetStateFromBlockParameters(blockParameter);
-            if (postBlockState == null)
-            {
-                postBlockState = TestChain.Chain.State;
-            }
-
-            // We execute our call on the current state and obtain our result
-            var result = HandleCall(callParams, postBlockState);
-
-            // Return our result.
-            var gasState = result.EVM.GasState;
-            return Task.FromResult((UInt256)(gasState.InitialGas - gasState.Gas));
-        }
-
         public Task<Address> Coinbase()
         {
             // Return our address
@@ -327,6 +310,67 @@ namespace Meadow.TestNode
 
             // Process the transaction and return the result
             return ProcessTransactionInternal(transaction, targetInformation.deploying, targetInformation.targetDeployedAddress);
+        }
+
+        public Task<UInt256> EstimateGas(CallParams callParams, DefaultBlockParameter blockParameter)
+        {
+            // Verify our block parameters are for the latest block.
+            if (blockParameter.ParameterType == BlockParameterType.Earliest ||
+                blockParameter.ParameterType == BlockParameterType.Pending)
+            {
+                return Task.FromException<UInt256>(new NotImplementedException("EstimateGas does not support estimations at earlier or pending points in the chain."));
+            }
+
+            if (blockParameter.ParameterType == BlockParameterType.BlockNumber && TestChain.Chain.State.CurrentBlock.Header.BlockNumber != blockParameter.BlockNumber)
+            {
+                return Task.FromException<UInt256>(new NotImplementedException("EstimateGas only supports estimations at the current block number in the chain."));
+            }
+
+            // Snapshot our state at this height in block
+            ulong snapshotID = Snapshot().Result;
+
+            // Define our resulting transaction receipt and exception (in case one occurs)
+            TransactionReceipt transactionReceipt = null;
+            Exception transactionException = null;
+
+            // Try to process our transaction and obtain the receipt.
+            try
+            {
+                // Process the transaction and obtain the transaction hash.
+                var transactionHash = SendTransaction(new TransactionParams()
+                {
+                    From = callParams.From,
+                    To = callParams.To,
+                    Data = callParams.Data,
+                    Gas = callParams.Gas,
+                    GasPrice = callParams.GasPrice,
+                    Nonce = null,
+                    Value = callParams.Value
+                }).Result;
+
+                // Obtain our transaction receipt.
+                transactionReceipt = GetTransactionReceipt(transactionHash).Result;
+            }
+            catch (Exception ex)
+            {
+                // An exception occurred, so we set our transaction exception.
+                transactionException = ex;
+            }
+
+            // Revert to our previous state
+            Revert(snapshotID);
+
+            // Remove the snapshot from our lookup
+            Snapshots.Remove(snapshotID);
+
+            // If our exception is not null, return it
+            if (transactionException != null)
+            {
+                return Task.FromException<UInt256>(transactionException);
+            }
+
+            // Return our gas used.
+            return Task.FromResult((UInt256)transactionReceipt.GasUsed);
         }
 
         public Task<Hash> SendTransaction(TransactionParams transactionParams)
@@ -1037,7 +1081,7 @@ namespace Meadow.TestNode
                 return TestChain.Chain.GetHeadBlock().Header.BlockNumber;
             }
             else if (blockParameter.ParameterType == BlockParameterType.Pending)
-            { 
+            {
                 // TODO: verify this..
                 // Test node instantly mine blocks so there is no pending block, use latest block instead
                 return TestChain.Chain.GetHeadBlock().Header.BlockNumber;
