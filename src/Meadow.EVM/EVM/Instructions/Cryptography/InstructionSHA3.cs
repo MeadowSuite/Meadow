@@ -37,6 +37,9 @@ namespace Meadow.EVM.EVM.Instructions.Cryptography
             // Hash our read data.
             byte[] hash = KeccakHash.ComputeHashBytes(data);
 
+            // Log our preimage
+            EVM.State.Configuration.DebugConfiguration?.RecordPreimage(hash, data);
+
             // Push it onto our stack.
             Stack.Push(BigIntegerConverter.GetBigInteger(hash));
         }

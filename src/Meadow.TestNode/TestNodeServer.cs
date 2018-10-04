@@ -807,7 +807,7 @@ namespace Meadow.TestNode
             }
 
             // Return our converted execution trace.
-            ExecutionTrace executionTrace = JsonTypeConverter.CoreExecutionTraceToJsonExecutionTrace(TestChain.Chain.Configuration.DebugConfiguration.ExecutionTrace);
+            ExecutionTrace executionTrace = JsonTypeConverter.ObtainJsonExecutionTrace(TestChain.Chain.Configuration.DebugConfiguration);
             return Task.FromResult(executionTrace);
         }
 

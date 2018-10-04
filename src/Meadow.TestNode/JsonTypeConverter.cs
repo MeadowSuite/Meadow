@@ -13,22 +13,22 @@ namespace Meadow.TestNode
 {
     internal abstract class JsonTypeConverter
     {
-        internal static ExecutionTrace CoreExecutionTraceToJsonExecutionTrace(Meadow.EVM.Debugging.Tracing.ExecutionTrace executionTrace)
+        internal static ExecutionTrace ObtainJsonExecutionTrace(Meadow.EVM.Debugging.DebugConfiguration debugConfiguration)
         {
             // If the execution trace is null, we return null
-            if (executionTrace == null)
+            if (debugConfiguration?.ExecutionTrace == null)
             {
                 return null;
             }
 
             // Create our array of trace points
-            ExecutionTracePoint[] tracepoints = new ExecutionTracePoint[executionTrace.Tracepoints.Count];
+            ExecutionTracePoint[] tracepoints = new ExecutionTracePoint[debugConfiguration.ExecutionTrace.Tracepoints.Count];
 
             // Populate all tracepoint items.
             for (int i = 0; i < tracepoints.Length; i++)
             {
                 // Obtain our trace point.
-                var executionTracePoint = executionTrace.Tracepoints[i];
+                var executionTracePoint = debugConfiguration.ExecutionTrace.Tracepoints[i];
 
                 // Define our memory and stack
                 Data[] executionMemory = null;
@@ -63,7 +63,7 @@ namespace Meadow.TestNode
             }
 
             // Create our array of exceptions
-            ExecutionTraceException[] exceptions = new ExecutionTraceException[executionTrace.Exceptions.Count];
+            ExecutionTraceException[] exceptions = new ExecutionTraceException[debugConfiguration.ExecutionTrace.Exceptions.Count];
 
             // Populate all exception items
             for (int i = 0; i < exceptions.Length; i++)
@@ -71,13 +71,38 @@ namespace Meadow.TestNode
                 // Set our item.
                 exceptions[i] = new ExecutionTraceException()
                 {
-                    TraceIndex = executionTrace.Exceptions[i].TraceIndex,
-                    Message = executionTrace.Exceptions[i].Exception.Message
+                    TraceIndex = debugConfiguration.ExecutionTrace.Exceptions[i].TraceIndex,
+                    Message = debugConfiguration.ExecutionTrace.Exceptions[i].Exception.Message
                 };
             }
 
+            // Obtain our execution trace analysis.
+            ExecutionTrace executionTrace = new ExecutionTrace() { Tracepoints = tracepoints, Exceptions = exceptions };
+            
+            // Determine while pre-images to include
+            if (debugConfiguration.IsTracingPreimages)
+            {
+                // Loop for every trace point in our execution trace
+                foreach (ExecutionTracePoint tracePoint in executionTrace.Tracepoints)
+                {
+                    // Verify we have storage at this point.
+                    if (tracePoint.Storage != null)
+                    {
+                        // Loop for each storage entry.
+                        foreach (var storageEntry in tracePoint.Storage.Keys)
+                        {
+                            // Check if this entry key is a hash, and we can obtain a preimage
+                            if (debugConfiguration.TryGetPreimage(storageEntry.ToArray(), out var storagePreimage))
+                            {
+                                // TODO: Include the preimage and hash/key in our execution trace.
+                            }
+                        }
+                    }
+                }
+            }
+            
             // Return our execution trace.
-            return new ExecutionTrace() { Tracepoints = tracepoints, Exceptions = exceptions };
+            return executionTrace;
         }
 
         internal static CompoundCoverageMap CoreCompoundCoverageMapsToJsonCompoundCoverageMaps((Meadow.EVM.Debugging.Coverage.CodeCoverage.CoverageMap undeployedMap, Meadow.EVM.Debugging.Coverage.CodeCoverage.CoverageMap deployedMap) compoundMaps)
