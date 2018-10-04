@@ -25,6 +25,8 @@ using System.Runtime.Versioning;
 using Meadow.Core.Cryptography.Ecdsa;
 using Meadow.Core.Cryptography;
 using Meadow.Core.RlpEncoding;
+using System.Net;
+using Meadow.Core.AccountDerivation;
 
 namespace Meadow.TestNode
 {
@@ -54,10 +56,10 @@ namespace Meadow.TestNode
         #region Constructor
         /// <param name="port">If null or unspecified the http server binds to a random port.</param>
         /// <param name="accountConfig">Configure number of accounts to generate, ether balance, wallet derivation method.</param>
-        public TestNodeServer(int? port = null, AccountConfiguration accountConfig = null)
+        public TestNodeServer(int? port = null, IPAddress address = null, AccountConfiguration accountConfig = null)
         {
             // Initialize our basic components.
-            RpcServer = new JsonRpcHttpServer(this, ConfigureWebHost, port);
+            RpcServer = new JsonRpcHttpServer(this, ConfigureWebHost, port, address);
             AccountKeys = new List<Address>();
             AccountDictionary = new Dictionary<Address, EthereumEcdsa>();
             Snapshots = new Dictionary<ulong, (StateSnapshot snapshot, TimeSpan timeStampOffset)>();
@@ -70,8 +72,10 @@ namespace Meadow.TestNode
             accountConfig = (accountConfig ?? new AccountConfiguration());
             BigInteger initialAccountBalance = new BigInteger(1e18M * accountConfig.DefaultAccountEtherBalance);
 
+            var accountDerivation = accountConfig.AccountDerivationMethod ?? HDAccountDerivation.Create();
+
             // Generate a keypairs
-            foreach (var keypair in EthereumEcdsa.Generate(accountConfig.AccountGenerationCount, accountConfig.AccountDerivationMethod))
+            foreach (var keypair in EthereumEcdsa.Generate(accountConfig.AccountGenerationCount, accountDerivation))
             {
                 // Get an account from the public key hash.
                 Meadow.EVM.Data_Types.Addressing.Address account = new Meadow.EVM.Data_Types.Addressing.Address(keypair.GetPublicKeyHash());

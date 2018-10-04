@@ -19,9 +19,8 @@ namespace Meadow.TestNode
         /// <summary>
         /// The specification/format to use for generating accounts from the seed.
         /// Defaults to <see cref="Bip44AccountDerivation"/>
-        /// TODO: Currently defaults to the C# rng with fixed seed until bip44 is implemented.
         /// </summary>
-        public IAccountDerivation AccountDerivationMethod { get; set; } = new SystemRandomAccountDerivation(1234);
+        public IAccountDerivation AccountDerivationMethod { get; set; }
 
     }
 }
