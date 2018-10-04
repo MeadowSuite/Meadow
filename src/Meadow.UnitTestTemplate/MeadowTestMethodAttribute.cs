@@ -62,6 +62,7 @@ namespace Meadow.UnitTestTemplate
                 }
 
             }
+
             // Test only has description, use in display name
             else if (desc != null)
             {

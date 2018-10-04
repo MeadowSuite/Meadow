@@ -36,6 +36,7 @@ namespace Meadow.JsonRpc.Server
         public string[] ServerAddresses => _serverAddressFeature().Addresses.ToArray();
 
         public int ServerPort => GetServerPort();
+        public Uri ServerAddress => GetServerHostAddress();
 
         Func<IServerAddressesFeature> _serverAddressFeature;
         IRpcController _serverHandler;
@@ -55,7 +56,7 @@ namespace Meadow.JsonRpc.Server
 
 
         /// <param name="port">If null or unspecified the http server binds to a random port.</param>
-        public JsonRpcHttpServer(IRpcController serverHandler, Func<IWebHostBuilder, IWebHostBuilder> configure = null, int? port = null)
+        public JsonRpcHttpServer(IRpcController serverHandler, Func<IWebHostBuilder, IWebHostBuilder> configure = null, int? port = null, IPAddress address = null)
         {
             _serverHandler = serverHandler;
             var webHostBuilder = new WebHostBuilder()
@@ -68,7 +69,7 @@ namespace Meadow.JsonRpc.Server
                .UseSockets()
                .UseKestrel(options => 
                {
-                   options.Listen(IPAddress.Loopback, port ?? 0);
+                   options.Listen(address ?? IPAddress.Loopback, port ?? 0);
                    //options.Listen(port ?? 0);
                });
 
@@ -99,8 +100,7 @@ namespace Meadow.JsonRpc.Server
 
         public void Stop() => WebHost.StopAsync().GetAwaiter().GetResult();
         
-
-        int GetServerPort()
+        Uri GetServerHostAddress()
         {
             var addrs = ServerAddresses;
             if (addrs.Length == 0)
@@ -109,9 +109,12 @@ namespace Meadow.JsonRpc.Server
             }
 
             var httpAddr = addrs.FirstOrDefault(addr => addr.StartsWith("http://", StringComparison.OrdinalIgnoreCase));
-            var addrParts = httpAddr.Split(':')[2];
-            var port = int.Parse(addrParts, CultureInfo.InvariantCulture);
-            return port;
+            return new Uri(httpAddr);
+        }
+
+        int GetServerPort()
+        {
+            return GetServerHostAddress().Port;
         }
 
         async Task Handle(HttpContext context, Func<Task> next)

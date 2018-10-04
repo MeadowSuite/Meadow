@@ -18,7 +18,7 @@ namespace Meadow.Cli.Commands
 
             var config = this.ReadConfig();
 
-            var testNodeServer = new TestNodeServer((int)config.NetworkPort, new AccountConfiguration
+            var testNodeServer = new TestNodeServer(port: (int)config.NetworkPort, accountConfig: new AccountConfiguration
             {
                 AccountGenerationCount = config.AccountCount,
                 DefaultAccountEtherBalance = config.AccountBalance
