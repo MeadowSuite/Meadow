@@ -374,6 +374,13 @@ namespace Meadow.JsonRpc
         Task<ExecutionTrace> GetExecutionTrace();
 
         /// <summary>
+        /// Obtains the pre-image (original data) for a given hash, if recorded in the database.
+        /// </summary>
+        /// <returns>Returns the pre-image if one exists, null otherwise.</returns>
+        [RpcApiMethod(RpcApiMethod.testing_getHashPreimage)]
+        Task<byte[]> GetHashPreimage(byte[] hash);
+
+        /// <summary>
         /// Enables or disables the size check on deployed contracts.
         /// </summary>
         [RpcApiMethod(RpcApiMethod.testing_setContractSizeCheckDisabled)]

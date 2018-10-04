@@ -15,6 +15,7 @@ using Meadow.CoverageReport.Debugging.Variables.Enums;
 using System.Globalization;
 using Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
+using Meadow.JsonRpc.Client;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -88,13 +89,13 @@ namespace Meadow.DebugAdapterServer
             });
         }
 
-        public async Task ProcessExecutionTraceAnalysis(ExecutionTraceAnalysis traceAnalysis)
+        public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis)
         {
             // Obtain our thread ID
             int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
 
             // Create a thread state for this thread
-            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(traceAnalysis, threadId);
+            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId);
 
             // Acquire the semaphore for processing a trace.
             await _processTraceSemaphore.WaitAsync();
@@ -693,11 +694,11 @@ namespace Meadow.DebugAdapterServer
             VariableValuePair[] variablePairs = Array.Empty<VariableValuePair>();
             if (isLocalVariableScope)
             {
-                variablePairs = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
+                variablePairs = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex, threadState.RpcClient);
             }
             else if (isStateVariableScope)
             {
-                variablePairs = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
+                variablePairs = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex, threadState.RpcClient);
             }
             else if (isParentVariableScope)
             {

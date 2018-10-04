@@ -108,6 +108,12 @@ namespace Meadow.JsonRpc.Server.Test
             throw new System.NotImplementedException();
         }
 
+        public Task<byte[]> GetHashPreimage(byte[] hash)
+        {
+            throw new System.NotImplementedException();
+        }
+
+
         public Task<LogObjectResult> GetFilterChanges(ulong filterID)
         {
             throw new System.NotImplementedException();

@@ -4,6 +4,7 @@ using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -29,7 +30,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #endregion
 
         #region Functions
-        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
+        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation, IJsonRpcClient rpcClient = null)
         {
             // Create our result array
             var results = new List<MappingKeyValuePair>();
@@ -39,7 +40,8 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             foreach (var storageKey in storage.Keys)
             {
                 // Try to obtain a preimage from this key
-                if (storageManager.ExecutionTrace.StoragePreimages.TryGetValue(storageKey, out var storageKeyPreimage))
+                var storageKeyPreimage = rpcClient?.GetHashPreimage(storageKey.ToArray())?.Result;
+                if (storageKeyPreimage != null)
                 {
                     // Verify our pre-image is 2 WORDs in length.
                     if (storageKeyPreimage.Length == UInt256.SIZE * 2)
@@ -61,7 +63,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                             // Obtain our resulting key-value pair.
                             var keyValuePair = new MappingKeyValuePair(
                                 new VariableValuePair(storageKeyVariable, storageKeyVariable.ValueParser.ParseData(originalStorageKeyData)), 
-                                new VariableValuePair(storageValueVariable, storageValueVariable.ValueParser.ParseFromStorage(storageManager, new StorageLocation(storageKey, 0))));
+                                new VariableValuePair(storageValueVariable, storageValueVariable.ValueParser.ParseFromStorage(storageManager, new StorageLocation(storageKey, 0), rpcClient)));
 
                             // Add our key-value pair to the results.
                             results.Add(keyValuePair);

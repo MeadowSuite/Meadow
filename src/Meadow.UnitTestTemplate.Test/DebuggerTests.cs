@@ -40,8 +40,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -64,8 +64,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -88,8 +88,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -109,8 +109,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -133,8 +133,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -157,8 +157,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -170,7 +170,14 @@ namespace Meadow.UnitTestTemplate.Test
             // Add all of our accounts to a mapping with the given index as the value.
             for (int i = 0; i < Accounts.Length; i++)
             {
-                await _contract.updateMappings(Accounts[i], i);
+                // We set a value for each account that is non-zero (zero values aren't stored, the storage entry is deleted).
+                await _contract.updateSimpleMapping(Accounts[i], i + 700);
+            }
+
+            // Add some other values to a nested mapping
+            for (int i = 1; i <= 10; i++)
+            {
+                await _contract.updateNestedMapping(i, i * 2, (byte)(i % 3));
             }
 
             // Throw an exception in a function call.
@@ -181,8 +188,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();

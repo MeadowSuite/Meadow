@@ -307,6 +307,11 @@ namespace Meadow.JsonRpc.Server.Test
             throw new NotImplementedException();
         }
 
+        public Task<byte[]> GetHashPreimage(byte[] hash)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task SetContractSizeCheckDisabled(bool enabled)
         {
             throw new NotImplementedException();

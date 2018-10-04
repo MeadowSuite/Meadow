@@ -1,4 +1,5 @@
 ﻿using Meadow.CoverageReport.Debugging;
+using Meadow.JsonRpc.Client;
 using Meadow.JsonRpc.Types.Debugging;
 using System;
 using System.Collections.Generic;
@@ -41,14 +42,19 @@ namespace Meadow.DebugAdapterServer
 
         public ExecutionTraceAnalysis ExecutionTraceAnalysis { get; }
 
+        public IJsonRpcClient RpcClient { get; }
+
         public SemaphoreSlim Semaphore { get; }
         #endregion
 
         #region Constructors
-        public MeadowDebugAdapterThreadState(ExecutionTraceAnalysis traceAnalysis, int threadId)
+        public MeadowDebugAdapterThreadState(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis, int threadId)
         {
             // Initialize our thread locking
             Semaphore = new SemaphoreSlim(0, int.MaxValue);
+
+            // Set our rpc client
+            RpcClient = rpcClient;
 
             // Set our execution trace analysis
             ExecutionTraceAnalysis = traceAnalysis;

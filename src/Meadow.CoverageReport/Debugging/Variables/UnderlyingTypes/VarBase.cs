@@ -3,6 +3,7 @@ using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 using System;
 using System.Numerics;
 
@@ -46,7 +47,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             throw new NotImplementedException();
         }
 
-        public virtual object ParseFromStack(Data[] stack, int stackIndex, Memory<byte> memory, StorageManager storageManager)
+        public virtual object ParseFromStack(Data[] stack, int stackIndex, Memory<byte> memory, StorageManager storageManager, IJsonRpcClient rpcClient = null)
         {
             // If we exceeded our stack size
             if (stack.Length <= stackIndex)
@@ -68,7 +69,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             return ParseData(data);
         }
 
-        public virtual object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
+        public virtual object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation, IJsonRpcClient rpcClient = null)
         {
             // Obtain our storage value for our given storage location.
             Memory<byte> storageValue = storageManager.ReadStorageSlot(storageLocation.SlotKey, storageLocation.DataOffset, SizeBytes);
