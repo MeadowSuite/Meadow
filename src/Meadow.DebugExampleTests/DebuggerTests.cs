@@ -116,5 +116,21 @@ namespace Meadow.DebugExampleTests
             // TODO: Verify variables.
             Assert.Inconclusive();
         }
+
+        [TestMethod]
+        public async Task TestMappings()
+        {
+            // Add all of our accounts to a mapping with the given index as the value.
+            for (int i = 0; i < Accounts.Length; i++)
+            {
+                await _contract.updateMappings(Accounts[i], i);
+            }
+
+            // Throw an exception in a function call.
+            await _contract.throwWithLocals(778899, 100).ExpectRevertTransaction();
+
+            // TODO: Verify variables.
+            Assert.Inconclusive();
+        }
     }
 }

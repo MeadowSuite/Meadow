@@ -642,7 +642,7 @@ namespace Meadow.DebugAdapterServer
                 case VarGenericType.ByteArrayFixed:
                     return variableValuePair.Variable.BaseType;
                 case VarGenericType.Mapping:
-                    return "<unsupported>";
+                    return $"{variableValuePair.Variable.BaseType} (size: {((MappingKeyValuePair[])variableValuePair.Value).Length})";
                 case VarGenericType.String:
                     return $"\"{variableValuePair.Value}\"";
                 case VarGenericType.Struct:
@@ -754,6 +754,24 @@ namespace Meadow.DebugAdapterServer
                             for (int i = 0; i < bytes.Length; i++)
                             {
                                 variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0));
+                            }
+
+                            break;
+                        }
+
+                    case VarGenericType.Mapping:
+                        {
+                            // Obtain our mapping's key-value pairs.
+                            var mappingKeyValuePairs = (MappingKeyValuePair[])parentVariableValuePair.Value;
+                            variablePairs = new VariableValuePair[mappingKeyValuePairs.Length * 2];
+
+                            // Loop for each key and value pair to add.
+                            int variableIndex = 0;
+                            for (int i = 0; i < mappingKeyValuePairs.Length; i++)
+                            {
+                                // Set our key and value in our variable value pair enumeration.
+                                variablePairs[variableIndex++] = mappingKeyValuePairs[i].Key;
+                                variablePairs[variableIndex++] = mappingKeyValuePairs[i].Value;
                             }
 
                             break;

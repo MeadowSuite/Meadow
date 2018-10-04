@@ -32,7 +32,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
         {
             // Create our result array
-            var results = new List<(VariableValuePair key, VariableValuePair value)>();
+            var results = new List<MappingKeyValuePair>();
 
             // We'll want to loop for every key in storage at this point
             var storage = storageManager.ExecutionTrace.Tracepoints[storageManager.TraceIndex].Storage;
@@ -49,23 +49,29 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                         if (storageLocation.SlotKey.Span.SequenceEqual(derivedBaseLocation))
                         {
                             // Obtain our value hashed with our parent location (original key to our mapping).
-                            var storageKeyOriginal = storageKeyPreimage.Slice(0, UInt256.SIZE);
+                            byte[] originalStorageKeyData = storageKeyPreimage.Slice(0, UInt256.SIZE);
 
                             // Obtain our value for this key in our mapping
-                            var storageValueOriginal = storage[storageKey];
+                            byte[] originalStorageValueData = storage[storageKey];
 
                             // Obtain our key and value's variable-value-pair.
-                            var storageKeyVariable = VarParser.GetVariableObject(MappingTypeName.KeyType, VarLocation.Storage);
-                            var storageValueVariable = VarParser.GetVariableObject(MappingTypeName.ValueType, VarLocation.Storage);
+                            StateVariable storageKeyVariable = new StateVariable($"key[{results.Count}]", MappingTypeName.KeyType);
+                            StateVariable storageValueVariable = new StateVariable($"value[{results.Count}]", MappingTypeName.ValueType);
 
-                            // TODO: Add our key-value pair to our results
-                            results.Add((new VariableValuePair(), new VariableValuePair()));
+                            // Obtain our resulting key-value pair.
+                            var keyValuePair = new MappingKeyValuePair(
+                                new VariableValuePair(storageKeyVariable, storageKeyVariable.ValueParser.ParseData(originalStorageKeyData)), 
+                                new VariableValuePair(storageValueVariable, storageValueVariable.ValueParser.ParseFromStorage(storageManager, new StorageLocation(storageKey, 0))));
+
+                            // Add our key-value pair to the results.
+                            results.Add(keyValuePair);
                         }
                     }
                 }
             }
 
-            return results;
+            // Return our results array.
+            return results.ToArray();
         }
         #endregion
     }

@@ -125,10 +125,21 @@ contract VarAnalysisContract
         arr2[4] = 4;
         arr2[3] = 3;
         TestEnum[] memory arr3 = new TestEnum[](3);
+
+        // Set our enum values.
         arr3[0] = TestEnum.FIRST;
         arr3[1] = TestEnum.SECOND;
         arr3[2] = TestEnum.THIRD;
+
+        // Create a multidimensional array and set two subarrays.
         uint[][] memory arr4 = new uint[][](8);
+        uint[] memory arr4_sub3 = new uint[](3);
+        arr4_sub3[1] = 111;
+        arr4_sub3[2] = 222;
+        uint[] memory arr4_sub7 = new uint[](7);
+        arr4_sub7[5] = 555;
+        arr4[3] = arr4_sub3;
+        arr4[7] = arr4_sub7;
         assert(false);
 	}
 

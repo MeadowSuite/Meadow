@@ -22,7 +22,7 @@ contract VarAnalysisContract
     uint[] globalArray1;
     uint[2] globalArray2;
     Line globalLine;
-    mapping(address => TestEnum) globalMapping1;
+    mapping(address => uint) globalMapping1;
 
     struct Point 
     {
@@ -65,7 +65,7 @@ contract VarAnalysisContract
         globalArray2[0] = 1;
         globalArray2[1] = 7;
 
-        globalMapping1[msg.sender] = TestEnum.THIRD;
+        globalMapping1[msg.sender] = 77;
 
         globalLine.a.x += 1;
         globalLine.a.y += 2;
@@ -149,5 +149,10 @@ contract VarAnalysisContract
         Point memory pointB = Point({x: 79, y: 80});
         Line memory line = Line({a: pointA, b: pointB, index: 777});
         assert(false);
+    }
+
+    function updateMappings(address mappingKey, uint mappingValue) public
+    {
+        globalMapping1[mappingKey] = mappingValue;
     }
 }
