@@ -77,7 +77,12 @@ namespace Meadow.TestNode
             }
 
             // Obtain our execution trace analysis.
-            ExecutionTrace executionTrace = new ExecutionTrace() { Tracepoints = tracepoints, Exceptions = exceptions };
+            ExecutionTrace executionTrace = new ExecutionTrace()
+            {
+                Tracepoints = tracepoints,
+                Exceptions = exceptions,
+                StoragePreimages = new Dictionary<Memory<byte>, byte[]>(new MemoryComparer<byte>())
+            };
             
             // Determine while pre-images to include
             if (debugConfiguration.IsTracingPreimages)
@@ -94,7 +99,8 @@ namespace Meadow.TestNode
                             // Check if this entry key is a hash, and we can obtain a preimage
                             if (debugConfiguration.TryGetPreimage(storageEntry.ToArray(), out var storagePreimage))
                             {
-                                // TODO: Include the preimage and hash/key in our execution trace.
+                                // Include the preimage and hash/key in our execution trace.
+                                executionTrace.StoragePreimages[storageEntry] = storagePreimage;
                             }
                         }
                     }

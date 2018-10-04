@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Meadow.JsonRpc.JsonConverters;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,5 +18,13 @@ namespace Meadow.JsonRpc.Types.Debugging
         /// </summary>
         [JsonProperty("exceptions")]
         public ExecutionTraceException[] Exceptions { get; set; }
+
+        /// <summary>
+        /// Represents the lookup of sha3 hash -> pre-images (original data) so storage slots original locations can be
+        /// computed. This is useful as mapping keys can be obtained from the hashes used to calculate the storage entry
+        /// for the key's corresponding value.
+        /// </summary>
+        [JsonProperty("storage_preimages"), JsonConverter(typeof(ByteArrayDictionaryConverter))]
+        public Dictionary<Memory<byte>, byte[]> StoragePreimages { get; set; }
     }
 }

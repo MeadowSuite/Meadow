@@ -175,7 +175,7 @@ namespace Meadow.EVM.Configuration
             Database = database ?? new BaseDB();
 
             // Initialize our debug items
-            DebugConfiguration = new DebugConfiguration(database);
+            DebugConfiguration = new DebugConfiguration();
             CodeCoverage = new CodeCoverage();
 
             // We set our timestamp offset as zero
