@@ -37,10 +37,16 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
 
             // We'll want to loop for every key in storage at this point
             var storage = storageManager.ExecutionTrace.Tracepoints[storageManager.TraceIndex].Storage;
-            foreach (var storageKey in storage.Keys)
+            foreach (Memory<byte> storageKey in storage.Keys)
             {
+                // Define our current key (in case we must iterate upward through children to reach this mapping).
+                Memory<byte> currentStorageKey = storageKey;
+
+                // The point from which we will iterate/recursive upwards on.
+                IterateNested:
+
                 // Try to obtain a preimage from this key
-                var storageKeyPreimage = rpcClient?.GetHashPreimage(storageKey.ToArray())?.Result;
+                var storageKeyPreimage = rpcClient?.GetHashPreimage(currentStorageKey.ToArray())?.Result;
                 if (storageKeyPreimage != null)
                 {
                     // Verify our pre-image is 2 WORDs in length.
@@ -53,9 +59,6 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                             // Obtain our value hashed with our parent location (original key to our mapping).
                             byte[] originalStorageKeyData = storageKeyPreimage.Slice(0, UInt256.SIZE);
 
-                            // Obtain our value for this key in our mapping
-                            byte[] originalStorageValueData = storage[storageKey];
-
                             // Obtain our key and value's variable-value-pair.
                             StateVariable storageKeyVariable = new StateVariable($"K[{results.Count}]", MappingTypeName.KeyType);
                             StateVariable storageValueVariable = new StateVariable($"V[{results.Count}]", MappingTypeName.ValueType);
@@ -63,13 +66,20 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                             // Obtain our resulting key-value pair.
                             var keyValuePair = new MappingKeyValuePair(
                                 new VariableValuePair(storageKeyVariable, storageKeyVariable.ValueParser.ParseData(originalStorageKeyData)), 
-                                new VariableValuePair(storageValueVariable, storageValueVariable.ValueParser.ParseFromStorage(storageManager, new StorageLocation(storageKey, 0), rpcClient)));
+                                new VariableValuePair(storageValueVariable, storageValueVariable.ValueParser.ParseFromStorage(storageManager, new StorageLocation(currentStorageKey, 0), rpcClient)));
 
                             // Add our key-value pair to the results.
                             results.Add(keyValuePair);
                         }
+                        else
+                        {
+                            // This derived location is not referencing this location. Iterate upward on it to determine if it's a child.
+                            currentStorageKey = derivedBaseLocation;
+                            goto IterateNested;
+                        }
                     }
                 }
+
             }
 
             // Return our results array.

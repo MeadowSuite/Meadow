@@ -174,10 +174,10 @@ namespace Meadow.UnitTestTemplate.Test
                 await _contract.updateSimpleMapping(Accounts[i], i + 700);
             }
 
-            // Add some other values to a nested mapping
+            // Add some other values to a nested mapping (every enum will alternate between SECOND and THIRD)
             for (int i = 1; i <= 10; i++)
             {
-                await _contract.updateNestedMapping(i, i * 2, (byte)(i % 3));
+                await _contract.updateNestedMapping(i, i * 2, (byte)((i % 2) + 1));
             }
 
             // Throw an exception in a function call.
