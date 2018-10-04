@@ -55,8 +55,8 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                             byte[] originalStorageValueData = storage[storageKey];
 
                             // Obtain our key and value's variable-value-pair.
-                            StateVariable storageKeyVariable = new StateVariable($"key[{results.Count}]", MappingTypeName.KeyType);
-                            StateVariable storageValueVariable = new StateVariable($"value[{results.Count}]", MappingTypeName.ValueType);
+                            StateVariable storageKeyVariable = new StateVariable($"K[{results.Count}]", MappingTypeName.KeyType);
+                            StateVariable storageValueVariable = new StateVariable($"V[{results.Count}]", MappingTypeName.ValueType);
 
                             // Obtain our resulting key-value pair.
                             var keyValuePair = new MappingKeyValuePair(

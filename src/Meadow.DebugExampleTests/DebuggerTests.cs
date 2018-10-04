@@ -123,7 +123,8 @@ namespace Meadow.DebugExampleTests
             // Add all of our accounts to a mapping with the given index as the value.
             for (int i = 0; i < Accounts.Length; i++)
             {
-                await _contract.updateMappings(Accounts[i], i);
+                // We set a value for each account that is non-zero (zero values aren't stored, the storage entry is deleted).
+                await _contract.updateMappings(Accounts[i], i + 700);
             }
 
             // Throw an exception in a function call.
