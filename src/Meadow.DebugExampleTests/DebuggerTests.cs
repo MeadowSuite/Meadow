@@ -124,7 +124,13 @@ namespace Meadow.DebugExampleTests
             for (int i = 0; i < Accounts.Length; i++)
             {
                 // We set a value for each account that is non-zero (zero values aren't stored, the storage entry is deleted).
-                await _contract.updateMappings(Accounts[i], i + 700);
+                await _contract.updateSimpleMapping(Accounts[i], i + 700);
+            }
+
+            // Add some other values to a nested mapping
+            for (int i = 1; i <= 10; i++)
+            {
+                await _contract.updateNestedMapping(i, i * 2, (byte)(i % 3));
             }
 
             // Throw an exception in a function call.
