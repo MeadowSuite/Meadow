@@ -175,7 +175,17 @@ namespace Meadow.SolCodeGen
                     var referenced = asm.GetReferencedAssemblies();
                     foreach (var child in referenced)
                     {
-                        var childAsm = Assembly.Load(child);
+                        Assembly childAsm;
+                        try
+                        {
+                            childAsm = Assembly.Load(child);
+                        }
+                        catch
+                        {
+                            var simpleAssemblyName = new AssemblyName { Name = child.Name };
+                            childAsm = Assembly.Load(simpleAssemblyName);
+                        }
+
                         Iterate(childAsm, assemblies);
                     }
                 }
