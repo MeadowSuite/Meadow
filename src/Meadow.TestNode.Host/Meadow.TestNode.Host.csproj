@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>meadow-testnode</ToolCommandName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
+    <PackageReference Include="Secp256k1.Native" Version="0.1.18" ExcludeAssets="native" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Meadow.JsonRpc.Server.Proxy\Meadow.JsonRpc.Server.Proxy.csproj" />
+    <ProjectReference Include="..\Meadow.TestNode\Meadow.TestNode.csproj" />
+  </ItemGroup>
+
+</Project>

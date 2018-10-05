@@ -175,6 +175,13 @@ namespace Meadow.UnitTestTemplate
 
                         stderrWriter.Flush();
                     }
+
+                    foreach (var msg in testResult.Messages)
+                    {
+                        stdoutWriter.WriteLine($"[{msg.Category}] {msg.Text}");
+                        stdoutWriter.Flush();
+                    }
+
                 }
             };
         }

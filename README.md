@@ -23,7 +23,18 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
   </tr>
 </table>
 
-## Quick start / guides
+## Quick start
+
+Install [.NET Core SDK v.2.1.4 or higher](https://www.microsoft.com/net/download), then run these commands in a new directory for your project:
+
+```bash
+dotnet new -i Meadow.ProjectTemplate
+dotnet new meadow
+```
+
+Open your project directory in VSCode or your favorite C# IDE.
+
+## Guides
 
 * [Writing unit tests](https://github.com/MeadowSuite/Meadow/wiki/Getting-Started-with-Unit-Tests) - getting started writing tests against Solidity contracts and generating code coverage reports.
 
@@ -31,7 +42,9 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 
 * [VSCode Solidity Debugger](https://github.com/MeadowSuite/Meadow/wiki/Using-the-VSCode-Solidity-Debugger)
 
-* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, tesing reverts, etc..
+* [Solidity Coverage Report](https://github.com/MeadowSuite/Meadow/wiki/Coverage-Report)
+
+* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, testing reverts, etc..
 ---
 
 ## Powerful Solidity contract development, deployment, and interaction

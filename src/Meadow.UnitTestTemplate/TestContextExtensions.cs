@@ -19,7 +19,7 @@ namespace Meadow.UnitTestTemplate
             bool success = testContext?.Properties?.TryGetValue(TEST_INTERNAL_STATE_KEY, out value) == true;
 
             // If we could obtain our value, return it.
-            if (success)
+            if (success && value != null)
             {
                 return (InternalTestState)value;
             }

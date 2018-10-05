@@ -1,4 +1,5 @@
 ﻿using Meadow.Contract;
+using Meadow.Core.AccountDerivation;
 using Meadow.Core.Utils;
 using Meadow.CoverageReport;
 using Meadow.CoverageReport.Debugging;
@@ -72,6 +73,14 @@ namespace Meadow.UnitTestTemplate
         [DefaultValue(2000), DisplayName("AccountBalance")]
         [System.ComponentModel.Description("TODO")]
         public static long? AccountBalance { get; set; }
+
+        /// <summary>
+        /// Initially populated by app.config (if set).
+        /// Defaults to a randomly generated mnemonic if not set.
+        /// </summary>
+        [DefaultValue(null), DisplayName("AccountMnemonic")]
+        [System.ComponentModel.Description("TODO")]
+        public static string AccountMnemonic { get; set; }
 
         /// <summary>
         /// Initially populated by app.config (if set). Describes the endpoint of an external node 
@@ -203,6 +212,11 @@ namespace Meadow.UnitTestTemplate
 
             SetupConfigValue(
                 configValueList,
+                () => AccountMnemonic,
+                str => str);
+
+            SetupConfigValue(
+                configValueList,
                 () => SolcVersion,
                 str => str);
 
@@ -319,11 +333,18 @@ namespace Meadow.UnitTestTemplate
 
         public static async Task<TestServices> CreateTestServicesInstance()
         {
+            // Setup account derivation / keys.
+            var mnemonic = AccountMnemonic ?? AttributeHelper.GetDefault(() => AccountMnemonic);
+            var accountDerivation = string.IsNullOrWhiteSpace(mnemonic) 
+                ? HDAccountDerivation.Create() 
+                : new HDAccountDerivation(mnemonic);
+
             // Create our local test node.
             var accountConfig = new AccountConfiguration
             {
                 AccountGenerationCount = AccountCount ?? AttributeHelper.GetDefault(() => AccountCount),
-                DefaultAccountEtherBalance = AccountBalance ?? AttributeHelper.GetDefault(() => AccountBalance)
+                DefaultAccountEtherBalance = AccountBalance ?? AttributeHelper.GetDefault(() => AccountBalance),
+                AccountDerivationMethod = accountDerivation
             };
 
             var testNodeServer = new TestNodeServer(accountConfig: accountConfig);

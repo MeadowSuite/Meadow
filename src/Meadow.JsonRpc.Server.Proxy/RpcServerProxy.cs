@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Meadow.Core.EthTypes;
@@ -21,10 +22,10 @@ namespace Meadow.JsonRpc.Server.Proxy
 
         public IWebHost WebHost => _httpServer.WebHost;
 
-        public RpcServerProxy(Uri targetHost, int? proxyServerPort = null)
+        public RpcServerProxy(Uri targetHost, int? proxyServerPort = null, IPAddress address = null)
         {
             _proxyClient = JsonRpcClient.Create(targetHost, ArbitraryDefaults.DEFAULT_GAS_LIMIT, ArbitraryDefaults.DEFAULT_GAS_PRICE);
-            _httpServer = new JsonRpcHttpServer(_proxyClient, ConfigureWebHost, proxyServerPort);
+            _httpServer = new JsonRpcHttpServer(_proxyClient, ConfigureWebHost, proxyServerPort, address);
             
             //var undefinedRpcMethods = this.GetUndefinedRpcMethods();
             //Console.WriteLine("Warning: following RPC methods are not defined: \n" + string.Join(", ", undefinedRpcMethods.Select(r => r.Value())));
