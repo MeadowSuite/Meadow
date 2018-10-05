@@ -686,7 +686,7 @@ namespace Meadow.DebugAdapterServer
                 responder.SetResponse(new VariablesResponse());
                 return;
             }
-
+            
             // Obtain the trace index for this scope.
             List<Variable> variableList = new List<Variable>();
 
@@ -740,10 +740,7 @@ namespace Meadow.DebugAdapterServer
 
                                 // Obtain the value string for this variable and add it to our list.
                                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                                variableList.Add(new Variable($"[{i}]", variableValueString, variablePairReferenceId)
-                                {
-                                    Type = underlyingVariableValuePair.Variable.BaseType
-                                });
+                                variableList.Add(CreateVariable($"[{i}]", variableValueString, variablePairReferenceId, underlyingVariableValuePair.Variable.BaseType));
                             }
 
 
@@ -757,10 +754,7 @@ namespace Meadow.DebugAdapterServer
                             var bytes = (Memory<byte>)parentVariableValuePair.Value;
                             for (int i = 0; i < bytes.Length; i++)
                             {
-                                variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0)
-                                {
-                                    Type = "byte"
-                                });
+                                variableList.Add(CreateVariable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0, "byte"));
                             }
 
                             break;
@@ -806,19 +800,49 @@ namespace Meadow.DebugAdapterServer
 
                 // Obtain the value string for this variable and add it to our list.
                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString, variablePairReferenceId)
-                {
-                    Type = variablePair.Variable.BaseType
-                });
+
+
+                variableList.Add(CreateVariable(variablePair.Variable.Name, variableValueString, variablePairReferenceId, variablePair.Variable.BaseType));
             }
 
             // Respond with our variable list.
             responder.SetResponse(new VariablesResponse(variableList));
         }
 
+        // This is a crap temporary work around to support VSCode "copy value" on variables.
+        // TODO: use existing resolve code.
+        // TODO: WARNING: this is a memory leak and stores every variable for all time.
+        #region Variable Eval Hacks
+        ConcurrentDictionary<int, string> _variableEvaluationValues = new ConcurrentDictionary<int, string>();
+        int _variableEvaluationID = 1;
+        const string VARIABLE_EVAL_TYPE = "vareval_";
+
+        Variable CreateVariable(string name, string value, int variablesReference, string type)
+        {
+            var evalID = System.Threading.Interlocked.Increment(ref _variableEvaluationID);
+            _variableEvaluationValues[evalID] = value;
+            return new Variable(name, value, variablesReference)
+            {
+                Type = type,
+                EvaluateName = VARIABLE_EVAL_TYPE + evalID.ToString(CultureInfo.InvariantCulture)
+            };
+        }
+        #endregion
+
         protected override void HandleEvaluateRequestAsync(IRequestResponder<EvaluateArguments, EvaluateResponse> responder)
         {
-            responder.SetResponse(new EvaluateResponse());
+            EvaluateResponse evalResponse = null;
+
+            if (responder.Arguments.Expression.StartsWith(VARIABLE_EVAL_TYPE, StringComparison.Ordinal))
+            {
+                var id = int.Parse(responder.Arguments.Expression.Substring(VARIABLE_EVAL_TYPE.Length), CultureInfo.InvariantCulture);
+                if (_variableEvaluationValues.TryGetValue(id, out var evalResult))
+                {
+                    evalResponse = new EvaluateResponse { Result = evalResult };
+                }
+            }
+
+            responder.SetResponse(evalResponse ?? new EvaluateResponse());
         }
      
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)
@@ -873,7 +897,7 @@ namespace Meadow.DebugAdapterServer
             // Obtain our internal path from a vs code path
             var relativeFilePath = ConvertVSCodePathToInternalPath(responder.Arguments.Source.Path);
 
-                     _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
+            _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
             
             responder.SetResponse(new SetBreakpointsResponse());
         }
