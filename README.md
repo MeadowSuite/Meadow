@@ -25,14 +25,14 @@ An integrated Ethereum implementation and tool suite focused on Solidity testing
 
 ## Quick start
 
-Install [.NET Core SDK v.2.1.4 or higher](https://www.microsoft.com/net/download) then run:
+Install [.NET Core SDK v.2.1.4 or higher](https://www.microsoft.com/net/download), then run these commands in a new directory for your project:
 
 ```bash
 dotnet new -i Meadow.ProjectTemplate
-dotnet new meadow -n YourProjectName
+dotnet new meadow
 ```
 
-Open the `YourProjectName` directory in VSCode or your favorite C# IDE.
+Open your project directory in VSCode or your favorite C# IDE.
 
 ## Guides
 
