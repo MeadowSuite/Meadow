@@ -7,6 +7,7 @@ using Meadow.CoverageReport.Debugging.Variables;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
 using Meadow.CoverageReport.Models;
+using Meadow.JsonRpc.Client;
 using Meadow.JsonRpc.Types.Debugging;
 using SolcNet.DataDescription.Output;
 using SolcNet.DataDescription.Parsing;
@@ -996,13 +997,13 @@ namespace Meadow.CoverageReport.Debugging
         }
 
        
-        public VariableValuePair[] GetLocalVariables()
+        public VariableValuePair[] GetLocalVariables(IJsonRpcClient rpcClient = null)
         {
             // Obtain the local variables for the last trace point.
-            return GetLocalVariables(ExecutionTrace.Tracepoints.Length - 1);
+            return GetLocalVariables(ExecutionTrace.Tracepoints.Length - 1, rpcClient);
         }
 
-        public VariableValuePair[] GetLocalVariables(int traceIndex)
+        public VariableValuePair[] GetLocalVariables(int traceIndex, IJsonRpcClient rpcClient = null)
         {
             // Obtain the scope for this trace index
             ExecutionTraceScope currentScope = GetScope(traceIndex);
@@ -1038,7 +1039,7 @@ namespace Meadow.CoverageReport.Debugging
                 }
 
                 // Parse our variable's value.
-                object value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager);
+                object value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
 
                 // Add our local variable to our results
                 result.Add(new VariableValuePair(variable, value));
@@ -1048,13 +1049,13 @@ namespace Meadow.CoverageReport.Debugging
             return result.ToArray();
         }
 
-        public VariableValuePair[] GetStateVariables()
+        public VariableValuePair[] GetStateVariables(IJsonRpcClient rpcClient = null)
         {
             // Obtain the state variables for the last trace point.
-            return GetStateVariables(ExecutionTrace.Tracepoints.Length - 1);
+            return GetStateVariables(ExecutionTrace.Tracepoints.Length - 1, rpcClient);
         }
 
-        public VariableValuePair[] GetStateVariables(int traceIndex)
+        public VariableValuePair[] GetStateVariables(int traceIndex, IJsonRpcClient rpcClient = null)
         {
             // Obtain the scope for this trace index
             ExecutionTraceScope currentScope = GetScope(traceIndex);
@@ -1098,7 +1099,7 @@ namespace Meadow.CoverageReport.Debugging
                 if (!stateVariable.Declaration.Constant)
                 {
                     // Parse our variable from storage
-                    variableValue = stateVariable.ValueParser.ParseFromStorage(StorageManager, stateVariable.StorageLocation);
+                    variableValue = stateVariable.ValueParser.ParseFromStorage(StorageManager, stateVariable.StorageLocation, rpcClient);
                 }
 
                 // Add the state variable to our result list.

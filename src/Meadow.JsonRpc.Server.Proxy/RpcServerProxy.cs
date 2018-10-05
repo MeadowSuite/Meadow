@@ -273,6 +273,11 @@ namespace Meadow.JsonRpc.Server.Proxy
             return _proxyClient.GetExecutionTrace();
         }
 
+        public virtual Task<byte[]> GetHashPreimage(byte[] hash)
+        {
+            return _proxyClient.GetHashPreimage(hash);
+        }
+
         public virtual Task SetContractSizeCheckDisabled(bool enabled)
         {
             return _proxyClient.SetContractSizeCheckDisabled(enabled);

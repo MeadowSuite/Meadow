@@ -802,6 +802,26 @@ namespace Meadow.TestNode
             return Task.CompletedTask;
         }
 
+        public Task<byte[]> GetHashPreimage(byte[] hash)
+        {
+            // Verify our hash is not null
+            if (hash == null)
+            {
+                return Task.FromException<byte[]>(new ArgumentNullException("Could not obtain pre-image because the given hash was null."));
+            }
+
+            // Try to obtain the pre-image
+            byte[] preimage = null;
+            if (TestChain?.Chain?.Configuration?.DebugConfiguration?.TryGetPreimage(hash, out preimage) == true)
+            {
+                return Task.FromResult(preimage);
+            }
+            else
+            {
+                return Task.FromResult<byte[]>(null);
+            }
+        }
+
         public Task<ExecutionTrace> GetExecutionTrace()
         {
             // Verify we have an execution trace.
@@ -811,7 +831,7 @@ namespace Meadow.TestNode
             }
 
             // Return our converted execution trace.
-            ExecutionTrace executionTrace = JsonTypeConverter.CoreExecutionTraceToJsonExecutionTrace(TestChain.Chain.Configuration.DebugConfiguration.ExecutionTrace);
+            ExecutionTrace executionTrace = JsonTypeConverter.CoreExecutionTraceJsonExecutionTrace(TestChain.Chain.Configuration.DebugConfiguration.ExecutionTrace);
             return Task.FromResult(executionTrace);
         }
 

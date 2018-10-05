@@ -5,6 +5,7 @@ using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 
 namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
 {
@@ -49,7 +50,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             return ParseDereferencedFromMemory(memory, (int)pointer);
         }
 
-        public override object ParseFromStack(Data[] stack, int stackIndex, Memory<byte> memory, StorageManager storageManager)
+        public override object ParseFromStack(Data[] stack, int stackIndex, Memory<byte> memory, StorageManager storageManager, IJsonRpcClient rpcClient = null)
         {
             // If we exceeded our stack size
             if (stack.Length <= stackIndex)
@@ -75,7 +76,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                     StorageLocation storageLocation = new StorageLocation(stackEntryData, 0);
 
                     // Parse our value from storage. (Using our stack data as a storage key)
-                    return ParseFromStorage(storageManager, storageLocation);
+                    return ParseFromStorage(storageManager, storageLocation, rpcClient);
 
                 default:
                     throw new VarResolvingException("Could not parse variable from stack using reference type because the provided underlying location is invalid.");

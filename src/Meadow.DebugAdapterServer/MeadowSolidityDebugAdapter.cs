@@ -15,6 +15,7 @@ using Meadow.CoverageReport.Debugging.Variables.Enums;
 using System.Globalization;
 using Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
+using Meadow.JsonRpc.Client;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -88,13 +89,13 @@ namespace Meadow.DebugAdapterServer
             });
         }
 
-        public async Task ProcessExecutionTraceAnalysis(ExecutionTraceAnalysis traceAnalysis)
+        public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis)
         {
             // Obtain our thread ID
             int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
 
             // Create a thread state for this thread
-            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(traceAnalysis, threadId);
+            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId);
 
             // Acquire the semaphore for processing a trace.
             await _processTraceSemaphore.WaitAsync();
@@ -642,7 +643,7 @@ namespace Meadow.DebugAdapterServer
                 case VarGenericType.ByteArrayFixed:
                     return variableValuePair.Variable.BaseType;
                 case VarGenericType.Mapping:
-                    return "<unsupported>";
+                    return $"{variableValuePair.Variable.BaseType} (size: {((MappingKeyValuePair[])variableValuePair.Value).Length})";
                 case VarGenericType.String:
                     return $"\"{variableValuePair.Value}\"";
                 case VarGenericType.Struct:
@@ -685,7 +686,7 @@ namespace Meadow.DebugAdapterServer
                 responder.SetResponse(new VariablesResponse());
                 return;
             }
-
+            
             // Obtain the trace index for this scope.
             List<Variable> variableList = new List<Variable>();
 
@@ -693,11 +694,11 @@ namespace Meadow.DebugAdapterServer
             VariableValuePair[] variablePairs = Array.Empty<VariableValuePair>();
             if (isLocalVariableScope)
             {
-                variablePairs = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex);
+                variablePairs = threadState.ExecutionTraceAnalysis.GetLocalVariables(traceIndex, threadState.RpcClient);
             }
             else if (isStateVariableScope)
             {
-                variablePairs = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex);
+                variablePairs = threadState.ExecutionTraceAnalysis.GetStateVariables(traceIndex, threadState.RpcClient);
             }
             else if (isParentVariableScope)
             {
@@ -739,7 +740,7 @@ namespace Meadow.DebugAdapterServer
 
                                 // Obtain the value string for this variable and add it to our list.
                                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                                variableList.Add(new Variable($"[{i}]", variableValueString, variablePairReferenceId));
+                                variableList.Add(CreateVariable($"[{i}]", variableValueString, variablePairReferenceId, underlyingVariableValuePair.Variable.BaseType));
                             }
 
 
@@ -753,7 +754,25 @@ namespace Meadow.DebugAdapterServer
                             var bytes = (Memory<byte>)parentVariableValuePair.Value;
                             for (int i = 0; i < bytes.Length; i++)
                             {
-                                variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0));
+                                variableList.Add(CreateVariable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0, "byte"));
+                            }
+
+                            break;
+                        }
+
+                    case VarGenericType.Mapping:
+                        {
+                            // Obtain our mapping's key-value pairs.
+                            var mappingKeyValuePairs = (MappingKeyValuePair[])parentVariableValuePair.Value;
+                            variablePairs = new VariableValuePair[mappingKeyValuePairs.Length * 2];
+
+                            // Loop for each key and value pair to add.
+                            int variableIndex = 0;
+                            for (int i = 0; i < mappingKeyValuePairs.Length; i++)
+                            {
+                                // Set our key and value in our variable value pair enumeration.
+                                variablePairs[variableIndex++] = mappingKeyValuePairs[i].Key;
+                                variablePairs[variableIndex++] = mappingKeyValuePairs[i].Value;
                             }
 
                             break;
@@ -781,16 +800,49 @@ namespace Meadow.DebugAdapterServer
 
                 // Obtain the value string for this variable and add it to our list.
                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString, variablePairReferenceId));
+
+
+                variableList.Add(CreateVariable(variablePair.Variable.Name, variableValueString, variablePairReferenceId, variablePair.Variable.BaseType));
             }
 
             // Respond with our variable list.
             responder.SetResponse(new VariablesResponse(variableList));
         }
 
+        // This is a crap temporary work around to support VSCode "copy value" on variables.
+        // TODO: use existing resolve code.
+        // TODO: WARNING: this is a memory leak and stores every variable for all time.
+        #region Variable Eval Hacks
+        ConcurrentDictionary<int, string> _variableEvaluationValues = new ConcurrentDictionary<int, string>();
+        int _variableEvaluationID = 1;
+        const string VARIABLE_EVAL_TYPE = "vareval_";
+
+        Variable CreateVariable(string name, string value, int variablesReference, string type)
+        {
+            var evalID = System.Threading.Interlocked.Increment(ref _variableEvaluationID);
+            _variableEvaluationValues[evalID] = value;
+            return new Variable(name, value, variablesReference)
+            {
+                Type = type,
+                EvaluateName = VARIABLE_EVAL_TYPE + evalID.ToString(CultureInfo.InvariantCulture)
+            };
+        }
+        #endregion
+
         protected override void HandleEvaluateRequestAsync(IRequestResponder<EvaluateArguments, EvaluateResponse> responder)
         {
-            responder.SetResponse(new EvaluateResponse());
+            EvaluateResponse evalResponse = null;
+
+            if (responder.Arguments.Expression.StartsWith(VARIABLE_EVAL_TYPE, StringComparison.Ordinal))
+            {
+                var id = int.Parse(responder.Arguments.Expression.Substring(VARIABLE_EVAL_TYPE.Length), CultureInfo.InvariantCulture);
+                if (_variableEvaluationValues.TryGetValue(id, out var evalResult))
+                {
+                    evalResponse = new EvaluateResponse { Result = evalResult };
+                }
+            }
+
+            responder.SetResponse(evalResponse ?? new EvaluateResponse());
         }
      
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)

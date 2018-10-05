@@ -522,6 +522,15 @@ namespace Meadow.JsonRpc.Client
             return executionTrace;
         }
 
+        public async Task<byte[]> GetHashPreimage()
+        {
+            // Set our enable tracing command
+            var requestData = CreateRequestObject(RpcApiMethod.testing_getHashPreimage);
+            var (error, result) = await InvokeRpcMethod(requestData);
+            var preimage = result.ToObject<byte[]>(JsonRpcSerializer.Serializer);
+            return preimage;
+        }
+
         public async Task<CompoundCoverageMap[]> GetAllCoverageMaps()
         {
             // Obtain all of our coverage maps.

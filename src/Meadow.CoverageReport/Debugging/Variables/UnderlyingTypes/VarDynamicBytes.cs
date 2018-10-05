@@ -4,6 +4,7 @@ using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -34,7 +35,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             return memory.Slice(offset + UInt256.SIZE, (int)length);
         }
 
-        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
+        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation, IJsonRpcClient rpcClient = null)
         {
             // Obtain our storage value for our given storage location.
             Memory<byte> storageData = storageManager.ReadStorageSlot(storageLocation.SlotKey, storageLocation.DataOffset, SizeBytes);

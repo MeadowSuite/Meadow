@@ -3,6 +3,7 @@ using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -31,10 +32,10 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             return result;
         }
 
-        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
+        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation, IJsonRpcClient rpcClient = null)
         {
             // Obtain our value as we would dynamic bytes, but as a UTF-8 string
-            Memory<byte> value = (Memory<byte>)base.ParseFromStorage(storageManager, storageLocation);
+            Memory<byte> value = (Memory<byte>)base.ParseFromStorage(storageManager, storageLocation, rpcClient);
 
             // Obtain a string value
             string result = Encoding.UTF8.GetString(value.ToArray());

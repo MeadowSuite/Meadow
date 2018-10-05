@@ -4,6 +4,7 @@ using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -65,7 +66,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             return results;
         }
 
-        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
+        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation, IJsonRpcClient rpcClient = null)
         {
             // Create our result array
             var results = new VariableValuePair[Members.Length];
@@ -77,7 +78,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                 StorageLocation memberLocation = new StorageLocation(storageLocation.SlotKeyInteger + Members[i].StorageLocation.SlotKeyInteger, storageLocation.DataOffset + Members[i].StorageLocation.DataOffset);
 
                 // Parse our result for our indexed variable.
-                results[i] = new VariableValuePair(Members[i], Members[i].ValueParser.ParseFromStorage(storageManager, memberLocation));
+                results[i] = new VariableValuePair(Members[i], Members[i].ValueParser.ParseFromStorage(storageManager, memberLocation, rpcClient));
             }
 
             return results;

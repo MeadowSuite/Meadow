@@ -40,8 +40,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -56,7 +56,7 @@ namespace Meadow.UnitTestTemplate.Test
                 await _contract.updateStateValues();
             }
 
-            // Throw an exception in a function call (so we can simply check locals on latest execution point, since we have no front end/UI to choose an execution point at the time of writing this).
+            // Throw an exception in a function call (so we can simply check locals on latest execution point).
             await _contract.throwWithLocals(778899, 100).ExpectRevertTransaction();
 
             // Obtain an execution trace and parse locals from the last point in it (where the exception occurred).
@@ -64,8 +64,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -80,7 +80,7 @@ namespace Meadow.UnitTestTemplate.Test
                 await _contract.updateStateValues();
             }
 
-            // Throw an exception in a function call (so we can simply check locals on latest execution point, since we have no front end/UI to choose an execution point at the time of writing this).
+            // Throw an exception in a function call (so we can simply check locals on latest execution point).
             await _contract.indirectThrowWithLocals(778899, 100).ExpectRevertTransaction();
 
             // Obtain an execution trace and parse locals from the last point in it (where the exception occurred).
@@ -88,8 +88,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -101,7 +101,7 @@ namespace Meadow.UnitTestTemplate.Test
             // Create a byte array
             byte[] param1 = { 0x77, 0x88, 0x99, 0x88, 0x77, 0x00, 0x00, 0x00 };
 
-            // Throw an exception in a function call (so we can simply check locals on latest execution point, since we have no front end/UI to choose an execution point at the time of writing this).
+            // Throw an exception in a function call (so we can simply check locals on latest execution point).
             await _contract.throwBytes(param1).ExpectRevertTransaction();
 
             // Obtain an execution trace and parse locals from the last point in it (where the exception occurred).
@@ -109,8 +109,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -125,7 +125,7 @@ namespace Meadow.UnitTestTemplate.Test
                 await _contract.updateStateValues();
             }
 
-            // Throw an exception in a function call (so we can simply check locals on latest execution point, since we have no front end/UI to choose an execution point at the time of writing this).
+            // Throw an exception in a function call (so we can simply check locals on latest execution point).
             await _contract.throwArray().ExpectRevertTransaction();
 
             // Obtain an execution trace and parse locals from the last point in it (where the exception occurred).
@@ -133,8 +133,8 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();
@@ -149,7 +149,7 @@ namespace Meadow.UnitTestTemplate.Test
                 await _contract.updateStateValues();
             }
 
-            // Throw an exception in a function call (so we can simply check locals on latest execution point, since we have no front end/UI to choose an execution point at the time of writing this).
+            // Throw an exception in a function call (so we can simply check locals on latest execution point).
             await _contract.throwStruct().ExpectRevertTransaction();
 
             // Obtain an execution trace and parse locals from the last point in it (where the exception occurred).
@@ -157,8 +157,39 @@ namespace Meadow.UnitTestTemplate.Test
             ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Obtain our local/state variables.
-            var localVariables = traceAnalysis.GetLocalVariables();
-            var stateVariables = traceAnalysis.GetStateVariables();
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
+
+            // TODO: Verify variables.
+            Assert.Inconclusive();
+        }
+
+        [TestMethod]
+        public async Task TestMappings()
+        {
+            // Add all of our accounts to a mapping with the given index as the value.
+            for (int i = 0; i < Accounts.Length; i++)
+            {
+                // We set a value for each account that is non-zero (zero values aren't stored, the storage entry is deleted).
+                await _contract.updateSimpleMapping(Accounts[i], i + 700);
+            }
+
+            // Add some other values to a nested mapping (every enum will alternate between SECOND and THIRD)
+            for (int i = 1; i <= 10; i++)
+            {
+                await _contract.updateNestedMapping(i, i * 2, (byte)((i % 2) + 1));
+            }
+
+            // Throw an exception in a function call.
+            await _contract.throwWithLocals(778899, 100).ExpectRevertTransaction();
+
+            // Obtain an execution trace and parse locals from the last point in it (where the exception occurred).
+            var executionTrace = await RpcClient.GetExecutionTrace();
+            ExecutionTraceAnalysis traceAnalysis = new ExecutionTraceAnalysis(executionTrace);
+
+            // Obtain our local/state variables.
+            var localVariables = traceAnalysis.GetLocalVariables(RpcClient);
+            var stateVariables = traceAnalysis.GetStateVariables(RpcClient);
 
             // TODO: Verify variables.
             Assert.Inconclusive();

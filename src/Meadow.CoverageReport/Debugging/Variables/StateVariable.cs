@@ -30,7 +30,7 @@ namespace Meadow.CoverageReport.Debugging.Variables
             get
             {
                 // Obtain our base value
-                AstVariableStorageLocation storageLoc = Declaration.StorageLocation;
+                AstVariableStorageLocation storageLoc = Declaration?.StorageLocation ?? AstVariableStorageLocation.Default;
 
                 // If our location is stated as the default location, we return our specific values.
                 switch (storageLoc)
@@ -49,6 +49,12 @@ namespace Meadow.CoverageReport.Debugging.Variables
 
         #region Constructor
         public StateVariable(AstVariableDeclaration declaration) : base(declaration)
+        {
+            // Set our declaration
+            Declaration = declaration;
+        }
+
+        public StateVariable(string name, AstElementaryTypeName astTypeName) : base(name, astTypeName)
         {
 
         }

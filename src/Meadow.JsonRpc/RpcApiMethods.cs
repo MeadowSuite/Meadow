@@ -220,6 +220,8 @@ namespace Meadow.JsonRpc
         testing_setTracingEnabled,
         [EnumMember(Value = "testing_getExecutionTrace")]
         testing_getExecutionTrace,
+        [EnumMember(Value = "testing_getHashPreimage")]
+        testing_getHashPreimage,
 
         [EnumMember(Value = "testing_setCoverageEnabled")]
         testing_setCoverageEnabled,

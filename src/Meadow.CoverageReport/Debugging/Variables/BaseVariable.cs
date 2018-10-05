@@ -23,7 +23,11 @@ namespace Meadow.CoverageReport.Debugging.Variables
         /// <summary>
         /// The name of this variable.
         /// </summary>
-        public string Name => Declaration.Name;
+        public string Name { get; private set; }
+        /// <summary>
+        /// The AST node which describes the type for this variable.
+        /// </summary>
+        public AstElementaryTypeName AstTypeName { get; private set; }
         /// <summary>
         /// The base type string of this variable, which is likened to the full <see cref="Type"/> but with location information stripped.
         /// </summary>
@@ -43,21 +47,37 @@ namespace Meadow.CoverageReport.Debugging.Variables
         #endregion
 
         #region Constructor
-        /// <summary>
-        /// Initializes the variable with a given declaration, parsing all relevant type information and associating the appropriate value parser. 
-        /// </summary>
-        /// <param name="declaration">The ast variable declaration which constitutes the solidity declaration of the variable we wish to interface with.</param>
-        public BaseVariable(AstVariableDeclaration declaration)
+        protected BaseVariable(AstVariableDeclaration declaration)
         {
             // Set our properties
             Declaration = declaration;
-            BaseType = VarTypes.ParseTypeComponents(Declaration.TypeName.TypeDescriptions.TypeString).baseType;
-            GenericType = VarTypes.GetGenericType(BaseType);
-            ValueParser = VarTypes.GetVariableObject(Declaration.TypeName, VariableLocation);
+
+            // Initialize by name and type.
+            Initialize(Declaration.Name, Declaration.TypeName);
+        }
+
+        /// <summary>
+        /// Initializes the variable with a given declaration, parsing all relevant type information and associating the appropriate value parser. 
+        /// </summary>
+        /// <param name="name">The name to use to describe the variable.</param>
+        /// <param name="astTypeName">The AST node which describes the type name for this variable.</param>
+        protected BaseVariable(string name, AstElementaryTypeName astTypeName)
+        {
+            // Initialize by name and type.
+            Initialize(name, astTypeName);
         }
         #endregion
 
         #region Functions
+        protected void Initialize(string name, AstElementaryTypeName astTypeName)
+        {
+            // Set our properties
+            Name = name;
+            AstTypeName = astTypeName;
+            BaseType = VarParser.ParseTypeComponents(AstTypeName.TypeDescriptions.TypeString).baseType;
+            GenericType = VarParser.GetGenericType(BaseType);
+            ValueParser = VarParser.GetVariableObject(AstTypeName, VariableLocation);
+        }
         #endregion
     }
 }

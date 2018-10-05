@@ -4,6 +4,7 @@ using Meadow.Core.Utils;
 using Meadow.CoverageReport.AstTypes;
 using Meadow.CoverageReport.Debugging.Variables.Enums;
 using Meadow.CoverageReport.Debugging.Variables.Storage;
+using Meadow.JsonRpc.Client;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -23,13 +24,13 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         public VarArray(AstArrayTypeName type, VarLocation location) : base(type)
         {
             // Obtain our array size
-            ArraySize = VarTypes.ParseArrayTypeComponents(BaseType).arraySize;
+            ArraySize = VarParser.ParseArrayTypeComponents(BaseType).arraySize;
 
             // Set our type name
             ArrayTypeName = type;
 
             // Set our element parser with the given array element/base type.
-            ElementObject = VarTypes.GetVariableObject(ArrayTypeName.BaseType, location);
+            ElementObject = VarParser.GetVariableObject(ArrayTypeName.BaseType, location);
 
             // Define our bounds variables
             int storageSlotCount = 1;
@@ -97,7 +98,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             return arrayElements;
         }
 
-        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation)
+        public override object ParseFromStorage(StorageManager storageManager, StorageLocation storageLocation, IJsonRpcClient rpcClient = null)
         {
             // Obtain our storage value for our given storage location.
             Memory<byte> storageData = storageManager.ReadStorageSlot(storageLocation.SlotKey, storageLocation.DataOffset, SizeBytes);
@@ -129,7 +130,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             for (int i = 0; i < arrayElements.Length; i++)
             {
                 // Decode our element at this index
-                arrayElements[i] = ElementObject.ParseFromStorage(storageManager, elementLocation);
+                arrayElements[i] = ElementObject.ParseFromStorage(storageManager, elementLocation, rpcClient);
 
                 // Determine how to iterate, dependent on if the array is dynamically sized or not, as described earlier,
                 // (since it could compact multiple elements into a single storage slot).

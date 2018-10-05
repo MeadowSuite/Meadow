@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="Portable.Microsoft.VisualStudio.Shared.VsCodeDebugProtocol" Version="15.8.20719.13" />
+    <PackageReference Include="Portable.Microsoft.VisualStudio.Shared.VsCodeDebugProtocol" Version="15.8.20719.15" />
   </ItemGroup>
 
   <ItemGroup>

@@ -22,7 +22,8 @@ contract VarAnalysisContract
     uint[] globalArray1;
     uint[2] globalArray2;
     Line globalLine;
-    mapping(address => TestEnum) globalMapping1;
+    mapping(address => uint) simpleMapping;
+    mapping(uint => mapping(uint => TestEnum)) nestedMapping;
 
     struct Point 
     {
@@ -42,7 +43,7 @@ contract VarAnalysisContract
         assert(test == 0);
 	}
 
-	 enum TestEnum {FIRST,SECOND,THIRD}
+	enum TestEnum {FIRST,SECOND,THIRD}
     
 	function updateStateValues()
 	{
@@ -65,7 +66,7 @@ contract VarAnalysisContract
         globalArray2[0] = 1;
         globalArray2[1] = 7;
 
-        globalMapping1[msg.sender] = TestEnum.THIRD;
+        simpleMapping[msg.sender] = 77;
 
         globalLine.a.x += 1;
         globalLine.a.y += 2;
@@ -149,5 +150,15 @@ contract VarAnalysisContract
         Point memory pointB = Point({x: 79, y: 80});
         Line memory line = Line({a: pointA, b: pointB, index: 777});
         assert(false);
+    }
+
+    function updateSimpleMapping(address mappingKey, uint mappingValue) public
+    {
+        simpleMapping[mappingKey] = mappingValue;
+    }
+
+    function updateNestedMapping(uint key1, uint key2, TestEnum enumValue) public
+    {
+        nestedMapping[key1][key2] = enumValue;
     }
 }
