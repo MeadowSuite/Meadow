@@ -138,79 +138,82 @@ namespace Meadow.Core.AccountDerivation.BIP39
         /// <returns>Returns a word list for the given language, used for mnemonic phrases.</returns>
         public static WordList GetWordList(WordListLanguage language)
         {
-            // Try to get our word list
-            bool success = _cachedWordLists.TryGetValue(language, out WordList result);
-            if (success)
+            lock (_cachedWordLists)
             {
-                return result;
-            }
-
-            // Obtain the appropriate word list from our resource files.
-            Assembly currentAssembly = Assembly.GetExecutingAssembly();
-            string resourceName = null;
-            switch (language)
-            {
-                case WordListLanguage.Chinese_Simplified:
-                    resourceName = "wordlist_chinese_simplified.txt";
-                    break;
-                case WordListLanguage.Chinese_Traditional:
-                    resourceName = "wordlist_chinese_traditional.txt";
-                    break;
-                case WordListLanguage.English:
-                    resourceName = "wordlist_english.txt";
-                    break;
-                case WordListLanguage.French:
-                    resourceName = "wordlist_french.txt";
-                    break;
-                case WordListLanguage.Italian:
-                    resourceName = "wordlist_italian.txt";
-                    break;
-                case WordListLanguage.Japanese:
-                    resourceName = "wordlist_japanese.txt";
-                    break;
-                case WordListLanguage.Korean:
-                    resourceName = "wordlist_korean.txt";
-                    break;
-                case WordListLanguage.Spanish:
-                    resourceName = "wordlist_spanish.txt";
-                    break;
-            }
-
-            // If our resource name is null, throw an exception
-            if (resourceName == null)
-            {
-                throw new ArgumentException($"Could not obtain an embedded word list for language \"{resourceName}\".");
-            }
-
-            // Obtain our full resource name (it should end with the resource filename).
-            resourceName = currentAssembly.GetManifestResourceNames().First(x => 
-            {
-                int targetIndex = x.Length - resourceName.Length;
-                if (targetIndex < 0)
+                // Try to get our word list
+                bool success = _cachedWordLists.TryGetValue(language, out WordList result);
+                if (success)
                 {
-                    return false;
+                    return result;
                 }
 
-                return x.LastIndexOf(resourceName, StringComparison.OrdinalIgnoreCase) == targetIndex;
-            });
+                // Obtain the appropriate word list from our resource files.
+                Assembly currentAssembly = Assembly.GetExecutingAssembly();
+                string resourceName = null;
+                switch (language)
+                {
+                    case WordListLanguage.Chinese_Simplified:
+                        resourceName = "wordlist_chinese_simplified.txt";
+                        break;
+                    case WordListLanguage.Chinese_Traditional:
+                        resourceName = "wordlist_chinese_traditional.txt";
+                        break;
+                    case WordListLanguage.English:
+                        resourceName = "wordlist_english.txt";
+                        break;
+                    case WordListLanguage.French:
+                        resourceName = "wordlist_french.txt";
+                        break;
+                    case WordListLanguage.Italian:
+                        resourceName = "wordlist_italian.txt";
+                        break;
+                    case WordListLanguage.Japanese:
+                        resourceName = "wordlist_japanese.txt";
+                        break;
+                    case WordListLanguage.Korean:
+                        resourceName = "wordlist_korean.txt";
+                        break;
+                    case WordListLanguage.Spanish:
+                        resourceName = "wordlist_spanish.txt";
+                        break;
+                }
 
-            // Open a stream on the resource
-            Stream stream = currentAssembly.GetManifestResourceStream(resourceName);
+                // If our resource name is null, throw an exception
+                if (resourceName == null)
+                {
+                    throw new ArgumentException($"Could not obtain an embedded word list for language \"{resourceName}\".");
+                }
 
-            // Read all the text from the stream.
-            StreamReader streamReader = new StreamReader(stream);
-            string allText = streamReader.ReadToEnd();
-            streamReader.Close();
-            stream.Close();
+                // Obtain our full resource name (it should end with the resource filename).
+                resourceName = currentAssembly.GetManifestResourceNames().First(x =>
+                {
+                    int targetIndex = x.Length - resourceName.Length;
+                    if (targetIndex < 0)
+                    {
+                        return false;
+                    }
 
-            // Create a word list instance
-            WordList wordList = new WordList(language, allText);
+                    return x.LastIndexOf(resourceName, StringComparison.OrdinalIgnoreCase) == targetIndex;
+                });
 
-            // Set it in our cached word lists
-            _cachedWordLists[language] = wordList;
+                // Open a stream on the resource
+                Stream stream = currentAssembly.GetManifestResourceStream(resourceName);
 
-            // Return our word list
-            return wordList;
+                // Read all the text from the stream.
+                StreamReader streamReader = new StreamReader(stream);
+                string allText = streamReader.ReadToEnd();
+                streamReader.Close();
+                stream.Close();
+
+                // Create a word list instance
+                WordList wordList = new WordList(language, allText);
+
+                // Set it in our cached word lists
+                _cachedWordLists[language] = wordList;
+
+                // Return our word list
+                return wordList;
+            }
         }
 
         /// <summary>
@@ -222,21 +225,24 @@ namespace Meadow.Core.AccountDerivation.BIP39
         /// <returns>Returns a word list for the given language, used for mnemonic phrases.</returns>
         public static WordList GetWordList(WordListLanguage language, string[] words)
         {
-            // Try to get our word list
-            bool success = _cachedWordLists.TryGetValue(language, out WordList result);
-            if (success)
+            lock (_cachedWordLists)
             {
-                return result;
+                // Try to get our word list
+                bool success = _cachedWordLists.TryGetValue(language, out WordList result);
+                if (success)
+                {
+                    return result;
+                }
+
+                // If we couldn't get it, parse a new one
+                WordList wordList = new WordList(language, words);
+
+                // Set it in our lookup
+                _cachedWordLists[language] = wordList;
+
+                // Return our word list.
+                return wordList;
             }
-
-            // If we couldn't get it, parse a new one
-            WordList wordList = new WordList(language, words);
-
-            // Set it in our lookup
-            _cachedWordLists[language] = wordList;
-
-            // Return our word list.
-            return wordList;
         }
 
         /// <summary>
@@ -248,22 +254,25 @@ namespace Meadow.Core.AccountDerivation.BIP39
         /// <returns>Returns a word list for the given language, used for mnemonic phrases.</returns>
         public static WordList GetWordList(WordListLanguage language, string fileName)
         {
-            // Try to get our word list
-            bool success = _cachedWordLists.TryGetValue(language, out WordList result);
-            if (success)
+            lock (_cachedWordLists)
             {
-                return result;
+                // Try to get our word list
+                bool success = _cachedWordLists.TryGetValue(language, out WordList result);
+                if (success)
+                {
+                    return result;
+                }
+
+                // If we couldn't get it, parse a new one
+                string allText = File.ReadAllText(fileName);
+                WordList wordList = new WordList(language, allText);
+
+                // Set it in our lookup
+                _cachedWordLists[language] = wordList;
+
+                // Return our word list.
+                return wordList;
             }
-
-            // If we couldn't get it, parse a new one
-            string allText = File.ReadAllText(fileName);
-            WordList wordList = new WordList(language, allText);
-
-            // Set it in our lookup
-            _cachedWordLists[language] = wordList;
-
-            // Return our word list.
-            return wordList;
         }
 
         /// <summary>
