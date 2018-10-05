@@ -740,7 +740,10 @@ namespace Meadow.DebugAdapterServer
 
                                 // Obtain the value string for this variable and add it to our list.
                                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                                variableList.Add(new Variable($"[{i}]", variableValueString, variablePairReferenceId));
+                                variableList.Add(new Variable($"[{i}]", variableValueString, variablePairReferenceId)
+                                {
+                                    Type = underlyingVariableValuePair.Variable.BaseType
+                                });
                             }
 
 
@@ -754,7 +757,10 @@ namespace Meadow.DebugAdapterServer
                             var bytes = (Memory<byte>)parentVariableValuePair.Value;
                             for (int i = 0; i < bytes.Length; i++)
                             {
-                                variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0));
+                                variableList.Add(new Variable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0)
+                                {
+                                    Type = "byte"
+                                });
                             }
 
                             break;
@@ -800,7 +806,10 @@ namespace Meadow.DebugAdapterServer
 
                 // Obtain the value string for this variable and add it to our list.
                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString, variablePairReferenceId));
+                variableList.Add(new Variable(variablePair.Variable.Name, variableValueString, variablePairReferenceId)
+                {
+                    Type = variablePair.Variable.BaseType
+                });
             }
 
             // Respond with our variable list.
