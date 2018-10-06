@@ -741,9 +741,7 @@ namespace Meadow.CoverageReport.Debugging
                 // Find any nodes exactly at this location (which are not the function definition node itself).
                 var currentLocationNodes = AstParser.AllAstNodes.Where(a =>
                 {
-                    return
-                       // a.NodeType != AstNodeType.FunctionDefinition &&
-                        a.SourceRange.SourceIndex == currentEntry.Index &&
+                    return a.SourceRange.SourceIndex == currentEntry.Index &&
                         a.SourceRange.Offset == currentEntry.Offset &&
                         a.SourceRange.Offset + a.SourceRange.Length == currentEntry.Offset + currentEntry.Length;
                 });
@@ -755,7 +753,7 @@ namespace Meadow.CoverageReport.Debugging
                 bool enteredFunctionDefinition = false;
                 foreach (var currentLocationNode in currentLocationNodes)
                 {
-                    // If this is a function definition and we haven't found one..
+                    // If this is a function definition and we haven't found one before, set it.
                     if (!foundFunctionDefinition && currentLocationNode.NodeType == AstNodeType.FunctionDefinition)
                     {
                         // Set our function definition candidate and mark us finding a function definition as true.
@@ -764,7 +762,8 @@ namespace Meadow.CoverageReport.Debugging
                     }
                     else
                     {
-                        // Try to obtain a function definition candidate from the current indexed node.
+                        // This isn't a function definition, meaning we might have entered the function now. Try to obtain a
+                        // parent function definition candidate from the current indexed node. If we can, we entered a function.
                         functionDefinitionCandidate = currentLocationNode.GetImmediateOrAncestor<AstFunctionDefinition>();
 
                         // If we found a node candidate, break out
