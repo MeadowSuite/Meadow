@@ -67,6 +67,11 @@ namespace Meadow.DebugAdapterServer
         public event ExitingEventHandler OnDebuggerDisconnect;
         #endregion
 
+        const string EXCEPTION_BREAKPOINT_FILTER_ALL = "All Exceptions";
+        const string EXCEPTION_BREAKPOINT_FILTER_UNHANDLED = "Unhandled Exceptions";
+
+        HashSet<string> _exceptionBreakpointFilters = new HashSet<string>();
+
         #region Constructor
         public MeadowSolidityDebugAdapter()
         {
@@ -255,6 +260,20 @@ namespace Meadow.DebugAdapterServer
                 // Obtain an exception at the current point.
                 ExecutionTraceException traceException = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
 
+                // TODO: determine if this exception is wrapped in an ExpectRevert from the front-end call
+                bool isUserHandledException = false;
+
+                lock (_exceptionBreakpointFilters)
+                {
+                    if (!_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_ALL))
+                    {
+                        if (!isUserHandledException && !_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
                 // If we have an exception, throw it and return the appropriate status.
                 if (traceException != null)
                 {
@@ -315,12 +334,39 @@ namespace Meadow.DebugAdapterServer
                 SupportTerminateDebuggee = false,
                 SupportsRestartRequest = false,
                 SupportsRestartFrame = false,
-                SupportedChecksumAlgorithms = new List<ChecksumAlgorithm> { ChecksumAlgorithm.SHA256 }
+                SupportedChecksumAlgorithms = new List<ChecksumAlgorithm> { ChecksumAlgorithm.SHA256 },
+                SupportsExceptionInfoRequest = true
+            };
+
+            response.ExceptionBreakpointFilters = new List<ExceptionBreakpointsFilter>
+            {
+                new ExceptionBreakpointsFilter
+                {
+                    Filter = EXCEPTION_BREAKPOINT_FILTER_ALL,
+                    Label = EXCEPTION_BREAKPOINT_FILTER_ALL,
+                    Default = false
+                },
+                new ExceptionBreakpointsFilter
+                {
+                    Filter = EXCEPTION_BREAKPOINT_FILTER_UNHANDLED,
+                    Label = EXCEPTION_BREAKPOINT_FILTER_UNHANDLED,
+                    Default = true
+                }
             };
 
             responder.SetResponse(response);
             Protocol.SendEvent(new InitializedEvent());
             CompletedInitializationRequest.SetResult(null);
+        }
+
+        protected override void HandleSetExceptionBreakpointsRequestAsync(IRequestResponder<SetExceptionBreakpointsArguments> responder)
+        {
+            lock (_exceptionBreakpointFilters)
+            {
+                _exceptionBreakpointFilters = new HashSet<string>(responder.Arguments.Filters);
+                var response = new SetExceptionBreakpointsResponse();
+                responder.SetResponse(response);
+            }
         }
 
         protected override void HandleAttachRequestAsync(IRequestResponder<AttachArguments> responder)
