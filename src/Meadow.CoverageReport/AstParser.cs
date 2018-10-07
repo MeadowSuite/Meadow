@@ -164,7 +164,7 @@ namespace Meadow.CoverageReport
             List<AstVariableDeclaration> stateVariables = new List<AstVariableDeclaration>();
 
             // Loop for each contract our target contract is based off of, and add it's variable declarations.
-            for (int i = 0; i < linearizedContracts.Length; i++)
+            for (int i = linearizedContracts.Length - 1; i >= 0; i--)
             {
                 stateVariables.AddRange(linearizedContracts[i].VariableDeclarations);
             }
