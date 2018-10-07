@@ -622,10 +622,10 @@ namespace Meadow.DebugAdapterServer
                         Id = ReferenceContainer.GetUniqueId(),
                         Name = frameName,
                         Line = startLine,
-                        Column = startColumn,
+                        Column = 1,
                         Source = stackFrameSource,
-                        EndLine = endLine,
-                        EndColumn = endColumn
+                        //EndLine = endLine,
+                        //EndColumn = endColumn
                     };
 
                     // Add the stack frame to our reference list
@@ -890,15 +890,28 @@ namespace Meadow.DebugAdapterServer
 
             responder.SetResponse(evalResponse ?? new EvaluateResponse());
         }
-     
+
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)
         {
             // Obtain the current thread state
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
             {
-                string exceptionMessage = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value).Message;
-                responder.SetResponse(new ExceptionInfoResponse(exceptionMessage, ExceptionBreakMode.Always));
+                var ex = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
+
+                // Get the exception call stack lines.
+                var exStackTrace = threadState.ExecutionTraceAnalysis.GetExceptionStackTrace(ex);
+
+                responder.SetResponse(new ExceptionInfoResponse("Error", ExceptionBreakMode.Always)
+                {
+                    Description = ex.Message,
+                    Details = new ExceptionDetails
+                    {
+                        Message = ex.Message,
+                        FormattedDescription = ex.Message,
+                        StackTrace = exStackTrace
+                    }
+                });
             }
         }
 
