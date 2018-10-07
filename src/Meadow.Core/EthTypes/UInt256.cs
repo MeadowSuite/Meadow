@@ -117,12 +117,25 @@ namespace Meadow.Core.EthTypes
 
         public static double Log(UInt256 value, double baseValue) => BigInteger.Log(value.ToBigInteger(), baseValue);
 
+        /// <summary>
+        /// Divides with a precision of 28 digits <see href="https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/decimal"/>
+        /// </summary>
+        public static UInt256 DivideRounded(UInt256 dividend, UInt256 divisor)
+        {
+            return Math.Round((decimal)dividend / (decimal)divisor);
+        }
 
+        public static explicit operator decimal(UInt256 value) => (decimal)value.ToBigInteger();
         public static explicit operator double(UInt256 value) => (double)value.ToBigInteger();
+        public static explicit operator float(UInt256 value) => (float)value.ToBigInteger();
         public static explicit operator ulong(UInt256 value) => (ulong)value.ToBigInteger();
+        public static explicit operator long(UInt256 value) => (long)value.ToBigInteger();
         public static explicit operator uint(UInt256 value) => (uint)value.ToBigInteger();
+        public static explicit operator int(UInt256 value) => (int)value.ToBigInteger();
         public static explicit operator ushort(UInt256 value) => (ushort)value.ToBigInteger();
+        public static explicit operator short(UInt256 value) => (short)value.ToBigInteger();
         public static explicit operator byte(UInt256 value) => (byte)value.ToBigInteger();
+        public static explicit operator sbyte(UInt256 value) => (sbyte)value.ToBigInteger();
         public static explicit operator BigInteger(UInt256 value) => value.ToBigInteger();
         public static explicit operator UInt256(BigInteger value) => new UInt256(value);
         public static explicit operator UInt256(string value) => TryParse(value, out var result) ? result : FromHexString(value);

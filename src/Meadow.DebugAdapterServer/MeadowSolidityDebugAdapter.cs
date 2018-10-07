@@ -67,6 +67,11 @@ namespace Meadow.DebugAdapterServer
         public event ExitingEventHandler OnDebuggerDisconnect;
         #endregion
 
+        const string EXCEPTION_BREAKPOINT_FILTER_ALL = "All Exceptions";
+        const string EXCEPTION_BREAKPOINT_FILTER_UNHANDLED = "Unhandled Exceptions";
+
+        HashSet<string> _exceptionBreakpointFilters = new HashSet<string>();
+
         #region Constructor
         public MeadowSolidityDebugAdapter()
         {
@@ -255,6 +260,20 @@ namespace Meadow.DebugAdapterServer
                 // Obtain an exception at the current point.
                 ExecutionTraceException traceException = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
 
+                // TODO: determine if this exception is wrapped in an ExpectRevert from the front-end call
+                bool isUserHandledException = false;
+
+                lock (_exceptionBreakpointFilters)
+                {
+                    if (!_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_ALL))
+                    {
+                        if (!isUserHandledException && !_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
                 // If we have an exception, throw it and return the appropriate status.
                 if (traceException != null)
                 {
@@ -315,12 +334,39 @@ namespace Meadow.DebugAdapterServer
                 SupportTerminateDebuggee = false,
                 SupportsRestartRequest = false,
                 SupportsRestartFrame = false,
-                SupportedChecksumAlgorithms = new List<ChecksumAlgorithm> { ChecksumAlgorithm.SHA256 }
+                SupportedChecksumAlgorithms = new List<ChecksumAlgorithm> { ChecksumAlgorithm.SHA256 },
+                SupportsExceptionInfoRequest = true
+            };
+
+            response.ExceptionBreakpointFilters = new List<ExceptionBreakpointsFilter>
+            {
+                new ExceptionBreakpointsFilter
+                {
+                    Filter = EXCEPTION_BREAKPOINT_FILTER_ALL,
+                    Label = EXCEPTION_BREAKPOINT_FILTER_ALL,
+                    Default = false
+                },
+                new ExceptionBreakpointsFilter
+                {
+                    Filter = EXCEPTION_BREAKPOINT_FILTER_UNHANDLED,
+                    Label = EXCEPTION_BREAKPOINT_FILTER_UNHANDLED,
+                    Default = true
+                }
             };
 
             responder.SetResponse(response);
             Protocol.SendEvent(new InitializedEvent());
             CompletedInitializationRequest.SetResult(null);
+        }
+
+        protected override void HandleSetExceptionBreakpointsRequestAsync(IRequestResponder<SetExceptionBreakpointsArguments> responder)
+        {
+            lock (_exceptionBreakpointFilters)
+            {
+                _exceptionBreakpointFilters = new HashSet<string>(responder.Arguments.Filters);
+                var response = new SetExceptionBreakpointsResponse();
+                responder.SetResponse(response);
+            }
         }
 
         protected override void HandleAttachRequestAsync(IRequestResponder<AttachArguments> responder)
@@ -576,10 +622,10 @@ namespace Meadow.DebugAdapterServer
                         Id = ReferenceContainer.GetUniqueId(),
                         Name = frameName,
                         Line = startLine,
-                        Column = startColumn,
+                        Column = 1,
                         Source = stackFrameSource,
-                        EndLine = endLine,
-                        EndColumn = endColumn
+                        //EndLine = endLine,
+                        //EndColumn = endColumn
                     };
 
                     // Add the stack frame to our reference list
@@ -844,15 +890,28 @@ namespace Meadow.DebugAdapterServer
 
             responder.SetResponse(evalResponse ?? new EvaluateResponse());
         }
-     
+
         protected override void HandleExceptionInfoRequestAsync(IRequestResponder<ExceptionInfoArguments, ExceptionInfoResponse> responder)
         {
             // Obtain the current thread state
             bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
             if (success)
             {
-                string exceptionMessage = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value).Message;
-                responder.SetResponse(new ExceptionInfoResponse(exceptionMessage, ExceptionBreakMode.Always));
+                var ex = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
+
+                // Get the exception call stack lines.
+                var exStackTrace = threadState.ExecutionTraceAnalysis.GetExceptionStackTrace(ex);
+
+                responder.SetResponse(new ExceptionInfoResponse("Error", ExceptionBreakMode.Always)
+                {
+                    Description = ex.Message,
+                    Details = new ExceptionDetails
+                    {
+                        Message = ex.Message,
+                        FormattedDescription = ex.Message,
+                        StackTrace = exStackTrace
+                    }
+                });
             }
         }
 
