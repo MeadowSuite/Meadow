@@ -71,6 +71,7 @@ namespace Meadow.DebugAdapterServer
         const string EXCEPTION_BREAKPOINT_FILTER_UNHANDLED = "Unhandled Exceptions";
 
         HashSet<string> _exceptionBreakpointFilters = new HashSet<string>();
+        int _threadIDCounter = 0;
 
         #region Constructor
         public MeadowSolidityDebugAdapter()
@@ -96,8 +97,10 @@ namespace Meadow.DebugAdapterServer
 
         public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis)
         {
-            // Obtain our thread ID
-            int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            // We don't have real threads here, only a unique execution context
+            // per RPC callback (eth_call or eth_sendTransactions).
+            // So just use a rolling ID for threads.
+            int threadId = System.Threading.Interlocked.Increment(ref _threadIDCounter);
 
             // Create a thread state for this thread
             MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId);
