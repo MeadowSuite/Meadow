@@ -42,6 +42,40 @@ namespace Meadow.Core.Test
         }
 
         [Fact]
+        public void DivideRounded()
+        {
+            // Test division with a cleanly divided number.
+            UInt256 dividend = 30;
+            UInt256 divisor = 3;
+            UInt256 result = UInt256.DivideRounded(dividend, divisor);
+            Assert.Equal(10, result);
+
+            // Test division with remainder (under midpoint, rounds down).
+            dividend = 29;
+            divisor = 4;
+            result = UInt256.DivideRounded(dividend, divisor);
+            Assert.Equal(7, result);
+
+            // Test division with remainder (at midpoint, rounds up).
+            dividend = 30;
+            divisor = 4;
+            result = UInt256.DivideRounded(dividend, divisor);
+            Assert.Equal(8, result);
+
+            // Test division with remainder (over midpoint, rounds up).
+            dividend = 31;
+            divisor = 4;
+            result = UInt256.DivideRounded(dividend, divisor);
+            Assert.Equal(8, result);
+
+            // Test division with zero integer (stays at zero).
+            dividend = 0;
+            divisor = 4;
+            result = UInt256.DivideRounded(dividend, divisor);
+            Assert.Equal(0, result);
+        }
+
+        [Fact]
         public void WeiTest()
         {
             var weiInt = BigInteger.Pow(10, 18);
