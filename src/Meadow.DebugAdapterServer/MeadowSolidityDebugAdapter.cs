@@ -16,6 +16,7 @@ using System.Globalization;
 using Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.JsonRpc.Client;
+using System.Text;
 
 namespace Meadow.DebugAdapterServer
 {
@@ -71,6 +72,7 @@ namespace Meadow.DebugAdapterServer
         const string EXCEPTION_BREAKPOINT_FILTER_UNHANDLED = "Unhandled Exceptions";
 
         HashSet<string> _exceptionBreakpointFilters = new HashSet<string>();
+        int _threadIDCounter = 0;
 
         #region Constructor
         public MeadowSolidityDebugAdapter()
@@ -94,13 +96,15 @@ namespace Meadow.DebugAdapterServer
             });
         }
 
-        public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis)
+        public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis, bool expectingException)
         {
-            // Obtain our thread ID
-            int threadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
+            // We don't have real threads here, only a unique execution context
+            // per RPC callback (eth_call or eth_sendTransactions).
+            // So just use a rolling ID for threads.
+            int threadId = System.Threading.Interlocked.Increment(ref _threadIDCounter);
 
             // Create a thread state for this thread
-            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId);
+            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId, expectingException);
 
             // Acquire the semaphore for processing a trace.
             await _processTraceSemaphore.WaitAsync();
@@ -207,6 +211,8 @@ namespace Meadow.DebugAdapterServer
                                 return;
                             }
 
+                            Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
+
                             // Signal our breakpoint event has occurred for this thread.
                             Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
 
@@ -254,25 +260,29 @@ namespace Meadow.DebugAdapterServer
 
         private bool HandleExceptions(MeadowDebugAdapterThreadState threadState)
         {
+            bool ShouldProcessException()
+            {
+                lock (_exceptionBreakpointFilters)
+                {
+                    if (_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_ALL))
+                    {
+                        return true;
+                    }
+
+                    if (!threadState.ExpectingException && _exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+
             // Try to obtain an exception at this point
-            if (threadState.CurrentStepIndex.HasValue)
+            if (ShouldProcessException() && threadState.CurrentStepIndex.HasValue)
             {
                 // Obtain an exception at the current point.
                 ExecutionTraceException traceException = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
-
-                // TODO: determine if this exception is wrapped in an ExpectRevert from the front-end call
-                bool isUserHandledException = false;
-
-                lock (_exceptionBreakpointFilters)
-                {
-                    if (!_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_ALL))
-                    {
-                        if (!isUserHandledException && !_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
-                        {
-                            return false;
-                        }
-                    }
-                }
 
                 // If we have an exception, throw it and return the appropriate status.
                 if (traceException != null)
@@ -573,7 +583,7 @@ namespace Meadow.DebugAdapterServer
 
                     // Determine the bounds of our stack frame.
                     int startLine = 0;
-                    int startColumn = 0;
+                    int startColumn = 1;
                     int endLine = 0;
                     int endColumn = 0;
 
@@ -622,11 +632,15 @@ namespace Meadow.DebugAdapterServer
                         Id = ReferenceContainer.GetUniqueId(),
                         Name = frameName,
                         Line = startLine,
-                        Column = 1,
+                        Column = startColumn,
                         Source = stackFrameSource,
-                        //EndLine = endLine,
-                        //EndColumn = endColumn
+                        EndColumn = endColumn
                     };
+
+                    if (endLine > 0)
+                    {
+                        stackFrame.EndLine = endLine;
+                    }
 
                     // Add the stack frame to our reference list
                     ReferenceContainer.LinkStackFrame(threadState.ThreadId, stackFrame, currentStackFrame.CurrentPositionTraceIndex);
@@ -732,10 +746,41 @@ namespace Meadow.DebugAdapterServer
                 responder.SetResponse(new VariablesResponse());
                 return;
             }
-            
+
             // Obtain the trace index for this scope.
             List<Variable> variableList = new List<Variable>();
 
+            try
+            {
+                ResolveVariables(
+                    variableList, 
+                    responder.Arguments.VariablesReference, 
+                    isLocalVariableScope, 
+                    isStateVariableScope, 
+                    isParentVariableScope, 
+                    traceIndex,
+                    parentVariableValuePair,
+                    threadState);
+            }
+            catch (Exception ex)
+            {
+                LogException(ex, threadState);
+            }
+
+            // Respond with our variable list.
+            responder.SetResponse(new VariablesResponse(variableList));
+        }
+
+        void ResolveVariables(
+            List<Variable> variableList,
+            int variablesReference,
+            bool isLocalVariableScope, 
+            bool isStateVariableScope,
+            bool isParentVariableScope,
+            int traceIndex,
+            UnderlyingVariableValuePair parentVariableValuePair,
+            MeadowDebugAdapterThreadState threadState)
+        { 
             // Obtain our local variables at this point in execution
             VariableValuePair[] variablePairs = Array.Empty<VariableValuePair>();
             if (isLocalVariableScope)
@@ -781,7 +826,7 @@ namespace Meadow.DebugAdapterServer
                                     variablePairReferenceId = ReferenceContainer.GetUniqueId();
 
                                     // Link our reference for any nested types.
-                                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, underlyingVariableValuePair);
+                                    ReferenceContainer.LinkSubVariableReference(variablesReference, variablePairReferenceId, threadState.ThreadId, underlyingVariableValuePair);
                                 }
 
                                 // Obtain the value string for this variable and add it to our list.
@@ -841,7 +886,7 @@ namespace Meadow.DebugAdapterServer
                     variablePairReferenceId = ReferenceContainer.GetUniqueId();
 
                     // Link our reference for any nested types.
-                    ReferenceContainer.LinkSubVariableReference(responder.Arguments.VariablesReference, variablePairReferenceId, threadId, underlyingVariableValuePair);
+                    ReferenceContainer.LinkSubVariableReference(variablesReference, variablePairReferenceId, threadState.ThreadId, underlyingVariableValuePair);
                 }
 
                 // Obtain the value string for this variable and add it to our list.
@@ -850,9 +895,6 @@ namespace Meadow.DebugAdapterServer
 
                 variableList.Add(CreateVariable(variablePair.Variable.Name, variableValueString, variablePairReferenceId, variablePair.Variable.BaseType));
             }
-
-            // Respond with our variable list.
-            responder.SetResponse(new VariablesResponse(variableList));
         }
 
         // This is a crap temporary work around to support VSCode "copy value" on variables.
@@ -900,7 +942,7 @@ namespace Meadow.DebugAdapterServer
                 var ex = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
 
                 // Get the exception call stack lines.
-                var exStackTrace = threadState.ExecutionTraceAnalysis.GetExceptionStackTrace(ex);
+                var exStackTrace = threadState.ExecutionTraceAnalysis.GetCallStackString(ex.TraceIndex.Value);
 
                 responder.SetResponse(new ExceptionInfoResponse("Error", ExceptionBreakMode.Always)
                 {
@@ -971,9 +1013,38 @@ namespace Meadow.DebugAdapterServer
             base.HandleLoadedSourcesRequestAsync(responder);
         }
 
+        void LogException(Exception ex, MeadowDebugAdapterThreadState threadState)
+        {
+            // Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages.ThreadEvent
+            var msg = new StringBuilder();
+            msg.AppendLine(ex.ToString());
+            msg.AppendLine();
+            msg.AppendLine("Solidity call stack: ");
+            try
+            {
+                msg.AppendLine(threadState.ExecutionTraceAnalysis.GetCallStackString(threadState.CurrentStepIndex.Value));
+            }
+            catch (Exception callstackResolveEx)
+            {
+                msg.AppendLine("Exception resolving callstack: " + callstackResolveEx.ToString());
+            }
+
+            var exceptionEvent = new OutputEvent
+            {
+                Category = OutputEvent.CategoryValue.Stderr,
+                Output = msg.ToString()
+            };
+            Protocol.SendEvent(exceptionEvent);
+        }
+
         protected override void HandleProtocolError(Exception ex)
         {
-            base.HandleProtocolError(ex);
+            var exceptionEvent = new OutputEvent
+            {
+                Category = OutputEvent.CategoryValue.Stderr,
+                Output = ex.ToString()
+            };
+            Protocol.SendEvent(exceptionEvent);
         }
 
         /*
@@ -984,17 +1055,17 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleRestartRequestAsync(IRequestResponder<RestartArguments> responder)
         {
-            base.HandleRestartRequestAsync(responder);
+            throw new NotImplementedException();
         }
 
         protected override void HandleTerminateThreadsRequestAsync(IRequestResponder<TerminateThreadsArguments> responder)
         {
-            base.HandleTerminateThreadsRequestAsync(responder);
+            throw new NotImplementedException();
         }
 
         protected override void HandleSourceRequestAsync(IRequestResponder<SourceArguments, SourceResponse> responder)
         {
-            base.HandleSourceRequestAsync(responder);
+            throw new NotImplementedException();
         }
 
         protected override void HandleSetVariableRequestAsync(IRequestResponder<SetVariableArguments, SetVariableResponse> responder)

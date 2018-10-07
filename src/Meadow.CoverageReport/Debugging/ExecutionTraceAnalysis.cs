@@ -576,64 +576,60 @@ namespace Meadow.CoverageReport.Debugging
             return traceException;
         }
 
-        public string GetExceptionStackTrace(ExecutionTraceException traceException)
+        public string GetCallStackString(int traceIndex)
         {
-
             // Define our unresolved label
             const string unresolved = "<unresolved>";
 
             var message = new StringBuilder();
 
-            // If we have a trace index, we have a callstack, we add that to the message.
-            if (traceException.TraceIndex.HasValue)
+            // Obtain our callstack and add every frame to it.
+            var callstack = GetCallStack(traceIndex);
+
+            for (int i = 0; i < callstack.Length; i++)
             {
-                // Obtain our callstack and add every frame to it.
-                var callstack = GetCallStack(traceException.TraceIndex.Value);
-                for (int i = 0; i < callstack.Length; i++)
+                // Grab our current call frame
+                var currentStackFrame = callstack[i];
+
+                // Verify we could resolve the current position.
+                if (currentStackFrame.Error)
                 {
-                    // Grab our current call frame
-                    var currentStackFrame = callstack[i];
-
-                    // Verify we could resolve the current position.
-                    if (currentStackFrame.Error)
-                    {
-                        message.AppendLine("-> <error: could not resolve stack frame>");
-                        continue;
-                    }
-
-                    // Verify we could resolve the function we're in
-                    if (!currentStackFrame.ResolvedFunction)
-                    {
-                        message.AppendLine($"-> at <code outside of mapped function>");
-                        continue;
-                    }
-
-                    // Obtain method descriptor information if possible
-                    string methodDescriptor = null;
-                    if (currentStackFrame.IsFunctionConstructor)
-                    {
-                        methodDescriptor = $"'{currentStackFrame.FunctionName ?? unresolved}' constructor";
-                    }
-                    else
-                    {
-                        methodDescriptor = $"method '{currentStackFrame.FunctionName ?? unresolved}'";
-                    }
-
-
-                    // Obtain our line information if possible.
-                    string lineFirstLine = "<unresolved code line>";
-                    long lineNumber = -1;
-                    string lineFileName = "<unresolved filename>";
-                    if (currentStackFrame.CurrentPositionLines.Length > 0)
-                    {
-                        lineFirstLine = currentStackFrame.CurrentPositionLines[0].LiteralSourceCodeLine.Trim();
-                        lineNumber = currentStackFrame.CurrentPositionLines[0].LineNumber;
-                        lineFileName = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFilePath;
-                    }
-
-                    // Else, we obtain the line for the previous' call.
-                    message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
+                    message.AppendLine("-> <error: could not resolve stack frame>");
+                    continue;
                 }
+
+                // Verify we could resolve the function we're in
+                if (!currentStackFrame.ResolvedFunction)
+                {
+                    message.AppendLine($"-> at <code outside of mapped function>");
+                    continue;
+                }
+
+                // Obtain method descriptor information if possible
+                string methodDescriptor = null;
+                if (currentStackFrame.IsFunctionConstructor)
+                {
+                    methodDescriptor = $"'{currentStackFrame.FunctionName ?? unresolved}' constructor";
+                }
+                else
+                {
+                    methodDescriptor = $"method '{currentStackFrame.FunctionName ?? unresolved}'";
+                }
+
+
+                // Obtain our line information if possible.
+                string lineFirstLine = "<unresolved code line>";
+                long lineNumber = -1;
+                string lineFileName = "<unresolved filename>";
+                if (currentStackFrame.CurrentPositionLines.Length > 0)
+                {
+                    lineFirstLine = currentStackFrame.CurrentPositionLines[0].LiteralSourceCodeLine.Trim();
+                    lineNumber = currentStackFrame.CurrentPositionLines[0].LineNumber;
+                    lineFileName = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFilePath;
+                }
+
+                // Else, we obtain the line for the previous' call.
+                message.AppendLine($"-> at '{lineFirstLine}' in {methodDescriptor} in file '{lineFileName}' : line {lineNumber}");
             }
 
             // Trim the end of our message.
@@ -650,7 +646,10 @@ namespace Meadow.CoverageReport.Debugging
         {
             var message = new StringBuilder();
             message.AppendLine(traceException.Message);
-            message.AppendLine(GetExceptionStackTrace(traceException));
+            if (traceException.TraceIndex.HasValue)
+            {
+                message.AppendLine(GetCallStackString(traceException.TraceIndex.Value));
+            }
             return message.ToString().TrimEnd();
         }
 

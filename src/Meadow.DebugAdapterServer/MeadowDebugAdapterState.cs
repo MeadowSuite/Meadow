@@ -44,11 +44,13 @@ namespace Meadow.DebugAdapterServer
 
         public IJsonRpcClient RpcClient { get; }
 
+        public bool ExpectingException { get; }
+
         public SemaphoreSlim Semaphore { get; }
         #endregion
 
         #region Constructors
-        public MeadowDebugAdapterThreadState(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis, int threadId)
+        public MeadowDebugAdapterThreadState(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis, int threadId, bool expectingException)
         {
             // Initialize our thread locking
             Semaphore = new SemaphoreSlim(0, int.MaxValue);
@@ -64,6 +66,8 @@ namespace Meadow.DebugAdapterServer
 
             // Set our thread id
             ThreadId = threadId;
+
+            ExpectingException = expectingException;
         }
         #endregion
 

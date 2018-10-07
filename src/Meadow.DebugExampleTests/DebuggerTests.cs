@@ -25,19 +25,8 @@ namespace Meadow.DebugExampleTests
         [TestMethod]
         public async Task InConstructorTest()
         {
-            ContractExecutionException exec = null;
             UInt256 testValue = 112233445566778899;
-            try
-            {
-                await VarAnalysisContract.New(testValue, RpcClient);
-            }
-            catch (ContractExecutionException ex)
-            {
-                exec = ex;
-            }
-
-            // TODO: Verify variables.
-            Assert.Inconclusive();
+            await VarAnalysisContract.New(testValue, RpcClient).ExpectRevert();
         }
 
         [TestMethod]

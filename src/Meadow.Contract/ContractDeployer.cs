@@ -62,7 +62,7 @@ namespace Meadow.Contract
         public async Task ExpectRevert()
         {
             var txParams = await GetTransactionParams();
-            (JsonRpcError error, Hash transactionHash) = await ContractFactory.TryDeploy(_contractAttribute, _rpcClient, _bytecode, txParams, _abiEncodedConstructorArgs);
+            (JsonRpcError error, Hash transactionHash) = await ContractFactory.TryDeploy(expectException: true, _contractAttribute, _rpcClient, _bytecode, txParams, _abiEncodedConstructorArgs);
 
             if (error == null)
             {

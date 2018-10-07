@@ -78,7 +78,7 @@ namespace Meadow.Contract
         {
             transactionParams = _contract.GetTransactionParams(transactionParams);
             transactionParams.Data = _callData;
-            var (error, transactionHash) = await _contract.JsonRpcClient.TrySendTransaction(transactionParams);
+            var (error, transactionHash) = await _contract.JsonRpcClient.TrySendTransaction(transactionParams, expectingException: true);
             if (error == null)
             {
                 var receipt = await _contract.JsonRpcClient.GetTransactionReceipt(transactionHash);
@@ -362,7 +362,7 @@ namespace Meadow.Contract
             callParams = _contract.GetCallParams(callParams);
             callParams.Data = _callData;
             blockParameter = blockParameter ?? BlockParameterType.Latest;
-            var (error, callResult) = await _contract.JsonRpcClient.TryCall(callParams, blockParameter);
+            var (error, callResult) = await _contract.JsonRpcClient.TryCall(callParams, blockParameter, expectingException: true);
             if (error == null)
             {
                 // Check if call is void (no return value)
