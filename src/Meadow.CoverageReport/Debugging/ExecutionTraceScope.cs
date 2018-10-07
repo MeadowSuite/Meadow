@@ -16,7 +16,7 @@ namespace Meadow.CoverageReport.Debugging
         /// <summary>
         /// The contract definition for the contract this scope's execution context takes place in.
         /// </summary>
-        public AstContractDefinition ContractDefinition { get; set; }
+        public AstContractDefinition ContractDefinition { get; private set; }
         /// <summary>
         /// The function definition for the function this scope's execution context takes place in.
         /// </summary>
@@ -24,7 +24,13 @@ namespace Meadow.CoverageReport.Debugging
         /// <summary>
         /// The trace index where the function definition is first resolved for this scope.
         /// </summary>
-        public int? FunctionDefinitionIndex { get; set; }
+        public int? FunctionDefinitionIndex { get; private set; }
+        /// <summary>
+        /// The trace index where the function definition is actually entered and encapsulated code is beginning execution. 
+        /// If this is not set, but <see cref="FunctionDefinition"/> is set, then execution is likely occuring in an access modifier,
+        /// and we have not entered the actual function definition's code.
+        /// </summary>
+        public int? FunctionEnteredIndex { get; set; }
         /// <summary>
         /// The trace index into the execution trace where the first instruction for this scope occurred.
         /// </summary>

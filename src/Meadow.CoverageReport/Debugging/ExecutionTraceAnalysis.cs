@@ -576,19 +576,13 @@ namespace Meadow.CoverageReport.Debugging
             return traceException;
         }
 
-        /// <summary>
-        /// Generates a message from an execution trace exception.
-        /// </summary>
-        /// <param name="traceException">The execution trace exception to generate a message for.</param>
-        /// <returns>Returns an exception message generated from an execution trace exception.</returns>
-        private string GetExceptionMessage(ExecutionTraceException traceException)
+        public string GetExceptionStackTrace(ExecutionTraceException traceException)
         {
-            // Define our unresolved label
-            string unresolved = "<unresolved>";
 
-            // Add the exception message
+            // Define our unresolved label
+            const string unresolved = "<unresolved>";
+
             var message = new StringBuilder();
-            message.AppendLine(traceException.Message);
 
             // If we have a trace index, we have a callstack, we add that to the message.
             if (traceException.TraceIndex.HasValue)
@@ -644,6 +638,19 @@ namespace Meadow.CoverageReport.Debugging
 
             // Trim the end of our message.
             // Return our message.
+            return message.ToString().TrimEnd();
+        }
+
+        /// <summary>
+        /// Generates a message from an execution trace exception.
+        /// </summary>
+        /// <param name="traceException">The execution trace exception to generate a message for.</param>
+        /// <returns>Returns an exception message generated from an execution trace exception.</returns>
+        private string GetExceptionMessage(ExecutionTraceException traceException)
+        {
+            var message = new StringBuilder();
+            message.AppendLine(traceException.Message);
+            message.AppendLine(GetExceptionStackTrace(traceException));
             return message.ToString().TrimEnd();
         }
 
@@ -734,15 +741,14 @@ namespace Meadow.CoverageReport.Debugging
             // Obtain our trace point for this index.
             var tracepoint = ExecutionTrace.Tracepoints[traceIndex];
 
-            // Verify we haven't set a function definition trace index yet.
-            if (!currentScope.FunctionDefinitionIndex.HasValue)
+            // If we haven't resolved a function definition for this scope, or a point where we entered the function,
+            // we'll want to do that. After both of these arr resolved, this code block will not be entered again.
+            if (!currentScope.FunctionDefinitionIndex.HasValue || !currentScope.FunctionEnteredIndex.HasValue)
             {
                 // Find any nodes exactly at this location (which are not the function definition node itself).
                 var currentLocationNodes = AstParser.AllAstNodes.Where(a =>
                 {
-                    return
-                        a.NodeType != AstNodeType.FunctionDefinition &&
-                        a.SourceRange.SourceIndex == currentEntry.Index &&
+                    return a.SourceRange.SourceIndex == currentEntry.Index &&
                         a.SourceRange.Offset == currentEntry.Offset &&
                         a.SourceRange.Offset + a.SourceRange.Length == currentEntry.Offset + currentEntry.Length;
                 });
@@ -750,56 +756,87 @@ namespace Meadow.CoverageReport.Debugging
                 // Try to find a function definition parent for any ast node that represents our current position.
                 // We do this instead of matching function definition directly to ensure we have entered the function scope.
                 AstFunctionDefinition functionDefinitionCandidate = null;
+                bool foundFunctionDefinition = false;
+                bool enteredFunctionDefinition = false;
                 foreach (var currentLocationNode in currentLocationNodes)
                 {
-                    // Try to obtain a function definition candidate from the current indexed node.
-                    functionDefinitionCandidate = currentLocationNode.GetImmediateOrAncestor<AstFunctionDefinition>();
-
-                    // If we found a node candidate, break out
-                    if (functionDefinitionCandidate != null)
+                    // If this is a function definition and we haven't found one before, set it.
+                    if (!foundFunctionDefinition && currentLocationNode.NodeType == AstNodeType.FunctionDefinition)
                     {
-                        break;
+                        // Set our function definition candidate and mark us finding a function definition as true.
+                        functionDefinitionCandidate = (AstFunctionDefinition)currentLocationNode;
+                        foundFunctionDefinition = true;
+                    }
+                    else
+                    {
+                        // This isn't a function definition, meaning we might have entered the function now. Try to obtain a
+                        // parent function definition candidate from the current indexed node. If we can, we entered a function.
+                        functionDefinitionCandidate = currentLocationNode.GetImmediateOrAncestor<AstFunctionDefinition>();
+
+                        // If we found a node candidate, break out
+                        if (functionDefinitionCandidate != null)
+                        {
+                            foundFunctionDefinition = true;
+                            enteredFunctionDefinition = true;
+                            break;
+                        }
                     }
                 }
 
                 // Verify we have obtained a function definition candidate.
-                if (functionDefinitionCandidate != null && (functionDefinitionCandidate.IsConstructor || IsJumpDestination(traceIndex - 1) || IsExternalCall(traceIndex - 1)))
+                if ((foundFunctionDefinition || enteredFunctionDefinition) && (functionDefinitionCandidate.IsConstructor || IsJumpDestination(traceIndex - 1) || IsExternalCall(traceIndex - 1)))
                 {
-                    // Set our scope properties
-                    currentScope.SetFunctionDefinitionAndIndex(traceIndex, functionDefinitionCandidate);
-
-                    // Create locals for our input parameters.
-                    int inputParameterCount = currentScope.FunctionDefinition.Parameters.Length;
-                    for (int parameterIndex = 0; parameterIndex < inputParameterCount; parameterIndex++)
+                    // If we found a function definition (and it doesn't match our existing function definition, we update it,
+                    // as a function definition derived from a step *within* the function will be more accurate, in case resolving
+                    // just the function definition without stepping into it was a side effect of incorrect mapping by solc, which
+                    // should not happen, but it's better to be safe than sorry in these heuristical approaches, especially if solc's
+                    // source mapping behavior can change in the future.
+                    if (foundFunctionDefinition && currentScope.FunctionDefinition != functionDefinitionCandidate)
                     {
-                        // Obtain our parameter
-                        AstVariableDeclaration parameter = currentScope.FunctionDefinition.Parameters[parameterIndex];
-
-                        // Determine our stack index
-                        int stackIndex = (tracepoint.Stack.Length - inputParameterCount) + parameterIndex;
-
-                        // Create a local variable
-                        LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
-
-                        // Add our local variable to our scope
-                        currentScope.AddLocalVariable(localVariable);
+                        // Set our scope properties
+                        currentScope.FunctionDefinition = functionDefinitionCandidate;
+                        currentScope.SetFunctionDefinitionAndIndex(traceIndex, functionDefinitionCandidate);
                     }
 
-                    // Create locals for our input parameters.
-                    int outputParameterCount = currentScope.FunctionDefinition.ReturnParameters.Length;
-                    for (int parameterIndex = 0; parameterIndex < outputParameterCount; parameterIndex++)
+                    // If we entered the actual function (not an access modifier), then we'll want to resolve input/output variables at this point.
+                    if (enteredFunctionDefinition)
                     {
-                        // Obtain our parameter
-                        AstVariableDeclaration parameter = currentScope.FunctionDefinition.ReturnParameters[parameterIndex];
+                        // Set our entered scope trace index
+                        currentScope.FunctionEnteredIndex = traceIndex;
 
-                        // Determine our stack index
-                        int stackIndex = (tracepoint.Stack.Length + parameterIndex);
+                        // Create locals for our input parameters.
+                        int inputParameterCount = currentScope.FunctionDefinition.Parameters.Length;
+                        for (int parameterIndex = 0; parameterIndex < inputParameterCount; parameterIndex++)
+                        {
+                            // Obtain our parameter
+                            AstVariableDeclaration parameter = currentScope.FunctionDefinition.Parameters[parameterIndex];
 
-                        // Create a local variable
-                        LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
+                            // Determine our stack index
+                            int stackIndex = (tracepoint.Stack.Length - inputParameterCount) + parameterIndex;
 
-                        // Add our local variable to our scope
-                        currentScope.AddLocalVariable(localVariable);
+                            // Create a local variable
+                            LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
+
+                            // Add our local variable to our scope
+                            currentScope.AddLocalVariable(localVariable);
+                        }
+
+                        // Create locals for our input parameters.
+                        int outputParameterCount = currentScope.FunctionDefinition.ReturnParameters.Length;
+                        for (int parameterIndex = 0; parameterIndex < outputParameterCount; parameterIndex++)
+                        {
+                            // Obtain our parameter
+                            AstVariableDeclaration parameter = currentScope.FunctionDefinition.ReturnParameters[parameterIndex];
+
+                            // Determine our stack index
+                            int stackIndex = (tracepoint.Stack.Length + parameterIndex);
+
+                            // Create a local variable
+                            LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
+
+                            // Add our local variable to our scope
+                            currentScope.AddLocalVariable(localVariable);
+                        }
                     }
                 }
             }
@@ -1098,8 +1135,16 @@ namespace Meadow.CoverageReport.Debugging
                 // If this isn't a constant
                 if (!stateVariable.Declaration.Constant)
                 {
-                    // Parse our variable from storage
-                    variableValue = stateVariable.ValueParser.ParseFromStorage(StorageManager, stateVariable.StorageLocation, rpcClient);
+                    try
+                    {
+                        // Parse our variable from storage
+                        variableValue = stateVariable.ValueParser.ParseFromStorage(StorageManager, stateVariable.StorageLocation, rpcClient);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO: do more with this exception, like send to debugger GUI to show
+                        variableValue = ex.ToString();
+                    }
                 }
 
                 // Add the state variable to our result list.
