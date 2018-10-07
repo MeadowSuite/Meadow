@@ -122,7 +122,8 @@ namespace Meadow.Core.EthTypes
         /// </summary>
         public static UInt256 DivideRounded(UInt256 dividend, UInt256 divisor)
         {
-            return Math.Round((decimal)dividend / (decimal)divisor);
+            // Perform rounded integer division on large number
+            return (dividend / divisor) + ((dividend % divisor) / (divisor / 2));
         }
 
         public static explicit operator decimal(UInt256 value) => (decimal)value.ToBigInteger();
