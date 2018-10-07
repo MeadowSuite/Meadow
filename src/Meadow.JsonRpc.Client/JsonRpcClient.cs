@@ -46,12 +46,12 @@ namespace Meadow.JsonRpc.Client
 
     public delegate Task<Exception> JsonRpcErrorFormatterDelegate(IJsonRpcClient client, JsonRpcError rpcError);
 
-    public delegate Task JsonRpcExecutionAnalysisDelegate(IJsonRpcClient client);
+    public delegate Task JsonRpcExecutionAnalysisDelegate(IJsonRpcClient client, bool expectingException);
 
     public interface IJsonRpcClientExtensions
     {
-        Task<(JsonRpcError Error, byte[] Result)> TryCall(CallParams callParams, DefaultBlockParameter blockParameter);
-        Task<(JsonRpcError Error, Hash Result)> TrySendTransaction(TransactionParams transactionParams);
+        Task<(JsonRpcError Error, byte[] Result)> TryCall(CallParams callParams, DefaultBlockParameter blockParameter, bool expectingException);
+        Task<(JsonRpcError Error, Hash Result)> TrySendTransaction(TransactionParams transactionParams, bool expectingException);
 
         /// <summary>
         /// If true, all transactions hashes are queried for their receipt, and an exception
@@ -378,7 +378,7 @@ namespace Meadow.JsonRpc.Client
 
         public async Task<Hash> SendTransaction(TransactionParams transactionParams)
         {
-            var (error, result) = await TrySendTransaction(transactionParams);
+            var (error, result) = await TrySendTransaction(transactionParams, expectingException: false);
             if (error != null)
             {
                 throw error.ToException();
@@ -387,7 +387,7 @@ namespace Meadow.JsonRpc.Client
             return result;
         }
 
-        public async Task<(JsonRpcError Error, Hash Result)> TrySendTransaction(TransactionParams transactionParams)
+        public async Task<(JsonRpcError Error, Hash Result)> TrySendTransaction(TransactionParams transactionParams, bool expectingException)
         {
             transactionParams.Gas = transactionParams.Gas ?? _defaultGasLimit;
             transactionParams.GasPrice = transactionParams.GasPrice ?? _defaultGasPrice;
@@ -406,7 +406,7 @@ namespace Meadow.JsonRpc.Client
             var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
 
             // Invoke our execution analysis hook.
-            await (JsonRpcExecutionAnalysis?.Invoke(_thisInterface) ?? Task.CompletedTask);
+            await (JsonRpcExecutionAnalysis?.Invoke(_thisInterface, expectingException) ?? Task.CompletedTask);
 
             if (error != null)
             {
@@ -420,7 +420,7 @@ namespace Meadow.JsonRpc.Client
 
         public async Task<byte[]> Call(CallParams callParams, DefaultBlockParameter blockParameter)
         {
-            var (error, result) = await TryCall(callParams, blockParameter);
+            var (error, result) = await TryCall(callParams, blockParameter, expectingException: false);
             if (error != null)
             {
                 throw error.ToException();
@@ -429,7 +429,7 @@ namespace Meadow.JsonRpc.Client
             return result;
         }
 
-        public async Task<(JsonRpcError Error, byte[] Result)> TryCall(CallParams callParams, DefaultBlockParameter blockParameter)
+        public async Task<(JsonRpcError Error, byte[] Result)> TryCall(CallParams callParams, DefaultBlockParameter blockParameter, bool expectingException)
         {
             callParams.Gas = callParams.Gas ?? _defaultGasLimit;
             callParams.GasPrice = callParams.GasPrice ?? _defaultGasPrice;
@@ -440,7 +440,7 @@ namespace Meadow.JsonRpc.Client
             var (error, result) = await InvokeRpcMethod(request, throwOnError: false);
 
             // Invoke our execution analysis hook.
-            await (JsonRpcExecutionAnalysis?.Invoke(_thisInterface) ?? Task.CompletedTask);
+            await (JsonRpcExecutionAnalysis?.Invoke(_thisInterface, expectingException) ?? Task.CompletedTask);
 
             if (error != null)
             {

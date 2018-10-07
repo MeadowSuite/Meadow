@@ -96,7 +96,7 @@ namespace Meadow.DebugAdapterServer
             });
         }
 
-        public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis)
+        public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis, bool expectingException)
         {
             // We don't have real threads here, only a unique execution context
             // per RPC callback (eth_call or eth_sendTransactions).
@@ -104,7 +104,7 @@ namespace Meadow.DebugAdapterServer
             int threadId = System.Threading.Interlocked.Increment(ref _threadIDCounter);
 
             // Create a thread state for this thread
-            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId);
+            MeadowDebugAdapterThreadState threadState = new MeadowDebugAdapterThreadState(rpcClient, traceAnalysis, threadId, expectingException);
 
             // Acquire the semaphore for processing a trace.
             await _processTraceSemaphore.WaitAsync();
@@ -258,25 +258,29 @@ namespace Meadow.DebugAdapterServer
 
         private bool HandleExceptions(MeadowDebugAdapterThreadState threadState)
         {
+            bool ShouldProcessException()
+            {
+                lock (_exceptionBreakpointFilters)
+                {
+                    if (_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_ALL))
+                    {
+                        return true;
+                    }
+
+                    if (!threadState.ExpectingException && _exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
+                        {
+                        return true;
+                        }
+
+                    return false;
+                    }
+                }
+
             // Try to obtain an exception at this point
-            if (threadState.CurrentStepIndex.HasValue)
+            if (ShouldProcessException() && threadState.CurrentStepIndex.HasValue)
             {
                 // Obtain an exception at the current point.
                 ExecutionTraceException traceException = threadState.ExecutionTraceAnalysis.GetException(threadState.CurrentStepIndex.Value);
-
-                // TODO: determine if this exception is wrapped in an ExpectRevert from the front-end call
-                bool isUserHandledException = false;
-
-                lock (_exceptionBreakpointFilters)
-                {
-                    if (!_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_ALL))
-                    {
-                        if (!isUserHandledException && !_exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
-                        {
-                            return false;
-                        }
-                    }
-                }
 
                 // If we have an exception, throw it and return the appropriate status.
                 if (traceException != null)

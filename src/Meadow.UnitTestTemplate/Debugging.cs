@@ -119,14 +119,14 @@ namespace Meadow.UnitTestTemplate
         }
 
 
-        public async Task RpcExecutionCallback(IJsonRpcClient client)
+        public async Task RpcExecutionCallback(IJsonRpcClient client, bool expectingException)
         {
             // Obtain an execution trace from our client.
             var executionTrace = await client.GetExecutionTrace();
             var executionTraceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Process our execution trace in the debug adapter.
-            await _debugAdapter.ProcessExecutionTraceAnalysis(client, executionTraceAnalysis);
+            await _debugAdapter.ProcessExecutionTraceAnalysis(client, executionTraceAnalysis, expectingException);
 
             await Task.CompletedTask;
         }
