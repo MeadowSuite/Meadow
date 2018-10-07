@@ -120,7 +120,9 @@ namespace Meadow.UnitTestTemplate.ParallelTest
         [TestMethod]
         public async Task AccountAddressEcho()
         {
-            var gas = await _basicContract.echoAddress(Accounts[1]).EstimateGas();
+            // The amount of gas used will deviate depending on leading zeros, so we test without any.
+            Address address = new Address("0x7777777777777777777777777777777777777777");
+            var gas = await _basicContract.echoAddress(address).EstimateGas();
             Assert.AreEqual(23269, gas);
         }
 
