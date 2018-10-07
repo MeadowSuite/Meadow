@@ -128,5 +128,12 @@ namespace Meadow.DebugExampleTests
             // TODO: Verify variables.
             Assert.Inconclusive();
         }
+
+        [TestMethod]
+        public async Task TestExternalCallDataArgs()
+        {
+            Address[] addresses = new Address[] { Accounts[0] };
+            await _contract.testExternalCallDataArgs(addresses, 10, 10);
+        }
     }
 }
