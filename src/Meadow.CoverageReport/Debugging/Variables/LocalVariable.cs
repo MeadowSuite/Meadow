@@ -56,12 +56,15 @@ namespace Meadow.CoverageReport.Debugging.Variables
         #endregion
 
         #region Constructor
-        public LocalVariable(AstVariableDeclaration declaration, bool isFunctionParameter, int stackIndex, SourceMapEntry sourceMapEntry) : base(declaration)
+        public LocalVariable(AstVariableDeclaration declaration, bool isFunctionParameter, int stackIndex, SourceMapEntry sourceMapEntry)
         {
             // Set our extended properties
             StackIndex = stackIndex;
             SourceMapEntry = sourceMapEntry;
             IsFunctionParameter = isFunctionParameter;
+
+            // Initialize by name and type.
+            Initialize(declaration);
         }
         #endregion
 

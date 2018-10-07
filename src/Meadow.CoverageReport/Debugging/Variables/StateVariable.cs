@@ -48,15 +48,16 @@ namespace Meadow.CoverageReport.Debugging.Variables
         #endregion
 
         #region Constructor
-        public StateVariable(AstVariableDeclaration declaration) : base(declaration)
+        public StateVariable(AstVariableDeclaration declaration)
         {
-            // Set our declaration
-            Declaration = declaration;
+            // Initialize by declaration
+            Initialize(declaration);
         }
 
-        public StateVariable(string name, AstElementaryTypeName astTypeName) : base(name, astTypeName)
+        public StateVariable(string name, AstElementaryTypeName astTypeName)
         {
-
+            // Initialize by name and type
+            Initialize(name, astTypeName);
         }
         #endregion
     }

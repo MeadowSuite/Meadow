@@ -46,8 +46,8 @@ namespace Meadow.CoverageReport.Debugging.Variables
         public VarBase ValueParser { get; set; }
         #endregion
 
-        #region Constructor
-        protected BaseVariable(AstVariableDeclaration declaration)
+        #region Functions
+        protected void Initialize(AstVariableDeclaration declaration)
         {
             // Set our properties
             Declaration = declaration;
@@ -56,19 +56,6 @@ namespace Meadow.CoverageReport.Debugging.Variables
             Initialize(Declaration.Name, Declaration.TypeName);
         }
 
-        /// <summary>
-        /// Initializes the variable with a given declaration, parsing all relevant type information and associating the appropriate value parser. 
-        /// </summary>
-        /// <param name="name">The name to use to describe the variable.</param>
-        /// <param name="astTypeName">The AST node which describes the type name for this variable.</param>
-        protected BaseVariable(string name, AstElementaryTypeName astTypeName)
-        {
-            // Initialize by name and type.
-            Initialize(name, astTypeName);
-        }
-        #endregion
-
-        #region Functions
         protected void Initialize(string name, AstElementaryTypeName astTypeName)
         {
             // Set our properties
