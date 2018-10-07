@@ -1135,8 +1135,16 @@ namespace Meadow.CoverageReport.Debugging
                 // If this isn't a constant
                 if (!stateVariable.Declaration.Constant)
                 {
-                    // Parse our variable from storage
-                    variableValue = stateVariable.ValueParser.ParseFromStorage(StorageManager, stateVariable.StorageLocation, rpcClient);
+                    try
+                    {
+                        // Parse our variable from storage
+                        variableValue = stateVariable.ValueParser.ParseFromStorage(StorageManager, stateVariable.StorageLocation, rpcClient);
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO: do more with this exception, like send to debugger GUI to show
+                        variableValue = ex.ToString();
+                    }
                 }
 
                 // Add the state variable to our result list.
