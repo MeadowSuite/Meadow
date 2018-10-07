@@ -211,6 +211,8 @@ namespace Meadow.DebugAdapterServer
                                 return;
                             }
 
+                            Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
+
                             // Signal our breakpoint event has occurred for this thread.
                             Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
 
@@ -268,13 +270,13 @@ namespace Meadow.DebugAdapterServer
                     }
 
                     if (!threadState.ExpectingException && _exceptionBreakpointFilters.Contains(EXCEPTION_BREAKPOINT_FILTER_UNHANDLED))
-                        {
+                    {
                         return true;
-                        }
+                    }
 
                     return false;
-                    }
                 }
+            }
 
             // Try to obtain an exception at this point
             if (ShouldProcessException() && threadState.CurrentStepIndex.HasValue)
@@ -744,7 +746,7 @@ namespace Meadow.DebugAdapterServer
                 responder.SetResponse(new VariablesResponse());
                 return;
             }
-            
+
             // Obtain the trace index for this scope.
             List<Variable> variableList = new List<Variable>();
 
