@@ -576,19 +576,13 @@ namespace Meadow.CoverageReport.Debugging
             return traceException;
         }
 
-        /// <summary>
-        /// Generates a message from an execution trace exception.
-        /// </summary>
-        /// <param name="traceException">The execution trace exception to generate a message for.</param>
-        /// <returns>Returns an exception message generated from an execution trace exception.</returns>
-        private string GetExceptionMessage(ExecutionTraceException traceException)
+        public string GetExceptionStackTrace(ExecutionTraceException traceException)
         {
-            // Define our unresolved label
-            string unresolved = "<unresolved>";
 
-            // Add the exception message
+            // Define our unresolved label
+            const string unresolved = "<unresolved>";
+
             var message = new StringBuilder();
-            message.AppendLine(traceException.Message);
 
             // If we have a trace index, we have a callstack, we add that to the message.
             if (traceException.TraceIndex.HasValue)
@@ -644,6 +638,19 @@ namespace Meadow.CoverageReport.Debugging
 
             // Trim the end of our message.
             // Return our message.
+            return message.ToString().TrimEnd();
+        }
+
+        /// <summary>
+        /// Generates a message from an execution trace exception.
+        /// </summary>
+        /// <param name="traceException">The execution trace exception to generate a message for.</param>
+        /// <returns>Returns an exception message generated from an execution trace exception.</returns>
+        private string GetExceptionMessage(ExecutionTraceException traceException)
+        {
+            var message = new StringBuilder();
+            message.AppendLine(traceException.Message);
+            message.AppendLine(GetExceptionStackTrace(traceException));
             return message.ToString().TrimEnd();
         }
 
