@@ -56,7 +56,8 @@ namespace Meadow.CoverageReport
             AstNodeType.VariableDeclaration,
             //AstNodeType.Literal,
             AstNodeType.PlaceholderStatement,
-            AstNodeType.UserDefinedTypeName
+            AstNodeType.UserDefinedTypeName,
+            AstNodeType.InlineAssembly
         };
 
         /// <summary>
@@ -70,11 +71,11 @@ namespace Meadow.CoverageReport
             AstNodeType.ForStatement,
             AstNodeType.FunctionCall,
             AstNodeType.IndexAccess,
-            AstNodeType.InlineAssembly,
+            //AstNodeType.InlineAssembly,
             AstNodeType.MemberAccess,
             AstNodeType.Return,
             AstNodeType.UnaryOperation,
-            // AstNodeType.VariableDeclarationStatement
+            //AstNodeType.VariableDeclarationStatement
         };
 
         public static AnalysisResults Run(
