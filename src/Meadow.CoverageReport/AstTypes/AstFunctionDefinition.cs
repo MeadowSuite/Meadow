@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Meadow.CoverageReport.AstTypes.Enums;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,10 @@ namespace Meadow.CoverageReport.AstTypes
         /// The name of the function definition. Can be a blank string if this refers to a constructor.
         /// </summary>
         public string Name { get;  }
+        /// <summary>
+        /// The visibility of this function.
+        /// </summary>
+        public AstDeclarationVisibility Visibility { get; }
         /// <summary>
         /// Indicates whether the function is a constructor for its parent <see cref="AstContractDefinition"/> or not.
         /// </summary>
@@ -32,6 +37,7 @@ namespace Meadow.CoverageReport.AstTypes
         {
             // Set our properties
             Name = node.SelectToken("name")?.Value<string>();
+            Visibility = GetVisibilityFromString(node.SelectToken("visibility")?.Value<string>());
             IsConstructor = node.SelectToken("isConstructor")?.Value<bool?>() == true;
             Parameters = node.SelectTokens("parameters.parameters[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();
             ReturnParameters = node.SelectTokens("returnParameters.parameters[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();

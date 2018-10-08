@@ -1,4 +1,5 @@
 ﻿using Meadow.CoverageReport.AstTypes;
+using Meadow.CoverageReport.AstTypes.Enums;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -138,6 +139,23 @@ namespace Meadow.CoverageReport
             {
                 return AstNodeType.Other;
             }   
+        }
+
+        public static AstDeclarationVisibility GetVisibilityFromString(string visibilityTypeString)
+        {
+            switch (visibilityTypeString)
+            {
+                case "private":
+                    return AstDeclarationVisibility.Private;
+                case "public":
+                    return AstDeclarationVisibility.Public;
+                case "external":
+                    return AstDeclarationVisibility.External;
+                case "internal":
+                    return AstDeclarationVisibility.Internal;
+                default:
+                    return AstDeclarationVisibility.Public;
+            }
         }
 
         public static AstNode GetParent(AstNode node)
