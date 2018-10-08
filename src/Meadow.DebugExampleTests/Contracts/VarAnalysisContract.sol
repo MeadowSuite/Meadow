@@ -162,10 +162,24 @@ contract VarAnalysisContract
         nestedMapping[key1][key2] = enumValue;
     }
 
-    function testExternalCallDataArgs(address[] testArr, uint256 u1, uint256 u2) external {
+    function throwExternalCallDataArgs(address[] testArr, uint256 u1, uint256 u2) external {
         // Arguments in this context (external) should be resolved from calldata, not memory)
         for(uint i=0; i< testArr.length; i+=1) {
-            require(testArr[i] != address(0));
+            assert(false);
+        }
+    }
+
+    function throwExternalCallDataArgs2(address[] testArr1, address[] testArr2, uint256 u1, uint256 u2) external {
+        // Arguments in this context (external) should be resolved from calldata, not memory)
+        for(uint i=0; i< testArr1.length; i+=1) {
+            assert(false);
+        }
+    }
+
+    function throwExternalCallDataArgs3(uint256 u1, address[] testArr1, address[] testArr2, uint256 u2) external {
+        // Arguments in this context (external) should be resolved from calldata, not memory)
+        for(uint i=0; i< testArr1.length; i+=1) {
+            assert(false);
         }
     }
 }

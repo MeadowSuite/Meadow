@@ -149,6 +149,7 @@ namespace Meadow.CoverageReport.Debugging
             Core.EthTypes.Data[] lastKnownStack = null;
             Core.EthTypes.Data[] lastKnownMemory = null;
             Address? lastKnownContractAddress = null;
+            byte[] lastKnownCallData = null;
             byte[] lastKnownCode = null;
             string lastKnownCodeHex = null;
             Dictionary<Memory<byte>, byte[]> lastKnownStorage = null;
@@ -187,6 +188,16 @@ namespace Meadow.CoverageReport.Debugging
                 else
                 {
                     lastKnownContractAddress = (Address)tracePoint.ContractAddress;
+                }
+
+                // Update any "unchanged" (null) references to the last known reference for call data
+                if (tracePoint.CallData == null)
+                {
+                    tracePoint.CallData = lastKnownCallData;
+                }
+                else
+                {
+                    lastKnownCallData = tracePoint.CallData;
                 }
 
                 // Update any "unchanged" (null) references to the last known reference for code

@@ -12,6 +12,12 @@ namespace Meadow.JsonRpc.Types.Debugging
     {
         #region Properties
         /// <summary>
+        /// The call data set at this trace point.
+        /// If NULL, then derived from last known value in the trace.
+        /// </summary>
+        [JsonProperty("callData"), JsonConverter(typeof(JsonRpcHexConverter))]
+        public byte[] CallData { get; set; }
+        /// <summary>
         /// The full code segment executed at this trace point (including constructor args if deploying, etc).
         /// Hence, this section will treat code segments as the EVM internally does, not discerning higher level structures and splitting them.
         /// If NULL, then derived from last known value in the trace.
