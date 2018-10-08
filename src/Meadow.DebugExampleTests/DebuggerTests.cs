@@ -132,8 +132,8 @@ namespace Meadow.DebugExampleTests
         [TestMethod]
         public async Task TestExternalCallDataArgs()
         {
-            Address[] addresses = new Address[] { Accounts[0] };
-            await _contract.testExternalCallDataArgs(addresses, 10, 10);
+            Address[] addresses = new Address[] { Accounts[0], Accounts[1], Accounts[2] };
+            await _contract.throwExternalCallDataArgs(addresses, 10, 10).ExpectRevertTransaction();
         }
     }
 }

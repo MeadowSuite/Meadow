@@ -48,6 +48,7 @@ namespace Meadow.TestNode
                 // Obtain our memory
                 tracepoints[i] = new ExecutionTracePoint()
                 {
+                    CallData = executionTracePoint.CallData,
                     Code = executionTracePoint.Code,
                     ContractAddress = executionTracePoint.ContractAddress == null ? (Address?)null : new Address(executionTracePoint.ContractAddress.ToByteArray()),
                     ContractDeployed = executionTracePoint.ContractDeployed,

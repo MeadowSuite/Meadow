@@ -25,6 +25,10 @@ namespace Meadow.EVM.Debugging.Tracing
         /// Indicates if the last tracepoint had changed storage, so it is known to be included for the current step.
         /// </summary>
         private bool _lastStorageChanged;
+        /// <summary>
+        /// The last call depth we had recorded.
+        /// </summary>
+        private int _lastCallDepth;
         #endregion
 
         #region Properties
@@ -46,6 +50,7 @@ namespace Meadow.EVM.Debugging.Tracing
             Exceptions = new List<ExecutionTraceException>();
             _lastContractAddress = null;
             _lastMemoryChangeCount = 0;
+            _lastCallDepth = -1;
             _lastStorageChanged = false;
         }
         #endregion
@@ -57,20 +62,31 @@ namespace Meadow.EVM.Debugging.Tracing
             Address deployedAddress = evm.Message.GetDeployedCodeAddress();
             bool isDeployed = deployedAddress == evm.Message.CodeAddress;
 
-            // Declare our memory + last returned data, null initially (indicating it is unchanged from the last known value).
+            // Declare our memory null initially (indicating it is unchanged from the last known value).
             byte[] memory = null;
 
             // Determine if our context has changed between contracts, or our memory has changed.
             bool contextChanged = _lastContractAddress != deployedAddress;
             bool memoryChanged = _lastMemoryChangeCount != evm.ExecutionState.Memory.ChangeCount;
+            bool callDepthChanged = _lastCallDepth != evm.Message.Depth;
 
             // If our context or memory has changed, we'll want to include the memory. (This way our simple lookup for memory will consist of checking in the current trace point, or if null, loop backwards to the last one you find).
-            if (contextChanged || memoryChanged)
+            if (contextChanged || callDepthChanged || memoryChanged)
             {
                 memory = evm.ExecutionState.Memory.ToArray();
             }
 
-            // Update our last processed contract address and change count
+            // Declare our call data
+            byte[] callData = null;
+
+            // If our call data changed, we'll want to include it.
+            if (contextChanged || callDepthChanged)
+            {
+                callData = evm.Message.Data;
+            }
+
+            // Update our last processed contract address, change count, and scope depth
+            _lastCallDepth = (int)evm.Message.Depth;
             _lastContractAddress = deployedAddress;
             _lastMemoryChangeCount = evm.ExecutionState.Memory.ChangeCount;
 
@@ -113,6 +129,7 @@ namespace Meadow.EVM.Debugging.Tracing
             // Add a new tracepoint.
             var tracePoint = new ExecutionTracePoint()
             {
+                CallData = callData,
                 Code = codeSegment,
                 ContractAddress = contextChanged ? deployedAddress : null,
                 ContractDeployed = isDeployed,

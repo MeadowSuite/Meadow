@@ -1,5 +1,6 @@
 ﻿using Meadow.EVM.Data_Types.Addressing;
 using Meadow.EVM.EVM.Instructions;
+using Meadow.EVM.EVM.Messages;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -10,6 +11,10 @@ namespace Meadow.EVM.Debugging.Tracing
     public class ExecutionTracePoint
     {
         #region Properties
+        /// <summary>
+        /// The <see cref="EVMMessage.Data"/> at the time of execution.
+        /// </summary>
+        public byte[] CallData { get; set; }
         /// <summary>
         /// The entire code segment being processed at this point. NULL if unchanged since last known value.
         /// </summary>

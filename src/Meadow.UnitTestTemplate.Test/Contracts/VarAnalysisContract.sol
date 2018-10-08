@@ -161,4 +161,11 @@ contract VarAnalysisContract
     {
         nestedMapping[key1][key2] = enumValue;
     }
+
+    function throwExternalCallDataArgs(address[] testArr, uint256 u1, uint256 u2) external {
+        // Arguments in this context (external) should be resolved from calldata, not memory)
+        for(uint i=0; i< testArr.length; i+=1) {
+            assert(false);
+        }
+    }
 }
