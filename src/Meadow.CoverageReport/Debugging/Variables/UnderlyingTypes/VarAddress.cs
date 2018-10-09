@@ -20,8 +20,8 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #region Functions
         public override object ParseData(Memory<byte> data)
         {
-            // If there is no data, return a zero address.
-            if (data.Length == 0)
+            // If there is insufficient data, return a zero address.
+            if (data.Length < Address.SIZE)
             {
                 return new Address(new byte[Address.SIZE]);
             }
