@@ -21,6 +21,12 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #region Functions
         public override object ParseData(Memory<byte> data)
         {
+            // If our data is not the correct size, return an empty array
+            if (data.Length < SizeBytes)
+            {
+                return default(Memory<byte>);
+            }
+
             // Slice our data off.
             return data.Slice(0, SizeBytes);
         }

@@ -25,6 +25,12 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #region Functions
         public override object ParseDereferencedFromMemory(Memory<byte> memory, int offset)
         {
+            // Verify our bounds
+            if (offset >= memory.Length)
+            {
+                return default(Memory<byte>);
+            }
+
             // Dynamic memory is a WORD denoting length, followed by the length in bytes of data.
 
             // Read a length bytes (size of word) to dereference the value.

@@ -50,6 +50,12 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #region Functions
         public override object ParseDereferencedFromMemory(Memory<byte> memory, int offset)
         {
+            // Verify our bounds
+            if (offset >= memory.Length)
+            {
+                return Array.Empty<VariableValuePair>();
+            }
+
             // Create our result array
             var results = new VariableValuePair[Members.Length];
 
