@@ -626,10 +626,11 @@ namespace Meadow.DebugAdapterServer
                         Name = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFileName,
                         Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, _contractsDirectory, sourceFilePath)
                     };
-                    
+
+                    // Create our stack frame
                     var stackFrame = new StackFrame()
                     {
-                        Id = ReferenceContainer.GetUniqueId(),
+                        Id = ReferenceContainer.GetStackFrameId(i),
                         Name = frameName,
                         Line = startLine,
                         Column = startColumn,
