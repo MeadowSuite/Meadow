@@ -23,6 +23,14 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 		this._context = context;
 	}
 
+	provideDebugAdapter?(session: vscode.DebugSession, folder: vscode.WorkspaceFolder | undefined, executable: IDebugAdapterExecutable | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
+		let debugSessionID: string = uuid();
+
+		dotnetLaunchDebug.launch(debugSessionID, this._debugConfig).catch(err => Logger.log("Error launching dotnet test", err));
+
+		return resolveMeadowDebugAdapter(this._context, debugSessionID, this._debugConfig);
+	}
+
 	// Notice: this is working in latest stable vscode but is preview.
 	// Keep the 'getDebuggerPath' command method intact in case its ever removed or broken for this use case.
 	debugAdapterExecutable(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {

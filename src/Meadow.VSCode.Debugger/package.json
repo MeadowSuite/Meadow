@@ -1,7 +1,7 @@
 {
   "name": "solidity-debugger",
   "displayName": "Solidity Debugger",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
   "categories": [
     "Debuggers"
@@ -47,13 +47,13 @@
   "dependencies": {
     "semver": "^5.5.1",
     "uuid": "^3.3.2",
-    "vscode-debugadapter": "^1.31.0",
-    "vscode-debugprotocol": "^1.31.0"
+    "vscode-debugadapter": "^1.32.1",
+    "vscode-debugprotocol": "^1.32.0"
   },
   "devDependencies": {
     "@types/node": "^8.10.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.0.3",
+    "typescript": "^3.1.1",
     "vsce": "^1.51.1",
     "vscode": "^1.1.21",
     "vscode-debugadapter-testsupport": "^1.31.0",
