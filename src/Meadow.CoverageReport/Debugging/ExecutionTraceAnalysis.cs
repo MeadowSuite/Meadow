@@ -844,6 +844,12 @@ namespace Meadow.CoverageReport.Debugging
                             // Create a local variable
                             LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
 
+                            // If the name is blank, override it
+                            if (string.IsNullOrEmpty(localVariable.Name))
+                            {
+                                localVariable.Name = $"<ReturnVariable{parameterIndex + 1}>";
+                            }
+
                             // Add our local variable to our scope
                             currentScope.AddLocalVariable(localVariable);
                         }

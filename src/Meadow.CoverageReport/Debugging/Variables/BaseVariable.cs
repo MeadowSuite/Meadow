@@ -23,7 +23,7 @@ namespace Meadow.CoverageReport.Debugging.Variables
         /// <summary>
         /// The name of this variable.
         /// </summary>
-        public string Name { get; private set; }
+        public string Name { get; set; }
         /// <summary>
         /// The AST node which describes the type for this variable.
         /// </summary>
