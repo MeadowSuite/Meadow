@@ -521,7 +521,7 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleReverseContinueRequestAsync(IRequestResponder<ReverseContinueArguments> responder)
         {
-            base.HandleReverseContinueRequestAsync(responder);
+            responder.SetResponse(new ReverseContinueResponse());
         }
 
         protected override void HandlePauseRequestAsync(IRequestResponder<PauseArguments> responder)
