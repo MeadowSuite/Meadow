@@ -3,7 +3,9 @@ using Meadow.CoverageReport.Debugging.Variables;
 using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -14,6 +16,7 @@ namespace Meadow.DebugAdapterServer
     {
         #region Constants
         private const int STACKFRAME_ID_RESERVED_COUNT = 0x10000;
+        private const string VARIABLE_EVAL_TYPE_PREFIX = "vareval_";
         #endregion
 
         #region Fields
@@ -32,7 +35,10 @@ namespace Meadow.DebugAdapterServer
         // variableReferenceId -> (threadId, variableValuePair)
         private Dictionary<int, (int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)> _variableReferenceIdToUnderlyingVariableValuePair;
 
+        private ConcurrentDictionary<int, string> _variableEvaluationValues;
+
         private int _startingStackFrameId;
+        private int _variableEvaluationId;
         #endregion
 
         #region Properties
@@ -49,6 +55,7 @@ namespace Meadow.DebugAdapterServer
             // Initialize our lookups.
             _currentStackFrameIds = new List<int>();
             _stackFrames = new Dictionary<int, (StackFrame stackFrame, int traceIndex)>();
+            _variableEvaluationValues = new ConcurrentDictionary<int, string>();
 
             LocalScopeId = GetUniqueId();
             StateScopeId = GetUniqueId();
@@ -168,6 +175,40 @@ namespace Meadow.DebugAdapterServer
             }
         }
 
+        public Variable CreateVariable(string name, string value, int variablesReference, string type)
+        {
+            // Obtain our next variable evaluation id and set it in our lookup.
+            var evalID = System.Threading.Interlocked.Increment(ref _variableEvaluationId);
+            _variableEvaluationValues[evalID] = value;
+
+            // Create the variable accordingly.
+            return new Variable(name, value, variablesReference)
+            {
+                Type = type,
+                EvaluateName = VARIABLE_EVAL_TYPE_PREFIX + evalID.ToString(CultureInfo.InvariantCulture)
+            };
+        }
+
+        public EvaluateResponse GetVariableEvaluateResponse(string expression)
+        {
+            // Verify the expression starts with the variable eval type prefix.
+            if (expression.StartsWith(VARIABLE_EVAL_TYPE_PREFIX, StringComparison.Ordinal))
+            {
+                // Obtain our id from our expression.
+                var id = int.Parse(expression.Substring(VARIABLE_EVAL_TYPE_PREFIX.Length), CultureInfo.InvariantCulture);
+
+                // Try to get our variable evaluation value using our id.
+                if (_variableEvaluationValues.TryGetValue(id, out var evalResult))
+                {
+                    // If we were able to get a variable evaluation from the id, return it.
+                   return new EvaluateResponse { Result = evalResult };
+                }
+            }
+
+            // We could not evaluate the variable.
+            return null;
+        }
+
         public bool ResolveParentVariable(int variableReference, out int threadId, out UnderlyingVariableValuePair variableValuePair)
         {
             // Try to obtain our thread id and variable value pair.
@@ -232,6 +273,10 @@ namespace Meadow.DebugAdapterServer
 
             // Unlink our state scope and sub variable references.
             UnlinkSubVariableReference(StateScopeId);
+
+            // Clear all of our variable evaluation and reset the id.
+            _variableEvaluationValues.Clear();
+            _variableEvaluationId = 0;
 
             // Set our thread as not linked
             IsThreadLinked = false;
