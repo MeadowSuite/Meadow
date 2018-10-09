@@ -26,14 +26,14 @@ namespace Meadow.DebugAdapterServer
         private List<int> _currentStackFrameIds;
 
         // stackFrameId -> stackFrame (actual)
-        private Dictionary<int, (StackFrame stackFrame, int traceIndex)> _stackFrames;
+        private ConcurrentDictionary<int, (StackFrame stackFrame, int traceIndex)> _stackFrames;
 
         // variableReferenceId -> sub-variableReferenceIds
-        private Dictionary<int, List<int>> _variableReferenceIdToSubVariableReferenceIds;
+        private ConcurrentDictionary<int, List<int>> _variableReferenceIdToSubVariableReferenceIds;
         // reverse: sub-variableReferenceIds -> variableReferenceId
-        private Dictionary<int, int> _subVariableReferenceIdToVariableReferenceId;
+        private ConcurrentDictionary<int, int> _subVariableReferenceIdToVariableReferenceId;
         // variableReferenceId -> (threadId, variableValuePair)
-        private Dictionary<int, (int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)> _variableReferenceIdToUnderlyingVariableValuePair;
+        private ConcurrentDictionary<int, (int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)> _variableReferenceIdToUnderlyingVariableValuePair;
 
         private ConcurrentDictionary<int, string> _variableEvaluationValues;
 
@@ -54,7 +54,7 @@ namespace Meadow.DebugAdapterServer
         {
             // Initialize our lookups.
             _currentStackFrameIds = new List<int>();
-            _stackFrames = new Dictionary<int, (StackFrame stackFrame, int traceIndex)>();
+            _stackFrames = new ConcurrentDictionary<int, (StackFrame stackFrame, int traceIndex)>();
             _variableEvaluationValues = new ConcurrentDictionary<int, string>();
 
             LocalScopeId = GetUniqueId();
@@ -64,9 +64,9 @@ namespace Meadow.DebugAdapterServer
             _startingStackFrameId = _nextId;
             Interlocked.Add(ref _nextId, STACKFRAME_ID_RESERVED_COUNT);
 
-            _variableReferenceIdToSubVariableReferenceIds = new Dictionary<int, List<int>>();
-            _subVariableReferenceIdToVariableReferenceId = new Dictionary<int, int>();
-            _variableReferenceIdToUnderlyingVariableValuePair = new Dictionary<int, (int threadId, UnderlyingVariableValuePair variableValuePair)>();
+            _variableReferenceIdToSubVariableReferenceIds = new ConcurrentDictionary<int, List<int>>();
+            _subVariableReferenceIdToVariableReferenceId = new ConcurrentDictionary<int, int>();
+            _variableReferenceIdToUnderlyingVariableValuePair = new ConcurrentDictionary<int, (int threadId, UnderlyingVariableValuePair variableValuePair)>();
         }
         #endregion
 
@@ -157,17 +157,17 @@ namespace Meadow.DebugAdapterServer
         private void UnlinkSubVariableReference(int variableReference)
         {
             // Unlink our variable value pair
-            _variableReferenceIdToUnderlyingVariableValuePair.Remove(variableReference);
+            _variableReferenceIdToUnderlyingVariableValuePair.TryRemove(variableReference, out _);
 
             // Try to get our list of sub variable references to unlink.
             if (_variableReferenceIdToSubVariableReferenceIds.TryGetValue(variableReference, out var subVariableReferenceIds))
             {
                 // Remove our variable reference from our lookup since it existed
-                _variableReferenceIdToSubVariableReferenceIds.Remove(variableReference);
+                _variableReferenceIdToSubVariableReferenceIds.TryRemove(variableReference, out _);
                 foreach (var subVariableReferenceId in subVariableReferenceIds)
                 {
                     // Remove the reverse lookup
-                    _subVariableReferenceIdToVariableReferenceId.Remove(subVariableReferenceId);
+                    _subVariableReferenceIdToVariableReferenceId.TryRemove(subVariableReferenceId, out _);
 
                     // Unlink recursively
                     UnlinkSubVariableReference(subVariableReferenceId);
