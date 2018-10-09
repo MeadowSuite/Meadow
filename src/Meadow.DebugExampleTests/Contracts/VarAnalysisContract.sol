@@ -85,8 +85,12 @@ contract VarAnalysisContract
         addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
         addr2 = 0x8080808080808080808080808080808080808080;
         int x = -1;
+        x *= 2;
         uint y = 0x1080;
+        y += 700;
         bool b1 = true;
+        b1 = false;
+        b1 = true;
         bool b2 = false;
         TestEnum enum1 = TestEnum.FIRST;
         TestEnum enum2 = TestEnum.SECOND;

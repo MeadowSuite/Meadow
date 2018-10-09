@@ -626,10 +626,11 @@ namespace Meadow.DebugAdapterServer
                         Name = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFileName,
                         Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, _contractsDirectory, sourceFilePath)
                     };
-                    
+
+                    // Create our stack frame
                     var stackFrame = new StackFrame()
                     {
-                        Id = ReferenceContainer.GetUniqueId(),
+                        Id = ReferenceContainer.GetStackFrameId(i),
                         Name = frameName,
                         Line = startLine,
                         Column = startColumn,
@@ -660,21 +661,15 @@ namespace Meadow.DebugAdapterServer
             // Create our scope list
             List<Scope> scopeList = new List<Scope>();
 
-            // Obtain all relevant ids.
-            int stackFrameId = responder.Arguments.FrameId;
-            int? localScopeId = ReferenceContainer.GetLocalScopeId(stackFrameId);
-            int? stateScopeId = ReferenceContainer.GetStateScopeId(stackFrameId);
-
-            // Add state variable scope if applicable.
-            if (stateScopeId.HasValue)
+            // If there is a thread linked
+            if (ReferenceContainer.IsThreadLinked)
             {
-                scopeList.Add(new Scope("State Variables", stateScopeId.Value, false));
-            }
+                // We'll want to set the current stack frame
+                ReferenceContainer.SetCurrentStackFrame(responder.Arguments.FrameId);
 
-            // Add local variable scope if applicable.
-            if (localScopeId.HasValue)
-            {
-                scopeList.Add(new Scope("Local Variables", localScopeId.Value, false));
+                // Add the relevant scopes for this stack frame.
+                scopeList.Add(new Scope("State Variables", ReferenceContainer.StateScopeId, false));
+                scopeList.Add(new Scope("Local Variables", ReferenceContainer.LocalScopeId, false));
             }
 
             // Set our response.
@@ -831,7 +826,8 @@ namespace Meadow.DebugAdapterServer
 
                                 // Obtain the value string for this variable and add it to our list.
                                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-                                variableList.Add(CreateVariable($"[{i}]", variableValueString, variablePairReferenceId, underlyingVariableValuePair.Variable.BaseType));
+                                Variable variable = ReferenceContainer.CreateVariable($"[{i}]", variableValueString, variablePairReferenceId, underlyingVariableValuePair.Variable.BaseType);
+                                variableList.Add(variable);
                             }
 
 
@@ -845,7 +841,8 @@ namespace Meadow.DebugAdapterServer
                             var bytes = (Memory<byte>)parentVariableValuePair.Value;
                             for (int i = 0; i < bytes.Length; i++)
                             {
-                                variableList.Add(CreateVariable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0, "byte"));
+                                Variable variable = ReferenceContainer.CreateVariable($"[{i}]", bytes.Span[i].ToString(CultureInfo.InvariantCulture), 0, "byte");
+                                variableList.Add(variable);
                             }
 
                             break;
@@ -891,45 +888,17 @@ namespace Meadow.DebugAdapterServer
 
                 // Obtain the value string for this variable and add it to our list.
                 string variableValueString = GetVariableValueString(underlyingVariableValuePair);
-
-
-                variableList.Add(CreateVariable(variablePair.Variable.Name, variableValueString, variablePairReferenceId, variablePair.Variable.BaseType));
+                Variable variable = ReferenceContainer.CreateVariable(variablePair.Variable.Name, variableValueString, variablePairReferenceId, variablePair.Variable.BaseType);
+                variableList.Add(variable);
             }
         }
-
-        // This is a crap temporary work around to support VSCode "copy value" on variables.
-        // TODO: use existing resolve code.
-        // TODO: WARNING: this is a memory leak and stores every variable for all time.
-        #region Variable Eval Hacks
-        ConcurrentDictionary<int, string> _variableEvaluationValues = new ConcurrentDictionary<int, string>();
-        int _variableEvaluationID = 1;
-        const string VARIABLE_EVAL_TYPE = "vareval_";
-
-        Variable CreateVariable(string name, string value, int variablesReference, string type)
-        {
-            var evalID = System.Threading.Interlocked.Increment(ref _variableEvaluationID);
-            _variableEvaluationValues[evalID] = value;
-            return new Variable(name, value, variablesReference)
-            {
-                Type = type,
-                EvaluateName = VARIABLE_EVAL_TYPE + evalID.ToString(CultureInfo.InvariantCulture)
-            };
-        }
-        #endregion
 
         protected override void HandleEvaluateRequestAsync(IRequestResponder<EvaluateArguments, EvaluateResponse> responder)
         {
-            EvaluateResponse evalResponse = null;
+            // Obtain an evaluation for this variable expression.
+            EvaluateResponse evalResponse = ReferenceContainer.GetVariableEvaluateResponse(responder.Arguments.Expression);
 
-            if (responder.Arguments.Expression.StartsWith(VARIABLE_EVAL_TYPE, StringComparison.Ordinal))
-            {
-                var id = int.Parse(responder.Arguments.Expression.Substring(VARIABLE_EVAL_TYPE.Length), CultureInfo.InvariantCulture);
-                if (_variableEvaluationValues.TryGetValue(id, out var evalResult))
-                {
-                    evalResponse = new EvaluateResponse { Result = evalResult };
-                }
-            }
-
+            // Set the response accordingly.
             responder.SetResponse(evalResponse ?? new EvaluateResponse());
         }
 
