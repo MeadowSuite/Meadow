@@ -18,7 +18,6 @@ namespace Meadow.DebugAdapterServer
 
         #region Fields
         private static int _nextId;
-        private int _stackFrameStartId;
 
         // (callstack)
         private List<int> _currentStackFrameIds;
@@ -33,13 +32,15 @@ namespace Meadow.DebugAdapterServer
         // variableReferenceId -> (threadId, variableValuePair)
         private Dictionary<int, (int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)> _variableReferenceIdToUnderlyingVariableValuePair;
 
-        private Dictionary<int, string> _variableReferenceIdToPath;
-        private Dictionary<string, int> _pathToVariableReferenceId;
+        private int _startingStackFrameId;
+        #endregion
 
-        private int _localScopeId;
-        private int _stateScopeId;
-        private int? _currentThreadId = null;
-        private int? _currentStackFrameId = null;
+        #region Properties
+        public bool IsThreadLinked { get; private set; }
+        public int CurrentThreadId { get; private set; }
+        public int CurrentStackFrameId { get; private set; }
+        public int LocalScopeId { get; private set; }
+        public int StateScopeId { get; private set; }
         #endregion
 
         #region Constructor
@@ -49,11 +50,11 @@ namespace Meadow.DebugAdapterServer
             _currentStackFrameIds = new List<int>();
             _stackFrames = new Dictionary<int, (StackFrame stackFrame, int traceIndex)>();
 
-            _localScopeId = GetUniqueId();
-            _stateScopeId = GetUniqueId();
+            LocalScopeId = GetUniqueId();
+            StateScopeId = GetUniqueId();
 
             // Allocate our desired amount of callstack ids
-            _stackFrameStartId = _nextId;
+            _startingStackFrameId = _nextId;
             Interlocked.Add(ref _nextId, STACKFRAME_ID_RESERVED_COUNT);
 
             _variableReferenceIdToSubVariableReferenceIds = new Dictionary<int, List<int>>();
@@ -77,7 +78,7 @@ namespace Meadow.DebugAdapterServer
             }
 
             // Return our ID
-            return _stackFrameStartId + index;
+            return _startingStackFrameId + index;
         }
 
         public bool TryGetStackFrames(int threadId, out List<StackFrame> result)
@@ -109,22 +110,23 @@ namespace Meadow.DebugAdapterServer
             _currentStackFrameIds.Add(stackFrame.Id);
 
             // Set our current thread.
-            _currentThreadId = threadId;
+            CurrentThreadId = threadId;
 
-            // Set our current stack frame
-            _currentStackFrameId = stackFrame.Id;
+            // Set our thread linked status.
+            IsThreadLinked = true;
         }
 
-        public int? GetLocalScopeId(int stackFrameId)
+        public bool SetCurrentStackFrame(int stackFrameId)
         {
-            // Return our scope id
-            return _localScopeId;
-        }
+            // If our stack frame exists in our lookup, set it as the current
+            if (_stackFrames.ContainsKey(stackFrameId))
+            {
+                CurrentStackFrameId = stackFrameId;
+                return true;
+            }
 
-        public int? GetStateScopeId(int stackFrameId)
-        {
-            // Return our scope id
-            return _stateScopeId;
+            // We could not find this stack frame.
+            return false;
         }
 
         public void LinkSubVariableReference(int parentVariableReference, int variableReference, int threadId, UnderlyingVariableValuePair underlyingVariableValuePair)
@@ -169,67 +171,70 @@ namespace Meadow.DebugAdapterServer
         public bool ResolveParentVariable(int variableReference, out int threadId, out UnderlyingVariableValuePair variableValuePair)
         {
             // Try to obtain our thread id and variable value pair.
-            if (!_variableReferenceIdToUnderlyingVariableValuePair.TryGetValue(variableReference, out var result))
+            if (_variableReferenceIdToUnderlyingVariableValuePair.TryGetValue(variableReference, out var result))
             {
-                threadId = 0;
-                variableValuePair = new UnderlyingVariableValuePair(null, null);
-                return false;
+                // Obtain the thread id and variable value pair for this reference.
+                threadId = result.threadId;
+                variableValuePair = result.underlyingVariableValuePair;
+                return true;
             }
 
-            // Obtain the thread id and variable value pair for this reference.
-            threadId = result.threadId;
-            variableValuePair = result.underlyingVariableValuePair;
-            return true;
+            // We could not resolve the variable.
+            threadId = 0;
+            variableValuePair = new UnderlyingVariableValuePair(null, null);
+            return false;
         }
 
         public bool ResolveLocalVariable(int variableReference, out int threadId, out int traceIndex)
         {
-            // Try to obtain our stack frame id.
-            if (!_currentThreadId.HasValue || !_currentStackFrameId.HasValue || variableReference != _localScopeId)
+            // Check the variable reference references the target scope id, and we have sufficient information.
+            if (IsThreadLinked && variableReference == LocalScopeId)
             {
-                threadId = 0;
-                traceIndex = 0;
-                return false;
+                // Obtain the thread id and trace index for this stack frame.
+                threadId = CurrentThreadId;
+                traceIndex = _stackFrames[CurrentStackFrameId].traceIndex;
+                return true;
             }
 
-            // Obtain the thread id and trace index for this stack frame.
-            threadId = _currentThreadId.Value;
-            traceIndex = _stackFrames[_currentStackFrameId.Value].traceIndex;
-            return true;
+            // We could not resolve the variable.
+            threadId = 0;
+            traceIndex = 0;
+            return false;
         }
 
         public bool ResolveStateVariable(int variableReference, out int threadId, out int traceIndex)
         {
-            // Try to obtain our stack frame id.
-            if (!_currentThreadId.HasValue || !_currentStackFrameId.HasValue || variableReference != _stateScopeId)
+            // Check the variable reference references the target scope id, and we have sufficient information.
+            if (IsThreadLinked && variableReference == StateScopeId)
             {
-                threadId = 0;
-                traceIndex = 0;
-                return false;
+                // Obtain the thread id and trace index for this stack frame.
+                threadId = CurrentThreadId;
+                traceIndex = _stackFrames[CurrentStackFrameId].traceIndex;
+                return true;
             }
 
-            // Obtain the thread id and trace index for this stack frame.
-            threadId = _currentThreadId.Value;
-            traceIndex = _stackFrames[_currentStackFrameId.Value].traceIndex;
-            return true;
+            // We could not resolve the variable.
+            threadId = 0;
+            traceIndex = 0;
+            return false;
         }
 
         public void UnlinkThreadId(int threadId)
         {
-            // Verify we have this thread id in our lookup.
-            _currentThreadId = null;
-
             // Remove this thread id from the lookup.
             _currentStackFrameIds.Clear();
 
             // Unlink our stack frame
             _stackFrames.Clear();
 
-            // Unlink our state scope and sub variable references.
-            UnlinkSubVariableReference(_stateScopeId);
-
             // Unlink our local scope and sub variable references.
-            UnlinkSubVariableReference(_localScopeId);
+            UnlinkSubVariableReference(LocalScopeId);
+
+            // Unlink our state scope and sub variable references.
+            UnlinkSubVariableReference(StateScopeId);
+
+            // Set our thread as not linked
+            IsThreadLinked = false;
         }
         #endregion
     }

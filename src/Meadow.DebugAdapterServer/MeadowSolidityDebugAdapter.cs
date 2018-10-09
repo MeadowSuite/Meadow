@@ -661,21 +661,15 @@ namespace Meadow.DebugAdapterServer
             // Create our scope list
             List<Scope> scopeList = new List<Scope>();
 
-            // Obtain all relevant ids.
-            int stackFrameId = responder.Arguments.FrameId;
-            int? localScopeId = ReferenceContainer.GetLocalScopeId(stackFrameId);
-            int? stateScopeId = ReferenceContainer.GetStateScopeId(stackFrameId);
-
-            // Add state variable scope if applicable.
-            if (stateScopeId.HasValue)
+            // If there is a thread linked
+            if (ReferenceContainer.IsThreadLinked)
             {
-                scopeList.Add(new Scope("State Variables", stateScopeId.Value, false));
-            }
+                // We'll want to set the current stack frame
+                ReferenceContainer.SetCurrentStackFrame(responder.Arguments.FrameId);
 
-            // Add local variable scope if applicable.
-            if (localScopeId.HasValue)
-            {
-                scopeList.Add(new Scope("Local Variables", localScopeId.Value, false));
+                // Add the relevant scopes for this stack frame.
+                scopeList.Add(new Scope("State Variables", ReferenceContainer.StateScopeId, false));
+                scopeList.Add(new Scope("Local Variables", ReferenceContainer.LocalScopeId, false));
             }
 
             // Set our response.
