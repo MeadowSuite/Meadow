@@ -24,6 +24,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 [assembly: Parallelize(Workers = 0, Scope = ExecutionScope.MethodLevel)]
@@ -116,24 +117,41 @@ namespace Meadow.UnitTestTemplate
         //static readonly Dictionary<string, string[]> AppConfigValues = new Dictionary<string, string[]>();
         static (string Key, string Value)[] appConfigValues;
 
+        static Action _debuggerCleanup;
 
         static Global()
         {
+            if (!Debugging.IsSolidityDebuggerAttached && Debugging.HasSolidityDebugAttachRequest)
+            {
+                var cancelToken = new CancellationTokenSource();
+                var debuggerDisposal = Debugging.AttachSolidityDebugger(cancelToken);
+                _debuggerCleanup = () =>
+                {
+                    _debuggerCleanup = null;
+                    if (!cancelToken.IsCancellationRequested)
+                    {
+                        cancelToken.Cancel();
+                        debuggerDisposal.Dispose();
+                    }
+                };
+            }
+
+
             // Hook onto events for after tests have ran so we can call
             // cleanup which does report generation.
             // Its unclear which of these may or may not work in any given
             // execution context and operating system, so hook to both.
             // HOWEVER, neither seem to be called while running
             // tests through test panels or `dotnet test`
-            AppDomain.CurrentDomain.ProcessExit += CurrentDomain_ProcessExit;
-            AssemblyLoadContext.Default.Unloading += Default_Unloading;
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => OnProcessExit();
+            AssemblyLoadContext.Default.Unloading += (s) => OnProcessExit();
 
             // Initialize our test variables.
             TestServicesPool = new AsyncObjectPool<TestServices>(CreateTestServicesInstance);
             CoverageMaps = new ConcurrentBag<(CompoundCoverageMap Coverage, SolcBytecodeInfo Contract)[]>();
             UnitTestResults = new ConcurrentBag<UnitTestResult>();
 
-           
+
             var thisAsm = Assembly.GetExecutingAssembly().GetName().Name;
             var unitTestAssembly = AppDomain.CurrentDomain
                 .GetAssemblies()
@@ -145,20 +163,18 @@ namespace Meadow.UnitTestTemplate
 
             ParseAppConfigSettings(unitTestAssembly);
 
+            //var dtest = Environment.GetEnvironmentVariable("MEADOW_SOLIDITY_DEBUG_SESSION");
+            //var debugSessionID = Environment.GetEnvironmentVariable("DEBUG_SESSION_ID");
+
+            //File.AppendAllLines("/Users/matthewlittle/Desktop/log.txt", new[] { "ENV TEST: " + debugSessionID });
         }
 
-        private static void Default_Unloading(AssemblyLoadContext obj)
+        static void OnProcessExit()
         {
             // Perform report generation on progrma exit.
             // (The cleanup method handles itself when being called multiple times).
             Cleanup().GetAwaiter().GetResult();
-        }
-
-        private static void CurrentDomain_ProcessExit(object sender, EventArgs e)
-        {
-            // Perform report generation on progrma exit.
-            // (The cleanup method handles itself when being called multiple times).
-            Cleanup().GetAwaiter().GetResult();
+            _debuggerCleanup?.Invoke();
         }
 
         static void ParseAppConfigSettings(Assembly callingAssembly)

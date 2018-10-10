@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as child_process from "child_process";
 import * as util from 'util';
 import * as debugConfigProvider from './debugConfigProvider';
-import { ISolidityMeadowDebugConfig } from './constants';
+import { ISolidityMeadowDebugConfig, DEBUG_SESSION_ID } from './constants';
 import { Logger } from './logger';
 import * as common from './common';
 
@@ -12,7 +12,7 @@ export async function launch(debugSessionID: string, debugConfig: ISolidityMeado
     // let responseTest = await e.customRequest("customRequestExample", { sessionID: debugSessionID });
 
     let envOpts = { 
-        "DEBUG_SESSION_ID": debugSessionID,
+        [DEBUG_SESSION_ID]: debugSessionID,
     };
 
     if (debugConfig.breakDebugServer) {

@@ -62,7 +62,8 @@
   "activationEvents": [
     "onDebug",
     "onDebugInitialConfigurations",
-    "onCommand:extension.meadow.vscode.debugger.getDebuggerPath"
+    "onCommand:extension.meadow.vscode.debugger.getDebuggerPath",
+    "workspaceContains:**/*.sol"
   ],
   "contributes": {
     "languages": [
@@ -84,6 +85,10 @@
     ],
     "debuggers": [
       {
+        "type": "coreclr",
+        "label": "Meadow C# Unit Test Hook"
+      },
+      {
         "type": "solidityMeadow",
         "label": "Solidity Debug",
         "adapterExecutableCommand": "extension.meadow.vscode.debugger.getDebuggerPath",
@@ -98,15 +103,7 @@
             }
           },
           "launch": {
-            "required": [
-              "program"
-            ],
             "properties": {
-              "program": {
-                "type": "string",
-                "description": "Absolute path to a text file.",
-                "default": "${workspaceFolder}"
-              },
               "stopOnEntry": {
                 "type": "boolean",
                 "description": "Automatically stop after launch.",

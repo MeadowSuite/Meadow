@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as uuid from 'uuid/v1';
 import * as dotnetLaunchDebug from './dotnetLaunchDebug';
 import { Logger } from './logger';
-import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, SOLIDITY_MEADOW_TYPE } from './constants';
+import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
 import { resolveMeadowDebugAdapter } from './debugAdapterExecutable';
 import * as common from './common';
 import * as child_process from 'child_process';
@@ -24,7 +24,14 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 	}
 
 	provideDebugAdapter?(session: vscode.DebugSession, folder: vscode.WorkspaceFolder | undefined, executable: IDebugAdapterExecutable | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
-		let debugSessionID: string = uuid();
+		
+		let debugSessionID: string;
+		if (this._debugConfig[DEBUG_SESSION_ID]) {
+			debugSessionID = this._debugConfig[DEBUG_SESSION_ID];
+		}
+		else {
+			debugSessionID = uuid();
+		}
 
 		dotnetLaunchDebug.launch(debugSessionID, this._debugConfig).catch(err => Logger.log("Error launching dotnet test", err));
 
@@ -34,15 +41,6 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 	// Notice: this is working in latest stable vscode but is preview.
 	// Keep the 'getDebuggerPath' command method intact in case its ever removed or broken for this use case.
 	debugAdapterExecutable(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
-
-		/*
-		let session = vscode.debug.activeDebugSession;
-		let workspaceConfig = vscode.workspace.getConfiguration();
-		let launchConfig = vscode.workspace.getConfiguration('launch');
-		let launchCompoundConfig = vscode.workspace.getConfiguration('launch.compounds');
-		let debugConfig = this._debugConfig;
-		let ctx = this._context;
-        */
 
 		let debugSessionID: string = uuid();
 

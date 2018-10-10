@@ -16,10 +16,16 @@ namespace Meadow.UnitTestTemplate
     public class Debugging : IDisposable
     {
 
+        public static bool IsSolidityDebuggerAttached { get; set; }
+
+        public static string SolidityDebugSessionID => Environment.GetEnvironmentVariable("DEBUG_SESSION_ID");
+
+        public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
+
+
         public static void Launch()
         {
-            var debugSessionID = Environment.GetEnvironmentVariable("DEBUG_SESSION_ID");
-            if (string.IsNullOrWhiteSpace(debugSessionID))
+            if (!HasSolidityDebugAttachRequest)
             {
                 MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly());
             }
@@ -32,29 +38,38 @@ namespace Meadow.UnitTestTemplate
                     Debugger.Launch();
                 }
 
-                using (var debuggingInstance = new Debugging(debugSessionID))
+
+                var cancelToken = new CancellationTokenSource();
+
+                using (AttachSolidityDebugger(cancelToken))
                 {
-                    debuggingInstance.InitializeDebugConnection();
-                    debuggingInstance.SetupRpcDebuggingHook();
-
-                    var cancelToken = new CancellationTokenSource();
-
-                    debuggingInstance.OnDebuggerDisconnect += () => 
-                    {
-                        // If the C# debugger is not attached, we don't care about running the rest of the tests
-                        // so exit program
-                        if (!Debugger.IsAttached)
-                        {
-                            cancelToken.Cancel();
-                            Environment.Exit(0);
-                        }
-                    };
-
                     // Run all tests (blocking)
                     MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken.Token);
                     Console.WriteLine("Tests completed");
                 }
             }
+        }
+
+        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken)
+        {
+            var debuggingInstance = new Debugging(SolidityDebugSessionID);
+
+            debuggingInstance.InitializeDebugConnection();
+            IsSolidityDebuggerAttached = true;
+            debuggingInstance.SetupRpcDebuggingHook();
+
+            debuggingInstance.OnDebuggerDisconnect += () =>
+            {
+                // If the C# debugger is not attached, we don't care about running the rest of the tests
+                // so exit program
+                if (!Debugger.IsAttached)
+                {
+                    cancelToken.Cancel();
+                    Environment.Exit(0);
+                }
+            };
+
+            return debuggingInstance;
         }
 
         readonly string _debugSessionID;

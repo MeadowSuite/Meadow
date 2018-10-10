@@ -4,7 +4,13 @@ export class Logger {
 
     private static outputChannel = vscode.window.createOutputChannel("Meadow Solidity Debugger");
 
+    private static _didShow: boolean = false;
+
     public static log(message: string, ...params: any[]): void {
+        if (!this._didShow) {
+            this._didShow = true;
+            this.show();
+        }
         this.outputChannel.appendLine(message);
         params.forEach(p => this.outputChannel.appendLine(p));
 

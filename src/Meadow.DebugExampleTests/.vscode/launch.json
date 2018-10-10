@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            //"preLaunchTask": "build",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.1/Meadow.DebugExampleTests.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "internalConsole"
+        },
+        {
             "type": "solidityMeadow",
             "request": "launch",
             "name": "Debug Solidity (via unit test run)"
@@ -13,7 +24,6 @@
             "type": "solidityMeadow",
             "request": "launch",
             "name": "Solidity Meadow",
-            "program": "${workspaceFolder}/test.sol",
             "stopOnEntry": false,
             "logFile": "./debugger_trace.txt",
             "testAssembly": "./bin/Debug/netcoreapp2.1/Meadow.DebugExampleTests.dll",
@@ -38,11 +48,5 @@
                 "VSTEST_HOST_DEBUG": "1"
             }
         }
-    ],
-	"compounds": [
-		{
-			"name": "Both Meadow",
-			"configurations": [ "Solidity Meadow", "Unit Tests" ]
-		}
-	]
+    ]
 }
