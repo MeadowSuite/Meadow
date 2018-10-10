@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 
 export const SOLIDITY_MEADOW_TYPE: string = 'solidityMeadow';
 
+export const DEBUG_SESSION_ID: string = 'DEBUG_SESSION_ID';
+
 export interface ISolidityMeadowDebugConfig extends vscode.DebugConfiguration {
 	readonly stopOnEntry?: boolean;
 	readonly debugAdapterFile?: string;

@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { IDebugAdapterExecutable, ISolidityMeadowDebugConfig } from './constants';
 import { Logger } from './logger';
-import { SOLIDITY_MEADOW_TYPE } from './constants';
+import { DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
 
 export async function resolveMeadowDebugAdapter(context: vscode.ExtensionContext, debugSessionID: string, debugConfig?: ISolidityMeadowDebugConfig): Promise<IDebugAdapterExecutable> {
 
@@ -44,7 +44,7 @@ export async function resolveMeadowDebugAdapter(context: vscode.ExtensionContext
 		type: "executable",
 		command: "dotnet",
 		args: args,
-		env: { "DEBUG_SESSION_ID": debugSessionID }
+		env: { [DEBUG_SESSION_ID]: debugSessionID }
 	};
 
 	Logger.log(`Launching debug adapter with: ${JSON.stringify(launchInfo)}`);

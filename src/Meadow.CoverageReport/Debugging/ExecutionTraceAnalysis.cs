@@ -661,6 +661,7 @@ namespace Meadow.CoverageReport.Debugging
             {
                 message.AppendLine(GetCallStackString(traceException.TraceIndex.Value));
             }
+
             return message.ToString().TrimEnd();
         }
 

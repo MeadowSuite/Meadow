@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-import * as child_process from "child_process";
-import * as util from 'util';
 import * as debugConfigProvider from './debugConfigProvider';
 import { Logger } from './logger';
 import { resolveMeadowDebugAdapter } from './debugAdapterExecutable';
 import { SOLIDITY_MEADOW_TYPE } from './constants';
+import { ClrDebugConfigProvider } from './clrDebugConfigProvider';
 
 
 export function activate(context: vscode.ExtensionContext) {
@@ -38,11 +37,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// register a configuration provider for the debug type
 	const provider = new debugConfigProvider.SolidityMeadowConfigurationProvider(context);
-
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(SOLIDITY_MEADOW_TYPE, provider));
 	context.subscriptions.push(provider);
 
+	// Register config provider for coreclr / omnisharp to hook in our solidity debugger.
+	const coreClrProvider = new ClrDebugConfigProvider(context);
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("coreclr", coreClrProvider));
 }
+
+
 
 export function deactivate() {
 	// nothing to do
