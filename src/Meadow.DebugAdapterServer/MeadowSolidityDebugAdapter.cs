@@ -176,50 +176,9 @@ namespace Meadow.DebugAdapterServer
             // If we haven't finished execution, 
             if (!finishedExecution)
             {
+                // Determine how to handle our desired control flow.
                 switch (controlFlowAction)
                 {
-                    case DesiredControlFlow.StepOver:
-                    // TODO: Implement
-
-                    case DesiredControlFlow.StepInto:
-                        {
-                            // Increment our step
-                            finishedExecution = !threadState.IncrementStep();
-
-                            // If we stepped successfully, we evaluate, and if an event is encountered, we stop.
-                            if (!finishedExecution && EvaluateCurrentStep(threadState))
-                            {
-                                return;
-                            }
-
-                            // Signal our breakpoint event has occurred for this thread.
-                            Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
-                            break;
-                        }
-
-                    case DesiredControlFlow.StepOut:
-                    // TODO: Implement
-
-                    case DesiredControlFlow.StepBackwards:
-                        {
-                            // Decrement our step
-                            bool decrementedStep = threadState.DecrementStep();
-
-                            // If we stepped successfully, we evaluate, and if an event is encountered, we stop.
-                            if (decrementedStep && EvaluateCurrentStep(threadState))
-                            {
-                                return;
-                            }
-
-                            Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
-
-                            // Signal our breakpoint event has occurred for this thread.
-                            Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
-
-                            // TODO: Check if we couldn't decrement step. Disable step backward if we can.
-                            break;
-                        }
-
                     case DesiredControlFlow.Continue:
                         {
                             // Process the execution trace analysis
@@ -242,7 +201,112 @@ namespace Meadow.DebugAdapterServer
                             finishedExecution = true;
                             break;
                         }
-                }
+
+                    case DesiredControlFlow.StepBackwards:
+                        {
+                            // Decrement our step
+                            bool decrementedStep = threadState.DecrementStep();
+
+                            // If we stepped successfully, we evaluate, and if an event is encountered, we stop.
+                            if (decrementedStep && EvaluateCurrentStep(threadState))
+                            {
+                                return;
+                            }
+
+                            Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
+
+                            // Signal our breakpoint event has occurred for this thread.
+                            Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
+                            break;
+                        }
+
+                    case DesiredControlFlow.StepInto:
+                    case DesiredControlFlow.StepOver:
+                    case DesiredControlFlow.StepOut:
+                        {
+                            // Here we handle Step Into + Step Over + Step Out
+                            // The following conditions need to be checked:
+                            //      (1) We step once unconditionally
+                            //      (2) Each step should be evaluated for breakpoints/exceptions and checked to see if execution ended.
+                            //      (3) If step into: break instantly.
+                            //      (4) If step out: break if current scope is the parent of the initial scope.
+                            //      (5) If step over: break if the current scope is the same OR the parent of the initial scope.
+
+                            // Define our initial scope
+                            ExecutionTraceScope initialTraceScope = null;
+                            SourceFileLine[] initialSourceLines = Array.Empty<SourceFileLine>();
+                            // Obtain the initial scope if we're stepping over or out (it will be needed for comparisons later).
+                            if (threadState.CurrentStepIndex.HasValue && controlFlowAction != DesiredControlFlow.StepInto)
+                            {
+                                initialTraceScope = threadState.ExecutionTraceAnalysis.GetScope(threadState.CurrentStepIndex.Value);
+                                initialSourceLines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
+                            }
+
+                            // Loop for through all the steps.
+                            do
+                            {
+                                // Increment our step
+                                finishedExecution = !threadState.IncrementStep();
+
+                                // If we stepped successfully, we evaluate, and if an event is encountered, we stop.
+                                if (!finishedExecution && EvaluateCurrentStep(threadState))
+                                {
+                                    return;
+                                }
+
+                                // If this isn't a basic single step (step into), we'll want to determine if we want to step more, or halt.
+                                if (controlFlowAction != DesiredControlFlow.StepInto)
+                                {
+                                    // Obtain our current execution trace point.
+                                    ExecutionTraceScope currentTraceScope = threadState.ExecutionTraceAnalysis.GetScope(threadState.CurrentStepIndex.Value);
+
+                                    // Check if we reached our target, if not, we iterate to step some more.
+                                    bool currentScopeIsParent = currentTraceScope == initialTraceScope.Parent;
+                                    bool currentScopeIsSame = currentTraceScope == initialTraceScope;
+                                    if (controlFlowAction == DesiredControlFlow.StepOver)
+                                    {
+                                        // We're handling a step over.
+
+                                        // If this isn't the same scope or parent, we keep step some more.
+                                        if (!currentScopeIsParent && !currentScopeIsSame)
+                                        {
+                                            continue;
+                                        }
+                                        else if (currentScopeIsSame)
+                                        {
+                                            // If the scope is the same, we verify the line is different (since entering/exiting a function will create two steps at the same point, we skip the latter point).
+                                            SourceFileLine[] currentSourceLines = threadState.ExecutionTraceAnalysis.GetSourceLines(threadState.CurrentStepIndex.Value);
+                                            if (currentSourceLines?.Length == 0 ||
+                                                (initialSourceLines.Length >= 1 &&
+                                                currentSourceLines[0].LineNumber == initialSourceLines[0].LineNumber &&
+                                                currentSourceLines[0].SourceFileMapParent?.SourceFileIndex == initialSourceLines[0].SourceFileMapParent?.SourceFileIndex))
+                                            {
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // We're handling a step out.
+
+                                        // If this isn't the parent scope, we keep step some more.
+                                        if (!currentScopeIsParent)
+                                        {
+                                            continue;
+                                        }
+                                    }
+                                }
+
+                                // Signal our breakpoint event has occurred for this thread.
+                                Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
+                                break;
+                            }
+                            // Loop while our execution hasn't finioshed.
+                            while (!finishedExecution);
+
+                            break;
+                        }
+            }
             }
 
             // If we finished execution, signal our thread
@@ -485,7 +549,16 @@ namespace Meadow.DebugAdapterServer
 
         protected override void HandleStepOutRequestAsync(IRequestResponder<StepOutArguments> responder)
         {
+            // Set our response
             responder.SetResponse(new StepOutResponse());
+
+            // Obtain the current thread state
+            bool success = ThreadStates.TryGetValue(responder.Arguments.ThreadId, out var threadState);
+            if (success)
+            {
+                // Continue executing
+                ContinueExecution(threadState, DesiredControlFlow.StepOut);
+            }
         }
 
         protected override void HandleStepBackRequestAsync(IRequestResponder<StepBackArguments> responder)
