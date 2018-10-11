@@ -213,6 +213,7 @@ namespace Meadow.DebugAdapterServer
                                 return;
                             }
 
+                            // Send our continued event to force refresh of state.
                             Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
 
                             // Signal our breakpoint event has occurred for this thread.
@@ -297,6 +298,9 @@ namespace Meadow.DebugAdapterServer
                                     }
                                 }
 
+                                // Send our continued event to force refresh of state.
+                                Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
+
                                 // Signal our breakpoint event has occurred for this thread.
                                 Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Step) { ThreadId = threadState.ThreadId });
                                 break;
@@ -351,6 +355,9 @@ namespace Meadow.DebugAdapterServer
                 // If we have an exception, throw it and return the appropriate status.
                 if (traceException != null)
                 {
+                    // Send our continued event to force refresh of state.
+                    Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
+
                     // Send our exception event.
                     var stoppedEvent = new StoppedEvent(StoppedEvent.ReasonValue.Exception)
                     {
@@ -388,6 +395,9 @@ namespace Meadow.DebugAdapterServer
                 bool containsBreakpoint = success && breakpointLines.Any(x => x == sourceLine.LineNumber);
                 if (containsBreakpoint)
                 {
+                    // Send our continued event to force refresh of state.
+                    Protocol.SendEvent(new ContinuedEvent(threadState.ThreadId));
+
                     // Signal our breakpoint event has occurred for this thread.
                     Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = threadState.ThreadId });
                     return true;
