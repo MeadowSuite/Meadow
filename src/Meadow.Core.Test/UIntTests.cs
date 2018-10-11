@@ -12,6 +12,26 @@ namespace Meadow.Core.Test
     public class UIntTests
     {
         [Fact]
+        public void TestSignedUnsignedCast()
+        {
+            // Test an oversigned number being cast to a UInt256 and Int256.
+            BigInteger u264Max = ((BigInteger.One << 264) - 1);
+            Assert.Equal((BigInteger)UInt256.MaxValue, u264Max.ToUInt256());
+            Assert.Equal(-1, u264Max.ToInt256());
+
+            // Test uint256 max value being cast to UInt256 (fits, doesn't change value) and Int256 (doesn't fit, overwrites sign bit).
+            BigInteger u256Max = ((BigInteger.One << 256) - 1);
+            Assert.Equal((BigInteger)UInt256.MaxValue, u256Max.ToUInt256());
+            Assert.Equal(-1, u256Max.ToInt256());
+
+            // Test int256 max value being cast to UInt256 and Int256 (both should have an unchanged value).
+            BigInteger i256Max = BigIntegerConverter.INT256_MAX_VALUE;
+            BigInteger expected = (u256Max >> 1);
+            Assert.Equal(expected, i256Max.ToUInt256());
+            Assert.Equal(expected, i256Max.ToInt256());
+        }
+
+        [Fact]
         public void UInt32Cast()
         {
             uint num = 2147483640;

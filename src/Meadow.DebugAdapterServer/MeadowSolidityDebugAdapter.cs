@@ -849,7 +849,7 @@ namespace Meadow.DebugAdapterServer
             responder.SetResponse(new VariablesResponse(variableList));
         }
 
-        void ResolveVariables(
+        private void ResolveVariables(
             List<Variable> variableList,
             int variablesReference,
             bool isLocalVariableScope, 
