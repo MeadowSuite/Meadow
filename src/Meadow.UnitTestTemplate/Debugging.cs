@@ -65,7 +65,7 @@ namespace Meadow.UnitTestTemplate
                 if (!Debugger.IsAttached)
                 {
                     cancelToken.Cancel();
-                    Environment.Exit(0);
+                    //Environment.Exit(0);
                 }
             };
 

@@ -9,14 +9,28 @@ using System.Threading;
 
 namespace Meadow.DebugAdapterServer
 {
+    /// <summary>
+    /// Represents the state/properties of a thread which is debugging solidity code.
+    /// </summary>
     public class MeadowDebugAdapterThreadState
     {
         #region Fields
+        /// <summary>
+        /// Indiciates the index into the significant step list <see cref="ExecutionTraceAnalysis.SignificantStepIndices"/>.
+        /// This is used to walk through all significant steps.
+        /// </summary>
         private int _significantStepIndexIndex;
         #endregion
 
         #region Properties
+        /// <summary>
+        /// The thread id of this thread state.
+        /// </summary>
         public int ThreadId { get; }
+        /// <summary>
+        /// Indicates the current tracepoint index into the execution trace <see cref="ExecutionTrace"/>.
+        /// This is used to
+        /// </summary>
         public int? CurrentStepIndex
         {
             get
@@ -32,6 +46,9 @@ namespace Meadow.DebugAdapterServer
             }
         }
 
+        /// <summary>
+        /// The current execution trace which is being analyzed on this thread.
+        /// </summary>
         public ExecutionTrace ExecutionTrace
         {
             get
@@ -40,12 +57,25 @@ namespace Meadow.DebugAdapterServer
             }
         }
 
+        /// <summary>
+        /// The execution trace analysis currently being analyzed/walked on this thread.
+        /// </summary>
         public ExecutionTraceAnalysis ExecutionTraceAnalysis { get; }
 
+        /// <summary>
+        /// The RPC client which entered the debugging session on this thread.
+        /// </summary>
         public IJsonRpcClient RpcClient { get; }
 
+        /// <summary>
+        /// Indicates whether we are expecting exceptions during this execution trace's analysis.
+        /// Used to determine if we have unhandled exceptions we should pause for.
+        /// </summary>
         public bool ExpectingException { get; }
 
+        /// <summary>
+        /// The thread locking object used to pause the test executing thread while debugging is occuring on it's execution trace.
+        /// </summary>
         public SemaphoreSlim Semaphore { get; }
         #endregion
 

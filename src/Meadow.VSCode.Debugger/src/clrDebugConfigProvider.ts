@@ -40,6 +40,7 @@ export class ClrDebugConfigProvider implements vscode.DebugConfigurationProvider
         
         // Check if the solidity debugger has already been launched and set the session ID
         if (debugConfiguration.env && debugConfiguration.env[DEBUG_SESSION_ID]) {
+			Logger.log(`Clr debugger already setup with solidity debug session ID.`);
             return debugConfiguration;
         }
         
@@ -53,7 +54,7 @@ export class ClrDebugConfigProvider implements vscode.DebugConfigurationProvider
 
         let workspaceFolder = common.getWorkspaceFolder();
 
-        let unitTestRunnerDebugConfig: vscode.DebugConfiguration = {
+        let solDebugConfig: vscode.DebugConfiguration = {
             name: "Solidity Debugger",
             type: SOLIDITY_MEADOW_TYPE,
             request: "launch",
@@ -61,10 +62,15 @@ export class ClrDebugConfigProvider implements vscode.DebugConfigurationProvider
             [DEBUG_SESSION_ID]: debugSessionID
         };
 
-        Logger.log(`Launching dotnet debugger for: ${JSON.stringify(unitTestRunnerDebugConfig)}`);
+		setTimeout(() => {
+			(async () => {
+				Logger.log(`Launching solidity debugger for: ${JSON.stringify(solDebugConfig)}`);
+				let startSolDebugResult = await vscode.debug.startDebugging(workspaceFolder, solDebugConfig);
+				console.log("Sol debugger result: " + startSolDebugResult);
+			})();
+		}, 1);
 
-        vscode.debug.startDebugging(workspaceFolder, unitTestRunnerDebugConfig);
-
+		Logger.log(`Using clr debug config with sol debug session ID ${JSON.stringify(config)}`);
 		return config;
 	}
 

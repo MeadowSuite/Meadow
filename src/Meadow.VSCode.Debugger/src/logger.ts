@@ -15,7 +15,8 @@ export class Logger {
         params.forEach(p => this.outputChannel.appendLine(p));
 
         if (this._isDebugging) {
-            console.log(message, params);
+            console.log(message);
+            params.forEach(p => console.log(p));
         }
     }
 

@@ -1,7 +1,7 @@
 {
   "name": "solidity-debugger",
   "displayName": "Solidity Debugger",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
   "categories": [
     "Debuggers"
