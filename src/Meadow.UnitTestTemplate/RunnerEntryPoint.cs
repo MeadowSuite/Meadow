@@ -9,7 +9,7 @@ namespace Meadow.UnitTestTemplate
     {
         public static void Main(string[] args)
         {
-            Meadow.UnitTestTemplate.Debugging.Launch();
+            Meadow.UnitTestTemplate.SolidityDebugger.Launch();
         }
     }
 }

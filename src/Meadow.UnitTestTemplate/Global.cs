@@ -121,22 +121,17 @@ namespace Meadow.UnitTestTemplate
 
         static Global()
         {
-            if (!Debugging.IsSolidityDebuggerAttached && Debugging.HasSolidityDebugAttachRequest)
+            if (!SolidityDebugger.IsSolidityDebuggerAttached && SolidityDebugger.HasSolidityDebugAttachRequest)
             {
-                var cancelToken = new CancellationTokenSource();
-                var debuggerDisposal = Debugging.AttachSolidityDebugger(cancelToken);
+                var debuggerDisposal = SolidityDebugger.AttachSolidityDebugger();
                 _debuggerCleanup = () =>
                 {
                     _debuggerCleanup = null;
-                    if (!cancelToken.IsCancellationRequested)
-                    {
-                        cancelToken.Cancel();
-                        debuggerDisposal.Dispose();
-                    }
+                    debuggerDisposal.Dispose();
                 };
             }
 
-
+            
             // Hook onto events for after tests have ran so we can call
             // cleanup which does report generation.
             // Its unclear which of these may or may not work in any given
@@ -447,7 +442,10 @@ namespace Meadow.UnitTestTemplate
         static readonly object _cleanupSyncRoot = new object();
         static bool _didCleanup = false;
 
-        public static async Task Cleanup()
+        [Obsolete("This function has been replaced with 'GenerateCoverageReport()'")]
+        public static Task Cleanup() => GenerateCoverageReport();
+
+        public static async Task GenerateCoverageReport()
         {
             lock (_cleanupSyncRoot)
             {

@@ -28,7 +28,7 @@ namespace Meadow.UnitTestTemplate.Test
 
         public static void Main(string[] args)
         {
-            Debugging.Launch();
+            SolidityDebugger.Launch();
         }
     }
 }
