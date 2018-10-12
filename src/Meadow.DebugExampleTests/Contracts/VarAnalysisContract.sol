@@ -6,7 +6,7 @@ pragma solidity ^0.4.21;
 /// @dev 
 contract VarAnalysisContract 
 {
-    uint globalVal;
+    uint public globalVal;
     uint sameVal;
     uint32 un32;
     uint32 un322;

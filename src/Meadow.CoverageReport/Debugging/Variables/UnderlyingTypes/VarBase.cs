@@ -47,6 +47,12 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             throw new NotImplementedException();
         }
 
+        public virtual object ParseFromCallData(ref Memory<byte> callData)
+        {
+            // TODO: Implement
+            return null;
+        }
+
         public virtual object ParseFromStack(Data[] stack, int stackIndex, Memory<byte> memory, StorageManager storageManager, IJsonRpcClient rpcClient = null)
         {
             // If we exceeded our stack size

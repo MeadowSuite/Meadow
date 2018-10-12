@@ -12,6 +12,10 @@ namespace Meadow.CoverageReport.AstTypes
     {
         #region Properties
         public string Name { get; }
+        /// <summary>
+        /// The visibility of this variable.
+        /// </summary>
+        public AstDeclarationVisibility Visibility { get; }
         public AstElementaryTypeName TypeName { get; }
         public AstVariableStorageLocation StorageLocation { get; }
         public bool Constant { get; }
@@ -27,6 +31,7 @@ namespace Meadow.CoverageReport.AstTypes
         {
             // Set our properties
             Name = node.SelectToken("name")?.Value<string>();
+            Visibility = GetVisibilityFromString(node.SelectToken("visibility")?.Value<string>());
             TypeName = Create<AstElementaryTypeName>((JObject)node.SelectToken("typeName"));
             StateVariable = node.SelectToken("stateVariable")?.Value<bool>() == true;
             Constant = node.SelectToken("constant")?.Value<bool>() == true;
