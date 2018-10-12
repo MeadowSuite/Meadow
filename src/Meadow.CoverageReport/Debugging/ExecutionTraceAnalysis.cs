@@ -826,7 +826,7 @@ namespace Meadow.CoverageReport.Debugging
                             int stackIndex = (tracepoint.Stack.Length - inputParameterCount) + parameterIndex;
 
                             // Create a local variable
-                            LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
+                            LocalVariable localVariable = new LocalVariable(parameter, true, false, stackIndex, currentEntry);
 
                             // Add our local variable to our scope
                             currentScope.AddLocalVariable(localVariable);
@@ -843,7 +843,7 @@ namespace Meadow.CoverageReport.Debugging
                             int stackIndex = (tracepoint.Stack.Length + parameterIndex);
 
                             // Create a local variable
-                            LocalVariable localVariable = new LocalVariable(parameter, true, stackIndex, currentEntry);
+                            LocalVariable localVariable = new LocalVariable(parameter, false, true, stackIndex, currentEntry);
 
                             // If the name is blank, override it
                             if (string.IsNullOrEmpty(localVariable.Name))
@@ -909,7 +909,7 @@ namespace Meadow.CoverageReport.Debugging
                 }
 
                 // Create a local variable
-                LocalVariable localVariable = new LocalVariable(variableDeclarations[0], false, tracepoint.Stack.Length, currentEntry);
+                LocalVariable localVariable = new LocalVariable(variableDeclarations[0], false, false, tracepoint.Stack.Length, currentEntry);
 
                 // Add our local variable to our scope
                 currentScope.AddLocalVariable(localVariable);
@@ -1077,6 +1077,9 @@ namespace Meadow.CoverageReport.Debugging
             // Obtain a linear representation of our memory.
             Memory<byte> memory = tracePoint.GetContiguousMemory();
 
+            // Obtain a reference to our call data memory (in case this is an external call)
+            Memory<byte> callData = tracePoint.CallData;
+
             // Set our storage manager's trace index
             StorageManager.TraceIndex = traceIndex;
 
@@ -1092,8 +1095,21 @@ namespace Meadow.CoverageReport.Debugging
                     continue;
                 }
 
-                // Parse our variable's value.
-                object value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
+                // Determine the if our variable is in call data or not, then parse it accordingly.
+                object value = null;
+                if (variable.IsFunctionInputParameter && currentScope.FunctionDefinition.Visibility == AstTypes.Enums.AstDeclarationVisibility.External)
+                {
+                    // If this is an external call, data leading to the value is parsed from call data.
+                    // value = variable.ValueParser.ParseFromCallData(ref callData);
+
+                    // TODO: Implement the call which is commented out above, and remove this code.
+                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
+                }
+                else
+                {
+                    // If this is not an external call, data leading to the value is parsed beginning from stack, and moving onto memory/storage.
+                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
+                }
 
                 // Add our local variable to our results
                 result.Add(new VariableValuePair(variable, value));
@@ -1125,9 +1141,6 @@ namespace Meadow.CoverageReport.Debugging
 
             // Obtain our tracepoint info.
             var currentExecutionInfo = GetInstructionAndSourceMap(traceIndex);
-
-            // Obtain a linear representation of our memory.
-            Memory<byte> memory = tracePoint.GetContiguousMemory();
 
             // Set our storage manager's trace index
             StorageManager.TraceIndex = traceIndex;
