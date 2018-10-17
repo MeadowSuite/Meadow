@@ -9,17 +9,17 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
     public class Fp12 : FpExtensionBase<Fp12>
     {
         #region Fields
-        private static IReadOnlyCollection<BigInteger> _modulusCoefficients = new BigInteger[] { 82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0 };
+        private static ICollection<BigInteger> _modulusCoefficients = new BigInteger[] { 82, 0, 0, 0, 0, 0, -18, 0, 0, 0, 0, 0 };
         public static readonly Fp12 Zero = new Fp12(new BigInteger[12]);
         public static readonly Fp12 One = new Fp12(new BigInteger[12] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
         #endregion
 
         #region Properties
-        public override IReadOnlyCollection<BigInteger> ModulusCoefficients => _modulusCoefficients;
+        public override ICollection<BigInteger> ModulusCoefficients => _modulusCoefficients;
         #endregion
 
         #region Constructor
-        public Fp12(IReadOnlyCollection<BigInteger> coefficients) : base(coefficients)
+        public Fp12(ICollection<BigInteger> coefficients) : base(coefficients)
         {
 
         }

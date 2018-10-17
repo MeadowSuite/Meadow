@@ -64,6 +64,12 @@ namespace Meadow.Core.Utils
             // https://en.wikipedia.org/wiki/Finite_field_arithmetic#Multiplicative_inverse
             // https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Modular_integers
 
+            // If a == 0, our result is 0
+            if (a == 0)
+            {
+                return 0;
+            }
+
             // Define our initial variables and give them their initial assignments.
             BigInteger newt = 1;
             BigInteger t = 0;
