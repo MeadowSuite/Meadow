@@ -125,8 +125,6 @@ namespace Meadow.UnitTestTemplate
         {
             // Teardown our hook by setting the target as null.
             JsonRpcClient.JsonRpcExecutionAnalysis = null;
-
-
         }
 
         private void DebugAdapter_OnDebuggerDisconnect(MeadowSolidityDebugAdapter sender)
