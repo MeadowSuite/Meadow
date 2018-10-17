@@ -31,12 +31,6 @@ namespace Meadow.Core.AbiEncoding
         /// </summary>
         public readonly int PrimitiveTypeByteSize;
 
-        /// <summary>
-        /// The length of static sized array types, for dynamic arrays this is zero.
-        /// For non-array types this is zero.
-        /// </summary>
-        public readonly int ArrayLength;
-
         public readonly SolidityTypeCategory Category;
 
         public readonly SolidityTypeElementaryBase ElementaryBaseType = SolidityTypeElementaryBase.None;
@@ -71,12 +65,12 @@ namespace Meadow.Core.AbiEncoding
         /// For example the type uint256[3][][6] would be represented as [3, 0, 6].
         /// Null for non-multi-dimensional types.
         /// </summary>
-        public readonly int[] MultiDimensionalArraySizes;
+        public readonly int[] ArrayDimensionSizes;
 
         public AbiTypeInfo(string solidityName, Type clrType, int primitiveTypeByteSize,
             SolidityTypeCategory category = SolidityTypeCategory.Elementary,
             SolidityTypeElementaryBase elementaryBaseType = SolidityTypeElementaryBase.None,
-            int arrayTypeLength = 0, AbiTypeInfo arrayItemInfo = null, int[] arrayDimensionSizes = null)
+            AbiTypeInfo arrayItemInfo = null, int[] arrayDimensionSizes = null)
         {
             SolidityName = solidityName;
             ClrType = clrType;
@@ -84,9 +78,8 @@ namespace Meadow.Core.AbiEncoding
             PrimitiveTypeByteSize = primitiveTypeByteSize;
             Category = category;
             ElementaryBaseType = elementaryBaseType;
-            ArrayLength = arrayTypeLength;
             ArrayItemInfo = arrayItemInfo;
-            MultiDimensionalArraySizes = arrayDimensionSizes;
+            ArrayDimensionSizes = arrayDimensionSizes;
         }
 
         public static AbiTypeInfo Create(string solidityName)

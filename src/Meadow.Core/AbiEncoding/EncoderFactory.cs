@@ -209,7 +209,7 @@ namespace Meadow.Core.AbiEncoding
             return encoder;
         }
 
-        public static IAbiTypeEncoder GetEncoder(AbiTypeInfo solidityType)
+        static IAbiTypeEncoder GetEncoder(AbiTypeInfo solidityType)
         {
             switch (solidityType.Category)
             {

@@ -1,4 +1,6 @@
 using Meadow.Contract;
+using Meadow.Core.AbiEncoding;
+using Meadow.Core.EthTypes;
 using Meadow.Core.Utils;
 using Meadow.EVM.Data_Types;
 using Meadow.JsonRpc.Types;
@@ -18,6 +20,32 @@ namespace Meadow.UnitTestTemplate.Test
         {
             // Deploy our test contract
             _contract = await BasicContract.New($"TestName", true, 34, RpcClient, new TransactionParams { From = Accounts[0], Gas = 4712388 }, Accounts[0]);
+        }
+
+        [TestMethod]
+        public async Task MultiDim()
+        {
+
+            var exampleArray = ArrayExtensions.CreateJaggedArray<UInt256[][][]>(2, 6, 3);
+            exampleArray[0][0][0] = 3;
+            exampleArray[1][5][2] = 3333;
+            exampleArray[0][2][1] = 777;
+            var encoded = SolidityUtil.AbiEncode("uint256[2][6][3]", exampleArray);
+            var encodedHex = encoded.ToHexString();
+            var recode = SolidityUtil.AbiDecode<UInt256[][][]>("uint256[2][6][3]", encoded);
+
+            Assert.AreEqual(exampleArray[0][0][0], recode[0][0][0]);
+            Assert.AreEqual(exampleArray[1][5][2], recode[1][5][2]);
+            Assert.AreEqual(exampleArray[0][2][1], recode[0][2][1]);
+
+            var rawData = await _contract.arrayStaticMultiDim().CallRaw();
+            var hex = rawData.ToHexString();
+            var decoded = SolidityUtil.AbiDecode<UInt256[][][]>("uint256[2][6][3]", rawData);
+            Assert.AreEqual(exampleArray[0][0][0], decoded[0][0][0]);
+            Assert.AreEqual(exampleArray[1][5][2], decoded[1][5][2]);
+            Assert.AreEqual(exampleArray[0][2][1], decoded[0][2][1]);
+
+            Assert.AreEqual(hex, encodedHex);
         }
 
         [TestMethod]

@@ -94,7 +94,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
 
         public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<byte> val)
         {
-            var bytes = new byte[_info.ArrayLength];
+            var bytes = new byte[_info.PrimitiveTypeByteSize];
             for (var i = 0; i < bytes.Length; i++)
             {
                 bytes[i] = buff.HeadCursor[i];
@@ -106,7 +106,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
             {
                 if (buff.HeadCursor[i] != 0)
                 {
-                    throw new ArgumentException($"Invalid {_info.SolidityName} input data; should be {_info.ArrayLength} bytes padded {UInt256.SIZE - _info.ArrayLength} zero-bytes; received: " + buff.HeadCursor.Slice(0, 32).ToHexString());
+                    throw new ArgumentException($"Invalid {_info.SolidityName} input data; should be {_info.PrimitiveTypeByteSize} bytes padded {UInt256.SIZE - _info.PrimitiveTypeByteSize} zero-bytes; received: " + buff.HeadCursor.Slice(0, 32).ToHexString());
                 }
             }
 #endif

@@ -58,8 +58,7 @@ namespace Meadow.Core.AbiEncoding
                     typeof(IEnumerable<byte>), 
                     primitiveTypeByteSize: i,
                     SolidityTypeCategory.Elementary,
-                    SolidityTypeElementaryBase.Bytes,
-                    arrayTypeLength: i);
+                    SolidityTypeElementaryBase.Bytes);
             }
 
             // signed and unsigned integer type of M bits, 0 < M <= 256, M % 8 == 0
@@ -118,7 +117,6 @@ namespace Meadow.Core.AbiEncoding
                 }
 
                 var bracketPart = name.Substring(arrayBracket);
-                int arraySize = 0;
                 var typeCategory = SolidityTypeCategory.DynamicArray;
 
                 int[] arrayDimensionSizes = null;
@@ -131,7 +129,6 @@ namespace Meadow.Core.AbiEncoding
                         arrayDimensionSizes = ParseArrayDimensionSizes(bracketPart);
                         if (arrayDimensionSizes[0] > 0)
                         {
-                            arraySize = arrayDimensionSizes[0];
                             typeCategory = SolidityTypeCategory.FixedArray;
                         }
                     }
@@ -139,7 +136,8 @@ namespace Meadow.Core.AbiEncoding
                     {
                         // parse the number within the square brackets
                         var sizeStr = bracketPart.Substring(1, bracketPart.Length - 2);
-                        arraySize = int.Parse(sizeStr, CultureInfo.InvariantCulture);
+                        var arraySize = int.Parse(sizeStr, CultureInfo.InvariantCulture);
+                        arrayDimensionSizes = new[] { arraySize };
                         typeCategory = SolidityTypeCategory.FixedArray;
                     }
                 }
@@ -148,7 +146,7 @@ namespace Meadow.Core.AbiEncoding
                 if (_finiteTypes.TryGetValue(baseName, out var baseInfo))
                 {
                     var arrayType = typeof(IEnumerable<>).MakeGenericType(baseInfo.ClrType);
-                    var info = new AbiTypeInfo(name, arrayType, baseInfo.PrimitiveTypeByteSize, typeCategory, SolidityTypeElementaryBase.None, arraySize, baseInfo, arrayDimensionSizes);
+                    var info = new AbiTypeInfo(name, arrayType, baseInfo.PrimitiveTypeByteSize, typeCategory, SolidityTypeElementaryBase.None, baseInfo, arrayDimensionSizes);
                     _cachedTypes[name] = info;
                     return info;
                 }

@@ -1,4 +1,5 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.25;
+
 
 /// @title An example contract title
 /// @author Matthew Little
@@ -95,6 +96,13 @@ contract BasicContract {
 
     function echoArrayStatic(uint24[5] input) returns (uint24[5] result) {
         return input;
+    }
+
+    function arrayStaticMultiDim() returns (uint[2][6][3] result) {
+        result[0][0][0] = 3;
+        result[2][5][1] = 3333;
+        result[1][2][0] = 777;
+        return result;
     }
 
     function echoMultipleStatic(uint32 p1, bool p2, address p3) public returns (uint32 r1, bool r2, address r3) {

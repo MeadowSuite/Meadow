@@ -251,5 +251,23 @@ namespace Meadow.Core.Test
             Assert.Equal(expectedOutput, resultHex);
         }
 
+        [Fact]
+        public void MultiDimensionalArrayEncoding()
+        {
+            var exampleArray = ArrayExtensions.CreateJaggedArray<UInt256[][][]>(2, 6, 3);
+            exampleArray[0][0][0] = 3;
+            exampleArray[0][4][2] = 3333;
+            exampleArray[0][2][1] = 777;
+
+            var encoded = SolidityUtil.AbiEncode("uint256[2][6][3]", exampleArray);
+            var encodedHex = encoded.ToHexString();
+            var recode = SolidityUtil.AbiDecode<UInt256[][][]>("uint256[2][6][3]", encoded);
+
+            Assert.Equal(exampleArray[0][0][0], recode[0][0][0]);
+            Assert.Equal(exampleArray[0][4][2], recode[0][4][2]);
+            Assert.Equal(exampleArray[0][2][1], recode[0][2][1]);
+        }
+
+
     }
 }

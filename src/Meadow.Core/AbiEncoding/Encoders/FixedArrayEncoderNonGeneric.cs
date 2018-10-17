@@ -33,33 +33,81 @@ namespace Meadow.Core.AbiEncoding.Encoders
 
         public void DecodeObject(ref AbiDecodeBuffer buff, out object val)
         {
-            var items = new object[TypeInfo.ArrayLength];
-            for (var i = 0; i < items.Length; i++)
+            var items = ArrayExtensions.CreateJaggedArray(TypeInfo.ArrayItemInfo.ClrType, TypeInfo.ArrayDimensionSizes);
+
+            void DecodeArray(ref AbiDecodeBuffer buffer, Array resultOutput, int[] arrayDimensionSizes, int i)
             {
-                _itemEncoder.DecodeObject(ref buff, out var item);
-                items[i] = item;
+                if (i < arrayDimensionSizes.Length - 1)
+                {
+                    foreach (var subItem in resultOutput)
+                    {
+                        DecodeArray(ref buffer, (Array)subItem, arrayDimensionSizes, i + 1);
+                    }
+                }
+
+                if (i == arrayDimensionSizes.Length - 1)
+                {
+                    for (var resultIndex = 0; resultIndex < resultOutput.Length; resultIndex++)
+                    {
+                        _itemEncoder.DecodeObject(ref buffer, out var item);
+                        resultOutput.SetValue(item, resultIndex);
+                    }
+                }
             }
+
+            DecodeArray(ref buff, (Array)items, TypeInfo.ArrayDimensionSizes, 0);
 
             val = items;
         }
 
         void ValidateArrayLength()
         {
-            var itemCount = _val.Count();
-            if (itemCount != TypeInfo.ArrayLength)
+            void Validate(IEnumerable<object> val, int[] arrayDimensionSizes, int i)
             {
-                throw new ArgumentOutOfRangeException($"Fixed size array type '{TypeInfo.SolidityName}' needs exactly {TypeInfo.ArrayLength} items, was given {itemCount}");
+                var actualCount = val.Count();
+                if (actualCount != arrayDimensionSizes[i])
+                {
+                    throw new ArgumentOutOfRangeException($"Fixed size array type '{TypeInfo.SolidityName}' needs exactly {arrayDimensionSizes[i]} items, was given {actualCount}");
+
+                }
+
+                if (i < arrayDimensionSizes.Length - 1)
+                {
+                    foreach (var subItem in val)
+                    {
+                        Validate((subItem as IEnumerable).Cast<object>(), arrayDimensionSizes, i + 1);
+                    }
+                }
             }
+
+            Validate(_val, TypeInfo.ArrayDimensionSizes, 0);
         }
 
         public void Encode(ref AbiEncodeBuffer buffer)
         {
             ValidateArrayLength();
-            foreach (var item in _val)
+
+            void EncodeValue(ref AbiEncodeBuffer buff, IEnumerable< object> val, int[] arrayDimensionSizes, int i)
             {
-                _itemEncoder.SetValue(item);
-                _itemEncoder.Encode(ref buffer);
+                if (i < arrayDimensionSizes.Length - 1)
+                {
+                    foreach (var subItem in val)
+                    {
+                        EncodeValue(ref buff, (subItem as IEnumerable).Cast<object>(), arrayDimensionSizes, i + 1);
+                    }
+                }
+
+                if (i == arrayDimensionSizes.Length - 1)
+                {
+                    foreach (var item in val)
+                    {
+                        _itemEncoder.SetValue(item);
+                        _itemEncoder.Encode(ref buff);
+                    }
+                }
             }
+
+            EncodeValue(ref buffer, _val, TypeInfo.ArrayDimensionSizes, 0);
         }
 
         public void EncodePacked(ref Span<byte> buffer)
@@ -74,13 +122,25 @@ namespace Meadow.Core.AbiEncoding.Encoders
 
         public int GetEncodedSize()
         {
-            int len = _itemEncoder.GetEncodedSize() * TypeInfo.ArrayLength;
+            int totalArraySize = 1;
+            foreach (var dim in TypeInfo.ArrayDimensionSizes)
+            {
+                totalArraySize *= dim;
+            }
+
+            int len = _itemEncoder.GetEncodedSize() * totalArraySize;
             return len;
         }
 
         public int GetPackedEncodedSize()
         {
-            int len = _itemEncoder.GetPackedEncodedSize() * TypeInfo.ArrayLength;
+            int totalArraySize = 1;
+            foreach (var dim in TypeInfo.ArrayDimensionSizes)
+            {
+                totalArraySize *= dim;
+            }
+
+            int len = _itemEncoder.GetPackedEncodedSize() * totalArraySize;
             return len;
         }
 

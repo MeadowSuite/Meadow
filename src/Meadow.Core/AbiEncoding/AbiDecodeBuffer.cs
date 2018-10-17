@@ -36,7 +36,13 @@ namespace Meadow.Core.AbiEncoding
                 switch (t.Category)
                 {
                     case SolidityTypeCategory.FixedArray:
-                        headLength += UInt256.SIZE * t.ArrayLength;
+                        int totalArraySize = 1;
+                        foreach (var dim in t.ArrayDimensionSizes)
+                        {
+                            totalArraySize *= dim;
+                        }
+
+                        headLength += UInt256.SIZE * totalArraySize;
                         break;
                     default:
                         headLength += UInt256.SIZE;

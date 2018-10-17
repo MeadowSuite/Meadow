@@ -24,22 +24,38 @@ namespace Meadow.Core.AbiEncoding.Encoders
 
         public override int GetEncodedSize()
         {
-            int len = _itemEncoder.GetEncodedSize() * _info.ArrayLength;
+            if (_info.ArrayDimensionSizes.Length != 1)
+            {
+                throw new NotImplementedException();
+            }
+
+            int len = _itemEncoder.GetEncodedSize() * _info.ArrayDimensionSizes[0];
             return len;
         }
 
         public override int GetPackedEncodedSize()
         {
-            int len = _itemEncoder.GetPackedEncodedSize() * _info.ArrayLength;
+            if (_info.ArrayDimensionSizes.Length != 1)
+            {
+                throw new NotImplementedException();
+            }
+
+            int len = _itemEncoder.GetPackedEncodedSize() * _info.ArrayDimensionSizes[0];
             return len;
         }
 
         void ValidateArrayLength()
         {
             var itemCount = _val.Count();
-            if (itemCount != _info.ArrayLength)
+            if (_info.ArrayDimensionSizes.Length != 1)
             {
-                throw new ArgumentOutOfRangeException($"Fixed size array type '{_info.SolidityName}' needs exactly {_info.ArrayLength} items, was given {itemCount}");
+                throw new NotImplementedException();
+            }
+
+            var expectedCount = _info.ArrayDimensionSizes[0];
+            if (itemCount != expectedCount)
+            {
+                throw new ArgumentOutOfRangeException($"Fixed size array type '{_info.SolidityName}' needs exactly {expectedCount} items, was given {itemCount}");
             }
         }
 
@@ -65,7 +81,12 @@ namespace Meadow.Core.AbiEncoding.Encoders
 
         public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<TItem> val)
         {
-            var items = new TItem[_info.ArrayLength];
+            if (_info.ArrayDimensionSizes.Length != 1)
+            {
+                throw new NotImplementedException();
+            }
+
+            var items = new TItem[_info.ArrayDimensionSizes[0]];
             for (var i = 0; i < items.Length; i++)
             {
                 _itemEncoder.Decode(ref buff, out var item);
