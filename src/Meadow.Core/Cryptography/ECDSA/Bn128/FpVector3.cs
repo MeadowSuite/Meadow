@@ -54,6 +54,11 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
             return Y.Pow(2).Multiply(Z).Subtract(X.Pow(3)).Equals(Z.Pow(3).Multiply(b.N));
         }
 
+        public (T X, T Y) Normalize()
+        {
+            return (X.Divide(Z), Y.Divide(Z));
+        }
+
         public FpVector3<T> Double()
         {
             T w = X.Multiply(3).Multiply(X);
