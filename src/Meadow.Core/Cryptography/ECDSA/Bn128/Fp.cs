@@ -9,18 +9,17 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
     /// <summary>
     /// Represents a field element wrapped around at point P from our bn128 curve.
     /// </summary>
-    public struct Fp : IField<Fp>
+    public class Fp : IField<Fp>
     {
         #region Fields
         public static readonly Fp ZeroValue = new Fp(0);
         public static readonly Fp OneValue = new Fp(1);
-
-        public readonly BigInteger N;
         #endregion
 
         #region Properties
         public Fp Zero => ZeroValue;
         public Fp One => OneValue;
+        public BigInteger N { get; }
         #endregion
 
         #region Constructors

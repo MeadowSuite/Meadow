@@ -69,7 +69,7 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
 
         private static Fp12 MillerLoop(FpVector3<Fp12> q, FpVector3<Fp12> p, bool finalExponentiate = true)
         {
-            if (!q.Initialized || !p.Initialized)
+            if (q == null || p == null)
             {
                 return Fp12.OneValue;
             }
@@ -134,9 +134,9 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
         private static FpVector3<Fp12> CastFpPointToFp12Point(FpVector3<Fp> point)
         {
             // If our point isn't initialized, return null.
-            if (!point.Initialized)
+            if (point == null)
             {
-                return new FpVector3<Fp12>(null, null, null);
+                return null;
             }
 
             // Create our data for our fq

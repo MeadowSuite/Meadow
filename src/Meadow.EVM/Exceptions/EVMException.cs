@@ -6,6 +6,7 @@ namespace Meadow.EVM.Exceptions
 {
     /// <summary>
     /// A basic exception type used by our EVM to signal a failure in the virtual execution.
+    /// This is caught and converted to a failed transaction/call result.
     /// </summary>
     public class EVMException : Exception
     {

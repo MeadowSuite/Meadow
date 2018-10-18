@@ -11,7 +11,7 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
         #region Fields
         private static ICollection<BigInteger> _modulusCoefficients = new BigInteger[] { 1, 0 };
         public static readonly Fp2 ZeroValue = new Fp2(new BigInteger[2]);
-        public static readonly Fp2 OneValue = new Fp2(new BigInteger[2] { 1, 0 });
+        public static readonly Fp2 OneValue = new Fp2(1, 0);
         #endregion
 
         #region Properties
@@ -22,6 +22,11 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
 
         #region Constructor
         public Fp2(ICollection<BigInteger> coefficients) : base(coefficients)
+        {
+
+        }
+
+        public Fp2(params BigInteger[] coefficients) : base(coefficients)
         {
 
         }

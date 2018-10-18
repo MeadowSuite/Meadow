@@ -9,22 +9,12 @@ using System.Text;
 
 namespace Meadow.Core.Cryptography.ECDSA.Bn128
 {
-    public struct FpVector3<T> : ICloneable where T : IField<T>
+    public class FpVector3<T> : ICloneable where T : IField<T>
     {
-        #region Fields
-        public T X;
-        public T Y;
-        public T Z;
-        #endregion
-
         #region Properties
-        public bool Initialized
-        {
-            get
-            {
-                return !(X == null || Y == null || Z == null);
-            }
-        }
+        public T X { get; }
+        public T Y { get; }
+        public T Z { get; }
         #endregion
 
         #region Constructor
@@ -43,7 +33,7 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
             return Z.Equals(Z.Zero);
         }
 
-        public bool IsOnCurveCheck(Fp b)
+        public bool IsOnCurveCheck(T b)
         {
             // If this point is at infinity, we mark it as on the curve.
             if (IsInfinity())
@@ -51,7 +41,7 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
                 return true;
             }
 
-            return Y.Pow(2).Multiply(Z).Subtract(X.Pow(3)).Equals(Z.Pow(3).Multiply(b.N));
+            return Y.Pow(2).Multiply(Z).Subtract(X.Pow(3)).Equals(Z.Pow(3).Multiply(b));
         }
 
         public (T X, T Y) Normalize()

@@ -1,10 +1,12 @@
 ﻿using Meadow.Core.Cryptography.Ecdsa;
+using Meadow.Core.Cryptography.ECDSA.Bn128;
 using Meadow.Core.Utils;
 using Meadow.EVM.Configuration;
 using Meadow.EVM.Data_Types;
 using Meadow.EVM.Data_Types.Addressing;
 using Meadow.EVM.EVM.Definitions;
 using Meadow.EVM.EVM.Execution;
+using Meadow.EVM.Exceptions;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -91,11 +93,14 @@ namespace Meadow.EVM.EVM.Precompiles
             // Charge the gas for the precompile operation before processing.
             evm.GasState.Deduct(GasDefinitions.GAS_PRECOMPILE_ECRECOVER);
 
+            // Obtain a memory representation of our data.
+            Span<byte> messageData = new Span<byte>(evm.Message.Data);
+
             // We extract our signature information from message data (256-bit each)
-            byte[] hash = evm.Message.Data.Slice(0, 32);
-            BigInteger v = BigIntegerConverter.GetBigInteger(evm.Message.Data.Slice(32, 64));
-            BigInteger r = BigIntegerConverter.GetBigInteger(evm.Message.Data.Slice(64, 96));
-            BigInteger s = BigIntegerConverter.GetBigInteger(evm.Message.Data.Slice(96, 128));
+            Span<byte> hash = messageData.Slice(0, 32);
+            BigInteger v = BigIntegerConverter.GetBigInteger(messageData.Slice(32, 64));
+            BigInteger r = BigIntegerConverter.GetBigInteger(messageData.Slice(64, 96));
+            BigInteger s = BigIntegerConverter.GetBigInteger(messageData.Slice(96, 128));
 
             // Verify we have a low r, s, and a valid v.
             if (r >= Secp256k1Curve.N || s >= Secp256k1Curve.N || v < 27 || v > 28)
@@ -212,7 +217,7 @@ namespace Meadow.EVM.EVM.Precompiles
             // Source: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-198.md
 
             // Obtain a memory representation of our data.
-            Span<byte> messageData = new Memory<byte>(evm.Message.Data).Span;
+            Span<byte> messageData = new Span<byte>(evm.Message.Data);
 
             // Extract our base length, exponent length, and mod length (in bytes)
             BigInteger baseLength = BigIntegerConverter.GetBigInteger(messageData.Slice(0, EVMDefinitions.WORD_SIZE));
@@ -281,6 +286,37 @@ namespace Meadow.EVM.EVM.Precompiles
             return new EVMExecutionResult(evm, result, true);
         }
 
+        private static FpVector3<Fp> ParsePoint(BigInteger x, BigInteger y)
+        {
+            // If our coordinates exceed our modulo divisor, they are invalid.
+            if (x >= Bn128Curve.P || y >= Bn128Curve.P)
+            {
+                return null;
+            }
+
+            // If our x and y coordinates are 0, we return a static point, otherwise we set components and verify
+            FpVector3<Fp> result;
+            if (x == 0 && y == 0)
+            {
+                // Initialize a point with constant values.
+                result = new FpVector3<Fp>(Fp.OneValue, Fp.OneValue, Fp.ZeroValue);
+            }
+            else
+            {
+                // Initialize a point from our components.
+                result = new FpVector3<Fp>(new Fp(x), new Fp(y), Fp.OneValue);
+
+                // Verify this point is on the curve, if not, we return null
+                if (!result.IsOnCurveCheck(Bn128Curve.B))
+                {
+                    result = null;
+                }
+            }
+
+            // Return the result.
+            return result;
+        }
+
         private static EVMExecutionResult Precompile_ECAdd(MeadowEVM evm)
         {
             // Verify we're past the byzantium fork
@@ -289,8 +325,47 @@ namespace Meadow.EVM.EVM.Precompiles
                 return new EVMExecutionResult(evm, null, true);
             }
 
-            // TODO: Implement
-            throw new NotImplementedException();
+            // Charge the gas for the precompile operation before processing.
+            BigInteger gasCharge = GasDefinitions.GAS_PRECOMPILE_ECADD_BASE;
+            evm.GasState.Deduct(gasCharge);
+
+            // Obtain a memory representation of our data.
+            Span<byte> messageData = new Span<byte>(evm.Message.Data);
+
+            // Obtain our component data
+            BigInteger x1 = BigIntegerConverter.GetBigInteger(messageData.Slice(0, EVMDefinitions.WORD_SIZE));
+            BigInteger y1 = BigIntegerConverter.GetBigInteger(messageData.Slice(32, EVMDefinitions.WORD_SIZE));
+            BigInteger x2 = BigIntegerConverter.GetBigInteger(messageData.Slice(64, EVMDefinitions.WORD_SIZE));
+            BigInteger y2 = BigIntegerConverter.GetBigInteger(messageData.Slice(96, EVMDefinitions.WORD_SIZE));
+
+            // Parse and verify our points.
+            FpVector3<Fp> point1 = ParsePoint(x1, y1);
+            if (point1 == null)
+            {
+                throw new EVMException("ECAdd precompile failed because point 1 was deemed invalid when parsing.");
+            }
+
+            FpVector3<Fp> point2 = ParsePoint(x2, y2);
+            if (point1 == null)
+            {
+                throw new EVMException("ECAdd precompile failed because point 2 was deemed invalid when parsing.");
+            }
+
+            // Add the two points together
+            FpVector3<Fp> additionResult = point1.Add(point2);
+
+            // Normalize the result into X/Y components.
+            (Fp resultX, Fp resultY) = additionResult.Normalize();
+
+            // Obtain the binary data for these results
+            byte[] resultXData = BigIntegerConverter.GetBytes(resultX.N, EVMDefinitions.WORD_SIZE);
+            byte[] resultYData = BigIntegerConverter.GetBytes(resultY.N, EVMDefinitions.WORD_SIZE);
+
+            // Concat them to a singular result
+            byte[] returnData = resultXData.Concat(resultYData);
+
+            // Return our result
+            return new EVMExecutionResult(evm, returnData, true);
         }
 
         private static EVMExecutionResult Precompile_ECMultiply(MeadowEVM evm)
@@ -301,8 +376,40 @@ namespace Meadow.EVM.EVM.Precompiles
                 return new EVMExecutionResult(evm, null, true);
             }
 
-            // TODO: Implement
-            throw new NotImplementedException();
+            // Charge the gas for the precompile operation before processing.
+            BigInteger gasCharge = GasDefinitions.GAS_PRECOMPILE_ECMUL_BASE;
+            evm.GasState.Deduct(gasCharge);
+
+            // Obtain a memory representation of our data.
+            Span<byte> messageData = new Span<byte>(evm.Message.Data);
+
+            // Obtain our component data
+            BigInteger x = BigIntegerConverter.GetBigInteger(messageData.Slice(0, EVMDefinitions.WORD_SIZE));
+            BigInteger y = BigIntegerConverter.GetBigInteger(messageData.Slice(32, EVMDefinitions.WORD_SIZE));
+            BigInteger multiplier = BigIntegerConverter.GetBigInteger(messageData.Slice(64, EVMDefinitions.WORD_SIZE));
+
+            // Parse and verify our point.
+            FpVector3<Fp> point = ParsePoint(x, y);
+            if (point == null)
+            {
+                throw new EVMException("ECMultiply precompile failed because the point was deemed invalid when parsing.");
+            }
+
+            // Add the two points together
+            FpVector3<Fp> additionResult = point.Multiply(multiplier);
+
+            // Normalize the result into X/Y components.
+            (Fp resultX, Fp resultY) = additionResult.Normalize();
+
+            // Obtain the binary data for these results
+            byte[] resultXData = BigIntegerConverter.GetBytes(resultX.N, EVMDefinitions.WORD_SIZE);
+            byte[] resultYData = BigIntegerConverter.GetBytes(resultY.N, EVMDefinitions.WORD_SIZE);
+
+            // Concat them to a singular result
+            byte[] returnData = resultXData.Concat(resultYData);
+
+            // Return our result
+            return new EVMExecutionResult(evm, returnData, true);
         }
 
         private static EVMExecutionResult Precompile_ECPairing(MeadowEVM evm)
@@ -313,8 +420,83 @@ namespace Meadow.EVM.EVM.Precompiles
                 return new EVMExecutionResult(evm, null, true);
             }
 
-            // TODO: Implement
-            throw new NotImplementedException();
+            const int PAIRING_SIZE_PER_POINT = 192;
+
+            // Verify our messatge data is divisible by our size per point.
+            if (evm.Message.Data.Length % PAIRING_SIZE_PER_POINT != 0)
+            {
+                throw new EVMException($"ECPairing precompile failed because the call data was not divisible by the size per point ({PAIRING_SIZE_PER_POINT}).");
+            }
+
+            // Charge the gas for the precompile operation before processing.
+            BigInteger gasCharge = GasDefinitions.GAS_PRECOMPILE_ECPAIRING_BASE + ((evm.Message.Data.Length / PAIRING_SIZE_PER_POINT) * GasDefinitions.GAS_PRECOMPILE_ECPAIRING_PER_POINT);
+            evm.GasState.Deduct(gasCharge);
+
+            // Obtain a memory representation of our data.
+            Span<byte> messageData = new Span<byte>(evm.Message.Data);
+
+            // Define some constant variables for arithmetic.
+            FpVector3<Fp2> zero = new FpVector3<Fp2>(Fp2.OneValue, Fp2.OneValue, Fp2.ZeroValue);
+            Fp12 exponent = Fp12.OneValue;
+
+            // Loop for each point in our data
+            for (int i = 0; i < evm.Message.Data.Length; i += PAIRING_SIZE_PER_POINT)
+            {
+                // Obtain our component data
+                BigInteger x1 = BigIntegerConverter.GetBigInteger(messageData.Slice(i + 0, EVMDefinitions.WORD_SIZE));
+                BigInteger y1 = BigIntegerConverter.GetBigInteger(messageData.Slice(i + 32, EVMDefinitions.WORD_SIZE));
+                BigInteger x2_i = BigIntegerConverter.GetBigInteger(messageData.Slice(i + 64, EVMDefinitions.WORD_SIZE));
+                BigInteger x2_r = BigIntegerConverter.GetBigInteger(messageData.Slice(i + 96, EVMDefinitions.WORD_SIZE));
+                BigInteger y2_i = BigIntegerConverter.GetBigInteger(messageData.Slice(i + 128, EVMDefinitions.WORD_SIZE));
+                BigInteger y2_r = BigIntegerConverter.GetBigInteger(messageData.Slice(i + 160, EVMDefinitions.WORD_SIZE));
+
+                // Parse and verify our point.
+                FpVector3<Fp> point1 = ParsePoint(x1, y1);
+                if (point1 == null)
+                {
+                    throw new EVMException("ECPairing precompile failed because point 1 was deemed invalid when parsing.");
+                }
+
+                // If our coordinates exceed our modulo divisor, they are invalid.
+                if (x2_i >= Bn128Curve.P || x2_r >= Bn128Curve.P || y2_i >= Bn128Curve.P || y2_r >= Bn128Curve.P)
+                {
+                    throw new EVMException("ECPairing precompile failed because point 2 was deemed invalid when parsing.");
+                }
+
+                Fp2 x2 = new Fp2(x2_r, x2_i);
+                Fp2 y2 = new Fp2(y2_r, y2_i);
+                FpVector3<Fp2> point2 = null;
+                if (x2 == Fp2.ZeroValue && y2 == Fp2.ZeroValue)
+                {
+                    // Our point is the zero point.
+                    point2 = zero;
+                }
+                else
+                {
+                    // Initialize our point from components.
+                    point2 = new FpVector3<Fp2>(x2, y2, Fp2.OneValue);
+
+                    // Verify our desired point is on the curve
+                    if (!point2.IsOnCurveCheck(Bn128Curve.B2))
+                    {
+                        throw new EVMException("ECPairing precompile failed because point 2 was not on the curve.");
+                    }
+                }
+
+                // Verify multiplying by the curve order is non-zero.
+                if (point2.Multiply(Bn128Curve.N).Z != Fp2.ZeroValue)
+                {
+                    throw new EVMException("ECPairing precompile failed because point 2 was deemed invalid. Points multiplied by the curve order should equal infinity (zero).");
+                }
+
+                // Pair our points and multiply the exponent by them.
+                exponent *= Bn128Pairing.Pair(point2, point1, false);
+            }
+
+            // Return our result
+            bool returnStatus = Bn128Pairing.FinalExponentiate(exponent) == Fp12.OneValue;
+            byte[] returnData = BigIntegerConverter.GetBytes(returnStatus ? 1 : 0, EVMDefinitions.WORD_SIZE);
+            return new EVMExecutionResult(evm, returnData, true);
         }
         #endregion
     }
