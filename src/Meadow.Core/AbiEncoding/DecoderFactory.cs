@@ -10,47 +10,23 @@ namespace Meadow.Core.AbiEncoding
 {
     public static class DecoderFactory
     {
-        public static DecodeDelegate<TItem[]> GetMultiDimArrayDecoder<TItem>(AbiTypeInfo solidityType)
+        public static DecodeDelegate<TItem> GetMultiDimArrayDecoder<TItem>(AbiTypeInfo solidityType)
         {
-            IAbiTypeEncoder encoder;
-            IAbiTypeEncoder itemEncoder;
-
-            if (solidityType.ArrayItemInfo.ElementaryBaseType == SolidityTypeElementaryBase.Bytes)
-            {
-                itemEncoder = new BytesMEncoder();
-            }
-            else
-            {
-                // TODO: define all multi-dim array encoder runtime matches
-                throw new NotImplementedException();
-            }
-
-            itemEncoder.SetTypeInfo(solidityType.ArrayItemInfo);
-
-            switch (solidityType.Category)
-            {
-                case SolidityTypeCategory.DynamicArray:
-                    encoder = new DynamicArrayEncoderNonGeneric(itemEncoder);
-                    break;
-                case SolidityTypeCategory.FixedArray:
-                    encoder = new FixedArrayEncoderNonGeneric(itemEncoder);
-                    break;
-                default:
-                    throw new ArgumentException($"Encoder factory for array types was called with a type '{solidityType.Category}'");
-            }
-
+            var encoder = EncoderFactory.LoadEncoder(solidityType);
             encoder.SetTypeInfo(solidityType);
 
-            void Decode(AbiTypeInfo st, ref AbiDecodeBuffer buff, out TItem[] val)
+            void Decode(AbiTypeInfo st, ref AbiDecodeBuffer buff, out TItem val)
             {
                 encoder.DecodeObject(ref buff, out var objectVal);
-                var objectArray = (object[])objectVal;
-                val = objectArray.Select(v => (TItem)v).ToArray();
+                val = (TItem)objectVal;
             }
 
             return Decode;
         }
 
+        /// <summary>
+        /// Used for regular one-dimensional arrays
+        /// </summary>
         public static DecodeDelegate<TItem[]> GetArrayDecoder<TItem>(IAbiTypeEncoder<TItem> itemEncoder)
         {
             void Decode(AbiTypeInfo solidityType, ref AbiDecodeBuffer buff, out TItem[] val)

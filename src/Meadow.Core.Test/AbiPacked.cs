@@ -268,6 +268,39 @@ namespace Meadow.Core.Test
             Assert.Equal(exampleArray[0][2][1], recode[0][2][1]);
         }
 
+        [Fact]
+        public void NonGenericArrayEncoding()
+        {
+            var exampleArray = new List<UInt256>();
+            exampleArray.Add(3);
+            exampleArray.Add(777);
+            exampleArray.Add(3333);
 
+            var encoded = SolidityUtil.AbiEncode("uint256[3]", exampleArray);
+            var encodedHex = encoded.ToHexString();
+            var recode = SolidityUtil.AbiDecode<UInt256[]>("uint256[3]", encoded);
+
+            Assert.Equal(exampleArray[0], recode[0]);
+            Assert.Equal(exampleArray[1], recode[1]);
+            Assert.Equal(exampleArray[2], recode[2]);
+        }
+
+        [Fact]
+        public void NonGenericArrayEncoding2()
+        {
+            var exampleArray = new List<List<UInt256>>();
+            exampleArray.Add(new List<UInt256> { 1, 2, 3 });
+            exampleArray.Add(new List<UInt256> { 4, 5, 6 });
+            exampleArray.Add(new List<UInt256> { 7, 8, 9 });
+            exampleArray.Add(new List<UInt256> { 10, 11, 12 });
+
+            var encoded = SolidityUtil.AbiEncode("uint256[4][3]", exampleArray);
+            var encodedHex = encoded.ToHexString();
+            var recode = SolidityUtil.AbiDecode<UInt256[][]>("uint256[4][3]", encoded);
+
+            Assert.Equal(exampleArray[0][0], recode[0][0]);
+            Assert.Equal(exampleArray[1][0], recode[1][0]);
+            Assert.Equal(exampleArray[2][0], recode[2][0]);
+        }
     }
 }

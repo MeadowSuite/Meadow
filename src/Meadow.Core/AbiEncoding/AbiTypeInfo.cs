@@ -49,9 +49,6 @@ namespace Meadow.Core.AbiEncoding
             Category == SolidityTypeCategory.Bytes ||
             ElementaryBaseType == SolidityTypeElementaryBase.Bytes;
 
-        public bool IsMultiDimensionalArray =>
-            IsArrayType && (ArrayItemInfo.IsArrayType || ArrayItemInfo.IsSpecialBytesType);
-
         public bool IsStaticType => Category == SolidityTypeCategory.Elementary;
         public bool IsDynamicType => !IsStaticType;
 

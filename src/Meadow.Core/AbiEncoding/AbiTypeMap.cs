@@ -119,7 +119,7 @@ namespace Meadow.Core.AbiEncoding
                 var bracketPart = name.Substring(arrayBracket);
                 var typeCategory = SolidityTypeCategory.DynamicArray;
 
-                int[] arrayDimensionSizes = null;
+                int[] arrayDimensionSizes;
 
                 // if a fixed array length has been set, ex: uint64[10]
                 if (bracketPart.Length > 2)
@@ -140,6 +140,10 @@ namespace Meadow.Core.AbiEncoding
                         arrayDimensionSizes = new[] { arraySize };
                         typeCategory = SolidityTypeCategory.FixedArray;
                     }
+                }
+                else
+                {
+                    arrayDimensionSizes = new[] { 0 };
                 }
 
                 var baseName = name.Substring(0, arrayBracket);

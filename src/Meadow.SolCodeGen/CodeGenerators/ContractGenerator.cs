@@ -170,11 +170,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 {
                     var input = inputs[i];
                     string encoderLine;
-                    if (input.AbiType.IsMultiDimensionalArray)
-                    {
-                        encoderLine = $"EncoderFactory.LoadMultiDimArrayEncoder(\"{input.SolidityTypeName}\", {input.Identifier})";
-                    }
-                    else if (input.AbiType.IsArrayType)
+                    if (input.AbiType.IsArrayType)
                     {
                         string arrayElementType = GetArrayElementClrTypeName(input.AbiType);
                         string arrayItemEncoder = $"EncoderFactory.LoadEncoder(\"{input.AbiType.ArrayItemInfo.SolidityName}\", default({arrayElementType}))";
@@ -295,9 +291,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 {
                     var input = inputs[i];
                     string encoderLine;
-                    if (input.AbiType.IsMultiDimensionalArray)
+                    if (input.AbiType.IsArrayType && input.AbiType.ArrayDimensionSizes?.Length > 1)
                     {
-                        encoderLine = $"EncoderFactory.LoadMultiDimArrayEncoder(\"{input.SolidityTypeName}\", {input.Identifier})";
+                        encoderLine = $"EncoderFactory.LoadEncoderNonGeneric(\"{input.SolidityTypeName}\", {input.Identifier})";
                     }
                     else if (input.AbiType.IsArrayType)
                     {
@@ -342,9 +338,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
             for (var i = 0; i < outputs.Length; i++)
             {
                 string decoder;
-                if (outputs[i].AbiType.IsMultiDimensionalArray)
+                if (outputs[i].AbiType.IsArrayType && outputs[i].AbiType.ArrayDimensionSizes?.Length > 1)
                 {
-                    var clrType = GetArrayElementClrTypeName(outputs[i].AbiType);
+                    var clrType = GetClrTypeName(outputs[i].AbiType, arrayAsEnumerable: false);
                     decoder = $"DecoderFactory.GetMultiDimArrayDecoder<{clrType}>(\"{outputs[i].AbiType.SolidityName}\")";
                 }
                 else if (outputs[i].AbiType.IsArrayType)
@@ -541,12 +537,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     clrType = GetClrTypeName(inputs[i].AbiType, arrayAsEnumerable: false);
                     dataTypes.Add(inputs[i].AbiType.SolidityName);
                     string decoder;
-                    if (inputs[i].AbiType.IsMultiDimensionalArray)
-                    {
-                        var arrayItemClrType = GetArrayElementClrTypeName(inputs[i].AbiType);
-                        decoder = $"DecoderFactory.GetMultiDimArrayDecoder<{arrayItemClrType}>(\"{inputs[i].AbiType.SolidityName}\")(dataTypes[{dataTypes.Count - 1}], ref dataBuff, out {inputs[i].Identifier});";
-                    }
-                    else if (inputs[i].AbiType.IsArrayType)
+                    if (inputs[i].AbiType.IsArrayType)
                     {
                         string arrayElementType = GetArrayElementClrTypeName(inputs[i].AbiType);
                         decoder = $"DecoderFactory.Decode(dataTypes[{dataTypes.Count - 1}], ref dataBuff, out {inputs[i].Identifier}, EncoderFactory.LoadEncoder(\"{inputs[i].AbiType.ArrayItemInfo.SolidityName}\", default({arrayElementType})));";
@@ -675,32 +666,44 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
         public static string GetClrTypeName(AbiTypeInfo abiType, bool arrayAsEnumerable)
         {
-            if (abiType.IsArrayType || abiType.IsSpecialBytesType)
+            if (abiType.IsArrayType)
             {
                 string arrayItemTypeName;
                 if (abiType.IsSpecialBytesType)
                 {
-                    arrayItemTypeName = typeof(byte).FullName;
+                    arrayItemTypeName = typeof(byte).FullName + "[]";
+                }
+                else if (abiType.ArrayItemInfo.ClrType.IsGenericType && typeof(IEnumerable).IsAssignableFrom(abiType.ArrayItemInfo.ClrType))
+                {
+                    arrayItemTypeName = GetClrTypeName(abiType.ArrayItemInfo, false);
                 }
                 else
                 {
-                    if (abiType.ArrayItemInfo.ClrType.IsGenericType && typeof(IEnumerable).IsAssignableFrom(abiType.ArrayItemInfo.ClrType))
-                    {
-                        arrayItemTypeName = GetClrTypeName(abiType.ArrayItemInfo, false);
-                    }
-                    else
-                    {
-                        arrayItemTypeName = abiType.ArrayItemInfo.ClrTypeName;
-                    }
+                    arrayItemTypeName = abiType.ArrayItemInfo.ClrTypeName;
                 }
 
-                if (arrayAsEnumerable)
+                if (abiType.ArrayDimensionSizes != null && abiType.ArrayDimensionSizes.Length > 1)
+                {
+                    return arrayItemTypeName + string.Join(string.Empty, Enumerable.Repeat("[]", abiType.ArrayDimensionSizes.Length));
+                }
+                else if (arrayAsEnumerable)
                 {
                     return "System.Collections.Generic.IEnumerable<" + arrayItemTypeName + ">";
                 }
                 else
                 {
                     return arrayItemTypeName + "[]";
+                }
+            }
+            else if (abiType.IsSpecialBytesType)
+            {
+                if (arrayAsEnumerable)
+                {
+                    return "System.Collections.Generic.IEnumerable<" + typeof(byte).FullName + ">";
+                }
+                else
+                {
+                    return typeof(byte).FullName + "[]";
                 }
             }
             else

@@ -144,4 +144,40 @@ contract ArrayEncodingTests {
 		return arr;
 	}
 
+    function arrayStaticMultiDim3DEcho(uint[2][6][3] input) returns (uint[2][6][3] result) {
+        return input;
+    }
+
+    function arrayStaticMultiDim3D() returns (uint[2][6][3] result) {
+        uint x = 0;
+        for (uint i = 0; i < 2; i++)
+        {
+            for (uint j = 0; j < 6; j++)
+            {
+                for (uint k = 0; k < 3; k++)
+                {
+                    result[k][j][i] = x++;
+                }
+            }
+        }
+        return result;
+    }
+
+    function arrayStaticMultiDim2DEcho(uint[6][3] input) returns (uint[6][3] result) {
+        return input;
+    }
+
+    function arrayStaticMultiDim2D() returns (uint[6][3] result) {
+        uint x = 0;
+        for (uint j = 0; j < 6; j++)
+        {
+            for (uint k = 0; k < 3; k++)
+            {
+                result[k][j] = x++;
+            }
+        }
+        return result;
+    }
+
+
 }

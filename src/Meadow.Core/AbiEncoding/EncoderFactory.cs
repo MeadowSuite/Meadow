@@ -69,6 +69,48 @@ namespace Meadow.Core.AbiEncoding
             return encoder;
         }
 
+        public static IAbiTypeEncoder<byte[]> LoadEncoder(string solidityType, in byte[] val)
+        {
+            var info = AbiTypeMap.GetSolidityTypeInfo(solidityType);
+            switch (info.Category)
+            {
+                case SolidityTypeCategory.Bytes:
+                    {
+                        var encoder = new BytesEncoder();
+                        encoder.SetTypeInfo(info);
+                        encoder.SetValue(val);
+                        return encoder;
+                    }
+
+                case SolidityTypeCategory.Elementary when info.ElementaryBaseType == SolidityTypeElementaryBase.Bytes:
+                    {
+                        var encoder = new BytesMEncoder();
+                        encoder.SetTypeInfo(info);
+                        encoder.SetValue(val);
+                        return encoder;
+                    }
+
+                case SolidityTypeCategory.DynamicArray:
+                    {
+                        var encoder = new DynamicArrayEncoder<byte>(new UInt8Encoder());
+                        encoder.SetTypeInfo(info);
+                        encoder.SetValue(val);
+                        return encoder;
+                    }
+
+                case SolidityTypeCategory.FixedArray:
+                    {
+                        var encoder = new FixedArrayEncoder<byte>(new UInt8Encoder());
+                        encoder.SetTypeInfo(info);
+                        encoder.SetValue(val);
+                        return encoder;
+                    }
+
+                default:
+                    throw new ArgumentException($"Encoder factor method for byte arrays called with type '{info.Category}'");
+            }
+        }
+
         public static IAbiTypeEncoder<IEnumerable<byte>> LoadEncoder(string solidityType, in IEnumerable<byte> val)
         {
             var info = AbiTypeMap.GetSolidityTypeInfo(solidityType);
@@ -91,6 +133,13 @@ namespace Meadow.Core.AbiEncoding
                     }
 
                 case SolidityTypeCategory.DynamicArray:
+                    {
+                        var encoder = new DynamicArrayEncoder<byte>(new UInt8Encoder());
+                        encoder.SetTypeInfo(info);
+                        encoder.SetValue(val);
+                        return encoder;
+                    }
+
                 case SolidityTypeCategory.FixedArray:
                     {
                         var encoder = new FixedArrayEncoder<byte>(new UInt8Encoder());
@@ -285,6 +334,14 @@ namespace Meadow.Core.AbiEncoding
         {
             var encoder = GetEncoder(solidityType);
             encoder.SetTypeInfo(solidityType);
+            return encoder;
+        }
+
+        public static IAbiTypeEncoder LoadEncoderNonGeneric(AbiTypeInfo solidityType, object val)
+        {
+            var encoder = GetEncoder(solidityType);
+            encoder.SetTypeInfo(solidityType);
+            encoder.SetValue(val);
             return encoder;
         }
     }

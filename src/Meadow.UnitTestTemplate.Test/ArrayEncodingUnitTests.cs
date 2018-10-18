@@ -17,6 +17,66 @@ namespace Meadow.UnitTestTemplate.Test
             _contract = await ArrayEncodingTests.New(RpcClient);
         }
 
+
+        [TestMethod]
+        public async Task MultiDim()
+        {
+            // Create our expected 3 dimensional array.
+            var expected3D = ArrayExtensions.CreateJaggedArray<UInt256[][][]>(2, 6, 3);
+            uint x = 0;
+            for (uint i = 0; i < 2; i++)
+            {
+                for (uint j = 0; j < 6; j++)
+                {
+                    for (uint k = 0; k < 3; k++)
+                    {
+                        expected3D[i][j][k] = x++;
+                    }
+                }
+            }
+
+            var t1 = await _contract.arrayStaticMultiDim3DEcho(expected3D).Call();
+
+            // Create our expected 2 dimensional array.
+            var expected2D = ArrayExtensions.CreateJaggedArray<UInt256[][]>(6, 3);
+            x = 0;
+            for (uint j = 0; j < 6; j++)
+            {
+                for (uint k = 0; k < 3; k++)
+                {
+                    expected2D[j][k] = x++;
+                }
+            }
+
+            var t2 = await _contract.arrayStaticMultiDim2DEcho(expected2D).Call();
+
+            // Encode and decode our 3D array to test re-encoding.
+            var encoded = SolidityUtil.AbiEncode("uint256[2][6][3]", expected3D);
+            var encodedHex = encoded.ToHexString();
+            var recode = SolidityUtil.AbiDecode<UInt256[][][]>("uint256[2][6][3]", encoded);
+
+            Assert.AreEqual(expected3D[0][0][0], recode[0][0][0]);
+            Assert.AreEqual(expected3D[1][5][2], recode[1][5][2]);
+            Assert.AreEqual(expected3D[0][2][1], recode[0][2][1]);
+
+            // Call our method that returns a static 3D array programmed in a contract.
+            var rawData3D = await _contract.arrayStaticMultiDim3D().CallRaw();
+            var hex = rawData3D.ToHexString();
+            var decoded3D = SolidityUtil.AbiDecode<UInt256[][][]>("uint256[2][6][3]", rawData3D);
+            Assert.AreEqual(expected3D[0][0][0], decoded3D[0][0][0]);
+            Assert.AreEqual(expected3D[1][5][2], decoded3D[1][5][2]);
+            Assert.AreEqual(expected3D[0][2][1], decoded3D[0][2][1]);
+            Assert.AreEqual(hex, encodedHex);
+
+            // Call our method that returns a static 2D array programmed in a contract.
+            var rawData2D = await _contract.arrayStaticMultiDim2D().CallRaw();
+            var decoded2D = SolidityUtil.AbiDecode<UInt256[][]>("uint256[6][3]", rawData2D);
+            Assert.AreEqual(expected2D[0][0], decoded2D[0][0]);
+            Assert.AreEqual(expected2D[3][1], decoded2D[3][1]);
+            Assert.AreEqual(expected2D[5][2], decoded2D[5][2]);
+        }
+
+
         [TestMethod]
         [Ignore]
         public async Task ArrayOfBytes32()

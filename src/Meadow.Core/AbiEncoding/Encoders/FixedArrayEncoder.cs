@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Meadow.Core.AbiEncoding.Encoders
 {
-    public class FixedArrayEncoder<TItem> : AbiTypeEncoder<IEnumerable<TItem>>
+    public class FixedArrayEncoder<TItem> : AbiTypeEncoder<IEnumerable<TItem>>, IAbiTypeEncoder<TItem[]>
     {
         IAbiTypeEncoder<TItem> _itemEncoder;
 
@@ -79,7 +79,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
             }
         }
 
-        public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<TItem> val)
+        public void Decode(ref AbiDecodeBuffer buff, out TItem[] val)
         {
             if (_info.ArrayDimensionSizes.Length != 1)
             {
@@ -94,6 +94,18 @@ namespace Meadow.Core.AbiEncoding.Encoders
             }
 
             val = items;
+
+        }
+
+        public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<TItem> val)
+        {
+            Decode(ref buff, out TItem[] result);
+            val = result;
+        }
+
+        public void SetValue(in TItem[] val)
+        {
+            SetValue((IEnumerable<TItem>)val);
         }
 
     }

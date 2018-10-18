@@ -39,7 +39,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
             // If we have no elements, no work needs to be done.
             if (TypeInfo.ArrayDimensionSizes.Length == 0)
             {
-                result = Array.Empty<object>();
+                result = Array.CreateInstance(TypeInfo.ArrayItemInfo.ClrType, 0);
                 return;
             }
 
@@ -135,12 +135,15 @@ namespace Meadow.Core.AbiEncoding.Encoders
             // Create a variable to track our position.
             int[] encodingPosition = new int[TypeInfo.ArrayDimensionSizes.Length];
 
+            // Get value as array (convert to array if its underlying type is something else)
+            IList parentArray = _val is IList arr ? arr : _val.ToArray();
+
             // Loop for each element to index.
             bool reachedEnd = false;
             while (!reachedEnd)
             {
                 // Define the parent array to resolve for this element.
-                Array innerMostArray = (Array)_val;
+                IList innerMostArray = parentArray;
 
                 // Increment our decoding position.
                 bool incrementing = true;
@@ -149,12 +152,14 @@ namespace Meadow.Core.AbiEncoding.Encoders
                     // If this isn't the final index (inner most array index), then it's an index to another array.
                     if (x < encodingPosition.Length - 1)
                     {
-                        innerMostArray = (Array)innerMostArray.GetValue(encodingPosition[x]);
+                        // Get value as array (convert to array if its underlying type is something else)
+                        var inner = innerMostArray[encodingPosition[x]];
+                        innerMostArray = inner is IList ia ? ia : ((inner as IEnumerable).Cast<object>()).ToArray();
                     }
                     else
                     {
                         // We've resolved the element to index.
-                        _itemEncoder.SetValue(innerMostArray.GetValue(encodingPosition[x]));
+                        _itemEncoder.SetValue(innerMostArray[encodingPosition[x]]);
                         _itemEncoder.Encode(ref buffer);
                     }
 

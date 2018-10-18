@@ -326,7 +326,7 @@ namespace Meadow.Core.Utils
         /// <summary>
         /// Encodes values as solidity types in ABI format which is used for: function parameters, return values, and event arguments.
         /// This method only supports static solidity types defined in <see cref="SolidityType"/>. 
-        /// To specify any type as a string use <see cref="AbiEncode" />.
+        /// To specify any type as a string use <see cref="AbiTypeInfo" />.
         /// </summary>
         public static byte[] AbiEncodeTypes(params (SolidityType SolidityType, object Value)[] values)
         {
