@@ -88,5 +88,20 @@ namespace Meadow.UnitTestTemplate.ParallelTest
             var modExpTest = BigIntegerConverter.GetBigInteger(modExpTestBytes, false, modExpTestBytes.Length);
             Assert.AreEqual("856753145937825219130387866259147", modExpTest.ToString(CultureInfo.InvariantCulture));
         }
+
+        [TestMethod]
+        public async Task ZkSnarksTest()
+        {
+            // Deploy the contract
+            ZkSnarkTest snarkTest = await ZkSnarkTest.New(RpcClient, new TransactionParams { From = Accounts[0], Gas = 4712388 }, Accounts[0]);
+
+            // Test adding/multiplying
+            var testAddResult = await snarkTest.f().Call();
+            Assert.IsTrue(testAddResult);
+
+            // Test pairing
+            var testPairingResult = await snarkTest.verifyTx().Call();
+            Assert.IsTrue(testPairingResult);
+        }
     }
 }

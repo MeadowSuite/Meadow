@@ -32,7 +32,7 @@ namespace Meadow.CoverageReport.AstTypes
             // Set our properties
             Name = node.SelectToken("name")?.Value<string>();
             Visibility = GetVisibilityFromString(node.SelectToken("visibility")?.Value<string>());
-            TypeName = Create<AstElementaryTypeName>((JObject)node.SelectToken("typeName"));
+            TypeName = Create<AstElementaryTypeName>(node.SelectToken("typeName") as JObject);
             StateVariable = node.SelectToken("stateVariable")?.Value<bool>() == true;
             Constant = node.SelectToken("constant")?.Value<bool>() == true;
 
