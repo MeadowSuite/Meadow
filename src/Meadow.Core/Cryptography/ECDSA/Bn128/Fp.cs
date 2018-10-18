@@ -12,10 +12,15 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
     public struct Fp : IField<Fp>
     {
         #region Fields
-        public static readonly Fp Zero = new Fp(0);
-        public static readonly Fp One = new Fp(1);
+        public static readonly Fp ZeroValue = new Fp(0);
+        public static readonly Fp OneValue = new Fp(1);
 
         public readonly BigInteger N;
+        #endregion
+
+        #region Properties
+        public Fp Zero => ZeroValue;
+        public Fp One => OneValue;
         #endregion
 
         #region Constructors
@@ -129,9 +134,13 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
         public static bool operator !=(Fp left, Fp right) => !(left == right);
         public static bool operator ==(Fp left, Fp right) => left.N == right.N;
         public static Fp operator +(Fp left, Fp right) => left.Add(right);
+        public static Fp operator +(Fp left, BigInteger right) => left.Add(right);
         public static Fp operator -(Fp left, Fp right) => left.Subtract(right);
+        public static Fp operator -(Fp left, BigInteger right) => left.Subtract(right);
         public static Fp operator *(Fp left, Fp right) => left.Multiply(right);
+        public static Fp operator *(Fp left, BigInteger right) => left.Multiply(right);
         public static Fp operator /(Fp dividend, Fp divisor) => dividend.Divide(divisor);
+        public static Fp operator /(Fp dividend, BigInteger divisor) => dividend.Divide(divisor);
         public static Fp operator -(Fp number) => number.Negate();
         #endregion
     }

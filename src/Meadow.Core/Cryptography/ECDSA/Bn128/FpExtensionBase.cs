@@ -23,6 +23,8 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
                 return ModulusCoefficients.Count;
             }
         }
+        public abstract T Zero { get; }
+        public abstract T One { get; }
         #endregion
 
         #region Constructors
@@ -154,11 +156,6 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
 
         public T Inverse()
         {
-            // References:
-            // https://en.wikipedia.org/wiki/Modular_multiplicative_inverse
-            // https://en.wikipedia.org/wiki/Finite_field_arithmetic#Multiplicative_inverse
-            // https://en.wikipedia.org/wiki/Extended_Euclidean_algorithm#Modular_integers
-
             // Define our initial variables and give them their initial assignments.
             BigInteger[] newt = new BigInteger[Degree + 1];
             newt[0] = 1;
@@ -172,7 +169,7 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
             ModulusCoefficients.CopyTo(r, 0);
             r[r.Length - 1] = 1;
 
-            // Loop for each valid degree to handle.
+            // Loop while there are elements which are non-zero.
             while (GetDegree(newr) != 0)
             {
                 BigInteger[] quotient = DividePolynomialRounded(r, newr);
@@ -254,12 +251,25 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
 
         #region Operators
         public static bool operator !=(FpExtensionBase<T> left, FpExtensionBase<T> right) => !(left == right);
+
         public static bool operator ==(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Coefficients.SequenceEqual(right.Coefficients);
-        public static FpExtensionBase<T> operator +(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Add((T)right);
-        public static FpExtensionBase<T> operator -(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Subtract((T)right);
-        public static FpExtensionBase<T> operator *(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Multiply((T)right);
-        public static FpExtensionBase<T> operator /(FpExtensionBase<T> dividend, FpExtensionBase<T> divisor) => dividend.Divide((T)divisor);
-        public static FpExtensionBase<T> operator -(FpExtensionBase<T> number) => number.Negate();
+
+        public static T operator +(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Add((T)right);
+        public static T operator +(FpExtensionBase<T> left, BigInteger right) => left.Add(right);
+        public static T operator +(BigInteger left, FpExtensionBase<T> right) => right.Add(left);
+
+        public static T operator -(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Subtract((T)right);
+        public static T operator -(FpExtensionBase<T> left, BigInteger right) => left.Subtract(right);
+
+        public static T operator *(FpExtensionBase<T> left, FpExtensionBase<T> right) => left.Multiply((T)right);
+        public static T operator *(FpExtensionBase<T> left, BigInteger right) => left.Multiply(right);
+        public static T operator *(BigInteger left, FpExtensionBase<T> right) => right.Multiply(left);
+
+        public static T operator /(FpExtensionBase<T> dividend, FpExtensionBase<T> divisor) => dividend.Divide((T)divisor);
+        public static T operator /(FpExtensionBase<T> dividend, BigInteger divisor) => dividend.Divide(divisor);
+
+        public static T operator -(FpExtensionBase<T> number) => number.Negate();
+
         #endregion
     }
 }

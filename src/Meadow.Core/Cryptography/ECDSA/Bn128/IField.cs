@@ -7,7 +7,8 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
 {
     public interface IField<T>
     {
-        
+        T Zero { get; }
+        T One { get; }
         T Add(T other);
         T Add(BigInteger other);
         T Subtract(T other);
