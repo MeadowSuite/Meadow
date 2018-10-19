@@ -99,7 +99,15 @@ namespace Meadow.UnitTestTemplate.ParallelTest
             var testAddResult = await snarkTest.f().Call();
             Assert.IsTrue(testAddResult);
 
-            // Test pairing
+            // Test simple negation + add == zero.
+            var testNegAddResult = await snarkTest.g().Call();
+            Assert.IsTrue(testNegAddResult);
+
+            // Test simple pairing example
+            var testSimplePair = await snarkTest.pair().Call();
+            Assert.IsTrue(testSimplePair);
+
+            // Test verify complex pairing
             var testPairingResult = await snarkTest.verifyTx().Call();
             Assert.IsTrue(testPairingResult);
         }
