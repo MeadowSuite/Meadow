@@ -44,7 +44,9 @@ Open your project directory in VSCode or your favorite C# IDE.
 
 * [Solidity Coverage Report](https://github.com/MeadowSuite/Meadow/wiki/Coverage-Report)
 
-* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/FAQs-and-Examples) - ABI & RLP encoding, ECSign / ECRecover, testing reverts, etc..
+* [Configuration](https://github.com/MeadowSuite/Meadow/wiki/Configuration) - Specifying gas defaults, solc version, solc optimizer, accounts, RPC host, etc..
+
+* [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/Usage-Examples) - ABI & RLP encoding, ECSign / ECRecover, testing reverts, etc..
 ---
 
 ## Powerful Solidity contract development, deployment, and interaction
