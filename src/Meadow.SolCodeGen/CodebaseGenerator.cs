@@ -364,7 +364,8 @@ namespace Meadow.SolCodeGen
                 var (solFile, contractName, contract, hash, bytecode) = contractInfo;
                 var hashHex = HexUtil.GetHexFromBytes(hash);
                 var hashHexBytes = Encoding.ASCII.GetBytes(hashHex);
-                generatedEvents.AddRange(GeneratedEventMetadata.Parse(contractName, _namespace, contract));
+                var contactEventInfo = GeneratedEventMetadata.Parse(contractName, _namespace, contract).ToList();
+                generatedEvents.AddRange(contactEventInfo);
 
                 var outputFilePath = Path.Combine(_generatedContractsDirectory, contractName + G_CS_FILE_EXT);
                 if (!_returnFullSources && FileStartsWithHash(outputFilePath, hashHexBytes))
@@ -373,7 +374,7 @@ namespace Meadow.SolCodeGen
                     continue;
                 }
 
-                var generator = new ContractGenerator(contractInfo, _solSourceDirectory, _namespace);
+                var generator = new ContractGenerator(contractInfo, _solSourceDirectory, _namespace, contactEventInfo);
                 var (generatedContractCode, syntaxTree) = generator.GenerateSourceCode();
                 using (var fs = new StreamWriter(outputFilePath, append: false, encoding: StringUtil.UTF8))
                 {

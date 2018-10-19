@@ -62,6 +62,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
 #pragma warning disable SA1024 // Colons Should Be Spaced Correctly
 #pragma warning disable SA1128 // Put constructor initializers on their own line
 #pragma warning disable SA1300 // Element should begin with upper-case letter
+#pragma warning disable SA1307 // Field names should begin with upper-case letter
 #pragma warning disable SA1313 // Parameter names should begin with lower-case letter
 #pragma warning disable IDE1006 // Naming Styles
 

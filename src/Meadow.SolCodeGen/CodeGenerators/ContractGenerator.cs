@@ -28,18 +28,20 @@ namespace Meadow.SolCodeGen.CodeGenerators
         readonly string _solSourceDir;
         readonly SolcNet.DataDescription.Output.Contract _contract;
         readonly ContractInfo _contractInfo;
+        readonly List<GeneratedEventMetadata> _eventMetadata;
 
         static readonly string JsonRpcClientType = typeof(IJsonRpcClient).FullName;
 
         static readonly Regex NewLineRegex = new Regex(@"\r\n|\n\r|\n|\r");
 
-        public ContractGenerator(ContractInfo contractInfo, string solSourceDir, string @namespace) : base(@namespace)
+        public ContractGenerator(ContractInfo contractInfo, string solSourceDir, string @namespace, List<GeneratedEventMetadata> eventMetadata) : base(@namespace)
         {
             _contractInfo = contractInfo;
             _contractSolFileName = contractInfo.SolFile;
             _contractName = contractInfo.ContractName;
             _contract = contractInfo.ContractOutput;
             _solSourceDir = solSourceDir;
+            _eventMetadata = eventMetadata;
         }
 
         protected override string GenerateUsingDeclarations()
@@ -61,12 +63,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
         protected override string GenerateClassDef()
         {
             List<string> eventTypes = new List<string>();
-            foreach (var item in _contract.Abi)
+            foreach (var item in _eventMetadata)
             {
-                if (item.Type == AbiType.Event)
-                {
-                    eventTypes.Add($"typeof({_namespace}.{_contractName}.{item.Name})");
-                }
+                eventTypes.Add($"typeof({item.ClrTypeFullName})");
             }
 
             string eventTypesString = string.Empty;
@@ -130,12 +129,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
             template.AppendLine(GenerateConstructor(constructorAbi));
 
             // Then events
-            foreach (var item in _contract.Abi)
+            foreach (var item in _eventMetadata)
             {
-                if (item.Type == AbiType.Event)
-                {
-                    template.AppendLine(GenerateEvent(item));
-                }
+                template.AppendLine(GenerateEvent(item));
             }
 
             // Then functions
@@ -500,8 +496,10 @@ namespace Meadow.SolCodeGen.CodeGenerators
             return NewLineRegex.Replace(line, $" <para/>");
         }
 
-        string GenerateEvent(Abi eventAbi)
+        string GenerateEvent(GeneratedEventMetadata eventMetadata)
         {
+            Abi eventAbi = eventMetadata.AbiItem;
+
             var inputs = GenerateInputs(eventAbi.Inputs);
 
             string[] propertyLines = new string[eventAbi.Inputs.Length];
@@ -597,11 +595,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
             string eventSignatureHash = AbiSignature.GetSignatureHash(eventAbi);
 
-            var eventName = ReservedKeywords.EscapeIdentifier(eventAbi.Name);
-
             return $@"
                 [{typeof(EventSignatureAttribute).FullName}(SIGNATURE)]
-                public class {eventName} : {typeof(EventLog).FullName}
+                public class {eventMetadata.ClrTypeName} : {typeof(EventLog).FullName}
                 {{
                     public override string EventName => ""{eventAbi.Name}"";
                     public override string EventSignature => SIGNATURE;
@@ -611,7 +607,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     // Event log parameters.
                     {propertyLinesString}
 
-                    public {eventAbi.Name}({typeof(FilterLogObject).FullName} log) : base(log)
+                    public {eventMetadata.ClrTypeName}({typeof(FilterLogObject).FullName} log) : base(log)
                     {{
                         // Decode the log topic args.
                         Span<byte> topicBytes = MemoryMarshal.AsBytes(new Span<{typeof(Meadow.Core.EthTypes.Data).FullName}>(log.Topics).Slice(1));
