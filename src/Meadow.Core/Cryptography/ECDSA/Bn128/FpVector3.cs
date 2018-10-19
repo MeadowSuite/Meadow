@@ -66,11 +66,11 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
         public FpVector3<T> Add(FpVector3<T> p2)
         {
             // Verify our z coordinates aren't zero
-            if (Z.Equals(X.Zero))
+            if (p2.Z.Equals(X.Zero))
             {
                 return this;
             }
-            else if (p2.Z.Equals(X.Zero))
+            else if (Z.Equals(X.Zero))
             {
                 return p2;
             }
