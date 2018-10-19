@@ -66,6 +66,7 @@
     <Rule Id="SA1026" Action="Warning" />
     <Rule Id="SA1027" Action="Warning" />
     <Rule Id="SA1028" Action="None" />
+    <Rule Id="SA1100" Action="None" />
     <Rule Id="SA1101" Action="None" />
     <Rule Id="SA1117" Action="None" />
     <Rule Id="SA1119" Action="None" />

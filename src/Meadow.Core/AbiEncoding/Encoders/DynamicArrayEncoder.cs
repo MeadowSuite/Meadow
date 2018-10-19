@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Meadow.Core.AbiEncoding.Encoders
 {
-    public class DynamicArrayEncoder<TItem> : AbiTypeEncoder<IEnumerable<TItem>>
+    public class DynamicArrayEncoder<TItem> : AbiTypeEncoder<IEnumerable<TItem>>, IAbiTypeEncoder<TItem[]>
     {
         IAbiTypeEncoder<TItem> _itemEncoder;
 
@@ -74,7 +74,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
             }
         }
 
-        public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<TItem> val)
+        public void Decode(ref AbiDecodeBuffer buff, out TItem[] val)
         {
             var uintEncoder = UInt256Encoder.UncheckedEncoders.Get();
 
@@ -107,6 +107,18 @@ namespace Meadow.Core.AbiEncoding.Encoders
                 UInt256Encoder.UncheckedEncoders.Put(uintEncoder);
             }
         }
+
+        public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<TItem> val)
+        {
+            Decode(ref buff, out TItem[] result);
+            val = result;
+        }
+
+        public void SetValue(in TItem[] val)
+        {
+            SetValue((IEnumerable<TItem>)val);
+        }
+
     }
 
 }

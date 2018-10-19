@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace Meadow.Core.AbiEncoding.Encoders
 {
-    public class BytesMEncoder : AbiTypeEncoder<IEnumerable<byte>>
+    public class BytesMEncoder : AbiTypeEncoder<IEnumerable<byte>>, IAbiTypeEncoder<byte[]>
     {
         public override void SetTypeInfo(AbiTypeInfo info)
         {
@@ -17,42 +17,47 @@ namespace Meadow.Core.AbiEncoding.Encoders
             }
         }
 
+        public void SetValue(in byte[] val)
+        {
+            base.SetValue(val);
+        }
+
         public override void SetValue(object val)
         {
             switch (val)
             {
                 case IEnumerable<byte> e:
-                    SetValue(e);
+                    base.SetValue(e);
                     break;
                 case string str:
-                    SetValue(HexUtil.HexToBytes(str));
+                    base.SetValue(HexUtil.HexToBytes(str));
                     break;
                 case byte n:
-                    SetValue(new byte[] { n });
+                    base.SetValue(new byte[] { n });
                     break;
                 case sbyte n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case short n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case ushort n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case int n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case uint n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case long n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case ulong n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case UInt256 n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 default:
                     ThrowInvalidTypeException(val);
@@ -94,7 +99,13 @@ namespace Meadow.Core.AbiEncoding.Encoders
 
         public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<byte> val)
         {
-            var bytes = new byte[_info.ArrayLength];
+            Decode(ref buff, out byte[] result);
+            val = result;
+        }
+
+        public void Decode(ref AbiDecodeBuffer buff, out byte[] val)
+        {
+            var bytes = new byte[_info.PrimitiveTypeByteSize];
             for (var i = 0; i < bytes.Length; i++)
             {
                 bytes[i] = buff.HeadCursor[i];
@@ -106,7 +117,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
             {
                 if (buff.HeadCursor[i] != 0)
                 {
-                    throw new ArgumentException($"Invalid {_info.SolidityName} input data; should be {_info.ArrayLength} bytes padded {UInt256.SIZE - _info.ArrayLength} zero-bytes; received: " + buff.HeadCursor.Slice(0, 32).ToHexString());
+                    throw new ArgumentException($"Invalid {_info.SolidityName} input data; should be {_info.PrimitiveTypeByteSize} bytes padded {UInt256.SIZE - _info.PrimitiveTypeByteSize} zero-bytes; received: " + buff.HeadCursor.Slice(0, 32).ToHexString());
                 }
             }
 #endif

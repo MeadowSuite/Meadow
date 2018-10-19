@@ -24,7 +24,7 @@ namespace Meadow.DebugExampleTests
         [AssemblyCleanup]
         public static async Task Cleanup()
         {
-            await Global.Cleanup();
+            await Global.GenerateCoverageReport();
         }
 
         public static void Main(string[] args)
