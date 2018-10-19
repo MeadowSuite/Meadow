@@ -13,12 +13,14 @@ using System.Threading.Tasks;
 
 namespace Meadow.UnitTestTemplate
 {
-    public class Debugging : IDisposable
+    public class SolidityDebugger : IDisposable
     {
+        const string DEBUG_SESSION_ID = "DEBUG_SESSION_ID";
+        const string DEBUG_STOP_ON_ENTRY = "DEBUG_STOP_ON_ENTRY";
 
         public static bool IsSolidityDebuggerAttached { get; set; }
 
-        public static string SolidityDebugSessionID => Environment.GetEnvironmentVariable("DEBUG_SESSION_ID");
+        public static string SolidityDebugSessionID => Environment.GetEnvironmentVariable(DEBUG_SESSION_ID);
 
         public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
 
@@ -31,7 +33,7 @@ namespace Meadow.UnitTestTemplate
             }
             else
             {
-                var debugStopOnEntry = (Environment.GetEnvironmentVariable("DEBUG_STOP_ON_ENTRY") ?? string.Empty).Equals("true", StringComparison.OrdinalIgnoreCase);
+                var debugStopOnEntry = (Environment.GetEnvironmentVariable(DEBUG_STOP_ON_ENTRY) ?? string.Empty).Equals("true", StringComparison.OrdinalIgnoreCase);
 
                 if (debugStopOnEntry && !Debugger.IsAttached)
                 {
@@ -50,9 +52,9 @@ namespace Meadow.UnitTestTemplate
             }
         }
 
-        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken)
+        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null)
         {
-            var debuggingInstance = new Debugging(SolidityDebugSessionID);
+            var debuggingInstance = new SolidityDebugger(SolidityDebugSessionID);
 
             debuggingInstance.InitializeDebugConnection();
             IsSolidityDebuggerAttached = true;
@@ -64,7 +66,7 @@ namespace Meadow.UnitTestTemplate
                 // so exit program
                 if (!Debugger.IsAttached)
                 {
-                    cancelToken.Cancel();
+                    cancelToken?.Cancel();
                     //Environment.Exit(0);
                 }
             };
@@ -80,7 +82,7 @@ namespace Meadow.UnitTestTemplate
         public event Action OnDebuggerDisconnect;
 #pragma warning restore CA1710 // Identifiers should have correct suffix
 
-        private Debugging(string debugSessionID)
+        private SolidityDebugger(string debugSessionID)
         {
             _debugSessionID = debugSessionID;
             _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
@@ -123,8 +125,6 @@ namespace Meadow.UnitTestTemplate
         {
             // Teardown our hook by setting the target as null.
             JsonRpcClient.JsonRpcExecutionAnalysis = null;
-
-
         }
 
         private void DebugAdapter_OnDebuggerDisconnect(MeadowSolidityDebugAdapter sender)

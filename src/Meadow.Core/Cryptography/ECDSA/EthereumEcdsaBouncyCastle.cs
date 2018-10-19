@@ -133,6 +133,12 @@ namespace Meadow.Core.Cryptography.Ecdsa
             Org.BouncyCastle.Math.BigInteger j = Org.BouncyCastle.Math.BigInteger.ValueOf((long)recoveryId >> 1);
             Org.BouncyCastle.Math.BigInteger x = j.Multiply(Secp256k1Curve.Parameters.N).Add(r);
 
+            // Verify our x coordinate is less than our curve's modulo p (aka curve Q)
+            if (Secp256k1Curve.Parameters.Curve.Field.Characteristic.CompareTo(x) <= 0)
+            {
+                throw new ArgumentException("ECDSA signature's X coordinate cannot exceeded the modulo divisor.");
+            }
+
             // To obtain our curve point R, we decode it with an extra byte for Y descriptor which mentions if Y is even or odd.
             int curveLength = X9IntegerConverter.GetByteLength(Secp256k1Curve.Parameters.Curve);
             byte[] xdata = X9IntegerConverter.IntegerToBytes(x, curveLength + 1);

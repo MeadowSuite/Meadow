@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as child_process from "child_process";
 import * as util from 'util';
-import * as debugConfigProvider from './debugConfigProvider';
 import { ISolidityMeadowDebugConfig, DEBUG_SESSION_ID } from './constants';
 import { Logger } from './logger';
 import * as common from './common';

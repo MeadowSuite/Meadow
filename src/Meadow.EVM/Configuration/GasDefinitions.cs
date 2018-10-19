@@ -75,7 +75,7 @@ namespace Meadow.EVM.Configuration
         /// </summary>
         public const int GAS_PRECOMPILE_RIPEMD160_WORD = 120;
 
-        // 
+        // Identity Precompile
         /// <summary>
         /// The amount of gas used just to execute an identity/memcpy precompile.
         /// </summary>
@@ -85,8 +85,26 @@ namespace Meadow.EVM.Configuration
         /// </summary>
         public const int GAS_PRECOMPILE_IDENTITY_WORD = 3;
 
-        //
+        // ModExp Precompile
         public const int GAS_PRECOMPILE_MODEXP_QUAD_DIVISOR = 20;
+
+        // EC Precompiles
+        /// <summary>
+        /// The amount of gas used just to execute an EC add operation.
+        /// </summary>
+        public const int GAS_PRECOMPILE_ECADD_BASE = 500;
+        /// <summary>
+        /// The amount of gas used just to execute an EC multiplication operation.
+        /// </summary>
+        public const int GAS_PRECOMPILE_ECMUL_BASE = 40000;
+        /// <summary>
+        /// The amount of gas used just to execute an EC pairing operation.
+        /// </summary>
+        public const int GAS_PRECOMPILE_ECPAIRING_BASE = 100000;
+        /// <summary>
+        /// The amount of gas used per point supplied to the EC pairing operation.
+        /// </summary>
+        public const int GAS_PRECOMPILE_ECPAIRING_PER_POINT = 80000;
 
         // Storage
         /// <summary>

@@ -27,6 +27,9 @@ namespace Meadow.DebugExampleTests
         {
             UInt256 testValue = 112233445566778899;
             await VarAnalysisContract.New(testValue, RpcClient).ExpectRevert();
+
+            // TODO: Verify variables.
+            Assert.Inconclusive();
         }
 
         [TestMethod]

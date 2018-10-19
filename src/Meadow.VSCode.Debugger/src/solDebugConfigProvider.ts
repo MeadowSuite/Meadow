@@ -3,12 +3,11 @@ import * as Net from 'net';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as uuid from 'uuid/v1';
-import * as dotnetLaunchDebug from './dotnetLaunchDebug';
+import * as dotnetLaunchDebug from './clrLaunchDebug';
 import { Logger } from './logger';
 import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
-import { resolveMeadowDebugAdapter } from './debugAdapterExecutable';
+import { resolveMeadowDebugAdapter } from './solDebugAdapterExecutable';
 import * as common from './common';
-import * as child_process from 'child_process';
 
 
 export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigurationProvider {
@@ -16,8 +15,6 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 	private _server?: Net.Server;
 
 	private _context: vscode.ExtensionContext;
-
-	private _debugConfig: ISolidityMeadowDebugConfig;
 
 	constructor(context: vscode.ExtensionContext) {
 		this._context = context;
@@ -28,29 +25,18 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 		
 		let debugSessionID: string;
 
-		if (this._debugConfig[DEBUG_SESSION_ID]) {
-			debugSessionID = this._debugConfig[DEBUG_SESSION_ID];
+		if (config[DEBUG_SESSION_ID]) {
+			debugSessionID = config[DEBUG_SESSION_ID];
 		}
 		else {
 			// If the debug session ID is not already set then the CLR debugger has not been launched
 			// so we will launch it.
 			debugSessionID = uuid();
-			dotnetLaunchDebug.launch(debugSessionID, this._debugConfig).catch(err => Logger.log("Error launching dotnet test", err));
+			dotnetLaunchDebug.launch(debugSessionID, config).catch(err => Logger.log("Error launching dotnet test", err));
 		}
 
-		return resolveMeadowDebugAdapter(this._context, debugSessionID, this._debugConfig);
+		return resolveMeadowDebugAdapter(this._context, debugSessionID, config);
 	}
-
-	// This is a preview API that is no longer available in the latest stable VSCode version.
-	// TODO: remove.
-	/*debugAdapterExecutable(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
-
-		let debugSessionID: string = uuid();
-
-		dotnetLaunchDebug.launch(debugSessionID, this._debugConfig).catch(err => Logger.log("Error launching dotnet test", err));
-
-		return resolveMeadowDebugAdapter(this._context, debugSessionID, this._debugConfig);
-	}*/
 
 	provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration[]> {
 
@@ -140,7 +126,6 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 	
 		Logger.log(`Using debug configuration: ${JSON.stringify(debugConfig)}`);
 
-		this._debugConfig = debugConfig
 		return debugConfig;
 	}
 

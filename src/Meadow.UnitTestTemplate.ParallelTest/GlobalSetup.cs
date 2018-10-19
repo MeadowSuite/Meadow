@@ -25,7 +25,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
 
         public static void Main(string[] args)
         {
-            Debugging.Launch();
+            SolidityDebugger.Launch();
         }
 
     }

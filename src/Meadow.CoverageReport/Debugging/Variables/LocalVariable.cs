@@ -18,17 +18,36 @@ namespace Meadow.CoverageReport.Debugging.Variables
     {
         #region Properties
         /// <summary>
-        /// Indicates if this local variable is an input/output parameter to a function.
+        /// Indicates if this local variable is either an input or output parameter to a function.
         /// </summary>
-        public bool IsFunctionParameter { get; }
+        public bool IsFunctionParameter
+        {
+            get
+            {
+                return IsFunctionInputParameter || IsFunctionOutputParameter;
+            }
+        }
+
+        /// <summary>
+        /// Indicates if this local variable is an input parameter to a function.
+        /// </summary>
+        public bool IsFunctionInputParameter { get; }
+
+        /// <summary>
+        /// Indicates if this local variable is an output parameter to a function.
+        /// </summary>
+        public bool IsFunctionOutputParameter { get; }
+
         /// <summary>
         /// Indicates the position on the stack to use as the entry point to resolving our underlying variable value.
         /// </summary>
         public int StackIndex { get; }
+
         /// <summary>
         /// The source map entry at the point when the local variable was resolved.
         /// </summary>
         public SourceMapEntry SourceMapEntry { get; }
+
         /// <summary>
         /// Represents the variable's underlying data location in less trivial cases.
         /// In the case of a local variable, the default value refers to memory if this is a function parameter, or storage otherwise.
@@ -56,12 +75,13 @@ namespace Meadow.CoverageReport.Debugging.Variables
         #endregion
 
         #region Constructor
-        public LocalVariable(AstVariableDeclaration declaration, bool isFunctionParameter, int stackIndex, SourceMapEntry sourceMapEntry)
+        public LocalVariable(AstVariableDeclaration declaration, bool isFunctionInputParameter, bool isFunctionOutputParameter, int stackIndex, SourceMapEntry sourceMapEntry)
         {
             // Set our extended properties
             StackIndex = stackIndex;
             SourceMapEntry = sourceMapEntry;
-            IsFunctionParameter = isFunctionParameter;
+            IsFunctionInputParameter = isFunctionInputParameter;
+            IsFunctionOutputParameter = isFunctionOutputParameter;
 
             // Initialize by name and type.
             Initialize(declaration);

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import * as debugConfigProvider from './debugConfigProvider';
+import * as debugConfigProvider from './solDebugConfigProvider';
 import { Logger } from './logger';
-import { resolveMeadowDebugAdapter } from './debugAdapterExecutable';
+import { resolveMeadowDebugAdapter } from './solDebugAdapterExecutable';
 import { SOLIDITY_MEADOW_TYPE } from './constants';
 import { ClrDebugConfigProvider } from './clrDebugConfigProvider';
 

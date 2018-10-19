@@ -3,6 +3,7 @@ using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto.Parameters;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 
@@ -20,7 +21,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
 
         #region Properties
         /// <summary>
-        /// secp256k1 is the ECDSA curve used in Ethereum signing. This is a bound for part of a public key which it should not exceed.
+        /// The elliptic curve order of the secp256k1 curve. This is a number which when multiplied to any other point, yields the point at infinity.
         /// </summary>
         public static BigInteger N { get; }
         /// <summary>

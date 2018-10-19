@@ -47,11 +47,17 @@ namespace Meadow.CoverageReport
         #region Functions
         public static T Create<T>(JObject node) where T : AstNode
         {
-            return (T)Create(node);
+            return Create(node) as T;
         }
 
         public static AstNode Create(JObject node)
         {
+            // If the node is null, return null.
+            if (node == null)
+            {
+                return null;
+            }
+
             // Obtain the node type
             string nodeTypeString = node.SelectToken("nodeType")?.Value<string>();
 

@@ -132,5 +132,28 @@ namespace Meadow.UnitTestTemplate.ParallelTest
             var gas = await _basicContract.emitTheEvent().EstimateGas();
             Assert.AreEqual(64709, gas);
         }
+
+        [TestMethod]
+        public async Task ZkSnarksTest()
+        {
+            // Deploy the contract
+            ZkSnarkTest snarkTest = await ZkSnarkTest.New(RpcClient, new TransactionParams { From = Accounts[0], Gas = 4712388 }, Accounts[0]);
+
+            // Test adding/multiplying
+            var testAddResult = await snarkTest.f().EstimateGas();
+            Assert.AreEqual(65114, testAddResult);
+
+            // Test simple negation + add == zero.
+            var testNegAddResult = await snarkTest.g().EstimateGas();
+            Assert.AreEqual(24219, testNegAddResult);
+
+            // Test simple pairing example
+            var testSimplePair = await snarkTest.pair().EstimateGas();
+            Assert.AreEqual(595435, testSimplePair);
+
+            // Test pairing
+            var testPairingResult = await snarkTest.verifyTx().EstimateGas();
+            Assert.AreEqual(1927502, testPairingResult);
+        }
     }
 }
