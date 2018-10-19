@@ -97,10 +97,10 @@ namespace Meadow.EVM.EVM.Precompiles
             Span<byte> messageData = new Span<byte>(evm.Message.Data);
 
             // We extract our signature information from message data (256-bit each)
-            Span<byte> hash = messageData.Slice(0, 32);
-            BigInteger v = BigIntegerConverter.GetBigInteger(messageData.Slice(32, 64));
-            BigInteger r = BigIntegerConverter.GetBigInteger(messageData.Slice(64, 96));
-            BigInteger s = BigIntegerConverter.GetBigInteger(messageData.Slice(96, 128));
+            Span<byte> hash = messageData.Slice(0, EVMDefinitions.WORD_SIZE);
+            BigInteger v = BigIntegerConverter.GetBigInteger(messageData.Slice(32, EVMDefinitions.WORD_SIZE));
+            BigInteger r = BigIntegerConverter.GetBigInteger(messageData.Slice(64, EVMDefinitions.WORD_SIZE));
+            BigInteger s = BigIntegerConverter.GetBigInteger(messageData.Slice(96, EVMDefinitions.WORD_SIZE));
 
             // Verify we have a low r, s, and a valid v.
             if (r >= Secp256k1Curve.N || s >= Secp256k1Curve.N || v < 27 || v > 28)
