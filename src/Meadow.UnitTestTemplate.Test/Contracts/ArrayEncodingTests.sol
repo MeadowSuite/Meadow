@@ -2,6 +2,11 @@ pragma solidity ^0.4.21;
 
 contract ArrayEncodingTests {
     
+    event MultiDimArrayEvent(uint64[1][2][3] _arr);
+    function emitMultiDimArrayEvent(uint64[1][2][3] input) public {
+        emit MultiDimArrayEvent(input);
+    }
+
     function takeUIntArrayStatic(uint[3] items) public {
         emit UIntEvent(items[0], items[1]);
     }

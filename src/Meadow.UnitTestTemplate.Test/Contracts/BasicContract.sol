@@ -98,33 +98,6 @@ contract BasicContract {
         return input;
     }
 
-    function arrayStaticMultiDim3D() returns (uint[2][6][3] result) {
-        uint x = 0;
-        for (uint i = 0; i < 2; i++)
-        {
-            for (uint j = 0; j < 6; j++)
-            {
-                for (uint k = 0; k < 3; k++)
-                {
-                    result[k][j][i] = x++;
-                }
-            }
-        }
-        return result;
-    }
-
-    function arrayStaticMultiDim2D() returns (uint[6][3] result) {
-        uint x = 0;
-        for (uint j = 0; j < 6; j++)
-        {
-            for (uint k = 0; k < 3; k++)
-            {
-                result[k][j] = x++;
-            }
-        }
-        return result;
-    }
-
     function echoMultipleStatic(uint32 p1, bool p2, address p3) public returns (uint32 r1, bool r2, address r3) {
         return (p1, p2, p3);
     }

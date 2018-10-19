@@ -341,7 +341,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 if (outputs[i].AbiType.IsArrayType && outputs[i].AbiType.ArrayDimensionSizes?.Length > 1)
                 {
                     var clrType = GetClrTypeName(outputs[i].AbiType, arrayAsEnumerable: false);
-                    decoder = $"DecoderFactory.GetMultiDimArrayDecoder<{clrType}>(\"{outputs[i].AbiType.SolidityName}\")";
+                    decoder = $"DecoderFactory.GetDecoder<{clrType}>(\"{outputs[i].AbiType.SolidityName}\")";
                 }
                 else if (outputs[i].AbiType.IsArrayType)
                 {
@@ -537,7 +537,11 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     clrType = GetClrTypeName(inputs[i].AbiType, arrayAsEnumerable: false);
                     dataTypes.Add(inputs[i].AbiType.SolidityName);
                     string decoder;
-                    if (inputs[i].AbiType.IsArrayType)
+                    if (inputs[i].AbiType.IsArrayType && inputs[i].AbiType.ArrayDimensionSizes?.Length > 1)
+                    {
+                        decoder = $"DecoderFactory.Decode<{clrType}>(dataTypes[{dataTypes.Count - 1}], ref dataBuff, out {inputs[i].Identifier});";
+                    }
+                    else if (inputs[i].AbiType.IsArrayType)
                     {
                         string arrayElementType = GetArrayElementClrTypeName(inputs[i].AbiType);
                         decoder = $"DecoderFactory.Decode(dataTypes[{dataTypes.Count - 1}], ref dataBuff, out {inputs[i].Identifier}, EncoderFactory.LoadEncoder(\"{inputs[i].AbiType.ArrayItemInfo.SolidityName}\", default({arrayElementType})));";

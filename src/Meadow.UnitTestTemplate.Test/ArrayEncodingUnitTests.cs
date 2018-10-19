@@ -17,6 +17,16 @@ namespace Meadow.UnitTestTemplate.Test
             _contract = await ArrayEncodingTests.New(RpcClient);
         }
 
+        [TestMethod]
+        public async Task MultiDimEvent()
+        {
+            var arr = ArrayExtensions.CreateJaggedArray<ulong[][][]>(1, 2, 3);
+            arr[0][0][0] = 1;
+            arr[0][1][2] = 2;
+            var e = await _contract.emitMultiDimArrayEvent(arr).FirstEventLog<ArrayEncodingTests.MultiDimArrayEvent>();
+            Assert.AreEqual(arr[0][0][0], e._arr[0][0][0]);
+            Assert.AreEqual(arr[0][1][2], e._arr[0][1][2]);
+        }
 
         [TestMethod]
         public async Task MultiDim()

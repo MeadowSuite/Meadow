@@ -10,7 +10,7 @@ namespace Meadow.Core.AbiEncoding
 {
     public static class DecoderFactory
     {
-        public static DecodeDelegate<TItem> GetMultiDimArrayDecoder<TItem>(AbiTypeInfo solidityType)
+        public static DecodeDelegate<TItem> GetDecoder<TItem>(AbiTypeInfo solidityType)
         {
             var encoder = EncoderFactory.LoadEncoder(solidityType);
             encoder.SetTypeInfo(solidityType);
@@ -108,6 +108,14 @@ namespace Meadow.Core.AbiEncoding
                 default:
                     throw new ArgumentException($"Encoder factor method for byte arrays called with type '{solidityType.Category}'");
             }
+        }
+
+        public static void Decode<TItem>(AbiTypeInfo solidityType, ref AbiDecodeBuffer buff, out TItem val)
+        {
+            var encoder = EncoderFactory.LoadEncoder(solidityType);
+            encoder.SetTypeInfo(solidityType);
+            encoder.DecodeObject(ref buff, out var objectVal);
+            val = (TItem)objectVal;
         }
 
         public static void Decode(AbiTypeInfo solidityType, ref AbiDecodeBuffer buff, out string val)
