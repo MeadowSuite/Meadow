@@ -1,4 +1,6 @@
 using Meadow.Contract;
+using Meadow.Core.AbiEncoding;
+using Meadow.Core.EthTypes;
 using Meadow.Core.Utils;
 using Meadow.EVM.Data_Types;
 using Meadow.JsonRpc.Types;

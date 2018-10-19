@@ -28,18 +28,20 @@ namespace Meadow.SolCodeGen.CodeGenerators
         readonly string _solSourceDir;
         readonly SolcNet.DataDescription.Output.Contract _contract;
         readonly ContractInfo _contractInfo;
+        readonly List<GeneratedEventMetadata> _eventMetadata;
 
         static readonly string JsonRpcClientType = typeof(IJsonRpcClient).FullName;
 
         static readonly Regex NewLineRegex = new Regex(@"\r\n|\n\r|\n|\r");
 
-        public ContractGenerator(ContractInfo contractInfo, string solSourceDir, string @namespace) : base(@namespace)
+        public ContractGenerator(ContractInfo contractInfo, string solSourceDir, string @namespace, List<GeneratedEventMetadata> eventMetadata) : base(@namespace)
         {
             _contractInfo = contractInfo;
             _contractSolFileName = contractInfo.SolFile;
             _contractName = contractInfo.ContractName;
             _contract = contractInfo.ContractOutput;
             _solSourceDir = solSourceDir;
+            _eventMetadata = eventMetadata;
         }
 
         protected override string GenerateUsingDeclarations()
@@ -61,12 +63,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
         protected override string GenerateClassDef()
         {
             List<string> eventTypes = new List<string>();
-            foreach (var item in _contract.Abi)
+            foreach (var item in _eventMetadata)
             {
-                if (item.Type == AbiType.Event)
-                {
-                    eventTypes.Add($"typeof({_namespace}.{_contractName}.{item.Name})");
-                }
+                eventTypes.Add($"typeof({item.ClrTypeFullName})");
             }
 
             string eventTypesString = string.Empty;
@@ -130,12 +129,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
             template.AppendLine(GenerateConstructor(constructorAbi));
 
             // Then events
-            foreach (var item in _contract.Abi)
+            foreach (var item in _eventMetadata)
             {
-                if (item.Type == AbiType.Event)
-                {
-                    template.AppendLine(GenerateEvent(item));
-                }
+                template.AppendLine(GenerateEvent(item));
             }
 
             // Then functions
@@ -170,11 +166,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 {
                     var input = inputs[i];
                     string encoderLine;
-                    if (input.AbiType.IsMultiDimensionalArray)
-                    {
-                        encoderLine = $"EncoderFactory.LoadMultiDimArrayEncoder(\"{input.SolidityTypeName}\", {input.Identifier})";
-                    }
-                    else if (input.AbiType.IsArrayType)
+                    if (input.AbiType.IsArrayType)
                     {
                         string arrayElementType = GetArrayElementClrTypeName(input.AbiType);
                         string arrayItemEncoder = $"EncoderFactory.LoadEncoder(\"{input.AbiType.ArrayItemInfo.SolidityName}\", default({arrayElementType}))";
@@ -295,9 +287,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 {
                     var input = inputs[i];
                     string encoderLine;
-                    if (input.AbiType.IsMultiDimensionalArray)
+                    if (input.AbiType.IsArrayType && input.AbiType.ArrayDimensionSizes?.Length > 1)
                     {
-                        encoderLine = $"EncoderFactory.LoadMultiDimArrayEncoder(\"{input.SolidityTypeName}\", {input.Identifier})";
+                        encoderLine = $"EncoderFactory.LoadEncoderNonGeneric(\"{input.SolidityTypeName}\", {input.Identifier})";
                     }
                     else if (input.AbiType.IsArrayType)
                     {
@@ -342,10 +334,10 @@ namespace Meadow.SolCodeGen.CodeGenerators
             for (var i = 0; i < outputs.Length; i++)
             {
                 string decoder;
-                if (outputs[i].AbiType.IsMultiDimensionalArray)
+                if (outputs[i].AbiType.IsArrayType && outputs[i].AbiType.ArrayDimensionSizes?.Length > 1)
                 {
-                    var clrType = GetArrayElementClrTypeName(outputs[i].AbiType);
-                    decoder = $"DecoderFactory.GetMultiDimArrayDecoder<{clrType}>(\"{outputs[i].AbiType.SolidityName}\")";
+                    var clrType = GetClrTypeName(outputs[i].AbiType, arrayAsEnumerable: false);
+                    decoder = $"DecoderFactory.GetDecoder<{clrType}>(\"{outputs[i].AbiType.SolidityName}\")";
                 }
                 else if (outputs[i].AbiType.IsArrayType)
                 {
@@ -504,8 +496,10 @@ namespace Meadow.SolCodeGen.CodeGenerators
             return NewLineRegex.Replace(line, $" <para/>");
         }
 
-        string GenerateEvent(Abi eventAbi)
+        string GenerateEvent(GeneratedEventMetadata eventMetadata)
         {
+            Abi eventAbi = eventMetadata.AbiItem;
+
             var inputs = GenerateInputs(eventAbi.Inputs);
 
             string[] propertyLines = new string[eventAbi.Inputs.Length];
@@ -541,10 +535,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     clrType = GetClrTypeName(inputs[i].AbiType, arrayAsEnumerable: false);
                     dataTypes.Add(inputs[i].AbiType.SolidityName);
                     string decoder;
-                    if (inputs[i].AbiType.IsMultiDimensionalArray)
+                    if (inputs[i].AbiType.IsArrayType && inputs[i].AbiType.ArrayDimensionSizes?.Length > 1)
                     {
-                        var arrayItemClrType = GetArrayElementClrTypeName(inputs[i].AbiType);
-                        decoder = $"DecoderFactory.GetMultiDimArrayDecoder<{arrayItemClrType}>(\"{inputs[i].AbiType.SolidityName}\")(dataTypes[{dataTypes.Count - 1}], ref dataBuff, out {inputs[i].Identifier});";
+                        decoder = $"DecoderFactory.Decode<{clrType}>(dataTypes[{dataTypes.Count - 1}], ref dataBuff, out {inputs[i].Identifier});";
                     }
                     else if (inputs[i].AbiType.IsArrayType)
                     {
@@ -602,11 +595,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
             string eventSignatureHash = AbiSignature.GetSignatureHash(eventAbi);
 
-            var eventName = ReservedKeywords.EscapeIdentifier(eventAbi.Name);
-
             return $@"
                 [{typeof(EventSignatureAttribute).FullName}(SIGNATURE)]
-                public class {eventName} : {typeof(EventLog).FullName}
+                public class {eventMetadata.ClrTypeName} : {typeof(EventLog).FullName}
                 {{
                     public override string EventName => ""{eventAbi.Name}"";
                     public override string EventSignature => SIGNATURE;
@@ -616,7 +607,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     // Event log parameters.
                     {propertyLinesString}
 
-                    public {eventAbi.Name}({typeof(FilterLogObject).FullName} log) : base(log)
+                    public {eventMetadata.ClrTypeName}({typeof(FilterLogObject).FullName} log) : base(log)
                     {{
                         // Decode the log topic args.
                         Span<byte> topicBytes = MemoryMarshal.AsBytes(new Span<{typeof(Meadow.Core.EthTypes.Data).FullName}>(log.Topics).Slice(1));
@@ -675,32 +666,44 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
         public static string GetClrTypeName(AbiTypeInfo abiType, bool arrayAsEnumerable)
         {
-            if (abiType.IsArrayType || abiType.IsSpecialBytesType)
+            if (abiType.IsArrayType)
             {
                 string arrayItemTypeName;
                 if (abiType.IsSpecialBytesType)
                 {
-                    arrayItemTypeName = typeof(byte).FullName;
+                    arrayItemTypeName = typeof(byte).FullName + "[]";
+                }
+                else if (abiType.ArrayItemInfo.ClrType.IsGenericType && typeof(IEnumerable).IsAssignableFrom(abiType.ArrayItemInfo.ClrType))
+                {
+                    arrayItemTypeName = GetClrTypeName(abiType.ArrayItemInfo, false);
                 }
                 else
                 {
-                    if (abiType.ArrayItemInfo.ClrType.IsGenericType && typeof(IEnumerable).IsAssignableFrom(abiType.ArrayItemInfo.ClrType))
-                    {
-                        arrayItemTypeName = GetClrTypeName(abiType.ArrayItemInfo, false);
-                    }
-                    else
-                    {
-                        arrayItemTypeName = abiType.ArrayItemInfo.ClrTypeName;
-                    }
+                    arrayItemTypeName = abiType.ArrayItemInfo.ClrTypeName;
                 }
 
-                if (arrayAsEnumerable)
+                if (abiType.ArrayDimensionSizes != null && abiType.ArrayDimensionSizes.Length > 1)
+                {
+                    return arrayItemTypeName + string.Join(string.Empty, Enumerable.Repeat("[]", abiType.ArrayDimensionSizes.Length));
+                }
+                else if (arrayAsEnumerable)
                 {
                     return "System.Collections.Generic.IEnumerable<" + arrayItemTypeName + ">";
                 }
                 else
                 {
                     return arrayItemTypeName + "[]";
+                }
+            }
+            else if (abiType.IsSpecialBytesType)
+            {
+                if (arrayAsEnumerable)
+                {
+                    return "System.Collections.Generic.IEnumerable<" + typeof(byte).FullName + ">";
+                }
+                else
+                {
+                    return typeof(byte).FullName + "[]";
                 }
             }
             else

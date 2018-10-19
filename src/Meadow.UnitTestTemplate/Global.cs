@@ -168,7 +168,7 @@ namespace Meadow.UnitTestTemplate
         {
             // Perform report generation on progrma exit.
             // (The cleanup method handles itself when being called multiple times).
-            Cleanup().GetAwaiter().GetResult();
+            GenerateCoverageReport().GetAwaiter().GetResult();
             _debuggerCleanup?.Invoke();
         }
 

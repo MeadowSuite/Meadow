@@ -7,7 +7,7 @@ using System.Linq;
 namespace Meadow.Core.AbiEncoding.Encoders
 {
 
-    public class BytesEncoder : AbiTypeEncoder<IEnumerable<byte>>
+    public class BytesEncoder : AbiTypeEncoder<IEnumerable<byte>>, IAbiTypeEncoder<byte[]>
     {
         public override void SetTypeInfo(AbiTypeInfo info)
         {
@@ -18,42 +18,47 @@ namespace Meadow.Core.AbiEncoding.Encoders
             }
         }
 
+        public void SetValue(in byte[] val)
+        {
+            base.SetValue(val);
+        }
+
         public override void SetValue(object val)
         {
             switch (val)
             {
                 case IEnumerable<byte> e:
-                    SetValue(e);
+                    base.SetValue(e);
                     break;
                 case string str:
-                    SetValue(HexUtil.HexToBytes(str));
+                    base.SetValue(HexUtil.HexToBytes(str));
                     break;
                 case byte n:
-                    SetValue(new byte[] { n });
+                    base.SetValue(new byte[] { n });
                     break;
                 case sbyte n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case short n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case ushort n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case int n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case uint n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case long n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case ulong n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 case UInt256 n:
-                    SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
+                    base.SetValue(HexConverter.GetHexFromInteger(n).HexToBytes());
                     break;
                 default:
                     ThrowInvalidTypeException(val);
@@ -77,6 +82,7 @@ namespace Meadow.Core.AbiEncoding.Encoders
             dataSpan.CopyTo(buffer);
             buffer = buffer.Slice(dataSpan.Length);
         }
+        
 
         public override void Encode(ref AbiEncodeBuffer buff)
         {
@@ -118,6 +124,12 @@ namespace Meadow.Core.AbiEncoding.Encoders
         }
 
         public override void Decode(ref AbiDecodeBuffer buff, out IEnumerable<byte> val)
+        {
+            Decode(ref buff, out byte[] result);
+            val = result;
+        }
+
+        public void Decode(ref AbiDecodeBuffer buff, out byte[] val)
         {
             var uintEncoder = UInt256Encoder.UncheckedEncoders.Get();
             try

@@ -1,4 +1,5 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.25;
+pragma experimental ABIEncoderV2;
 
 /// @title An example contract title
 /// @author Matthew Little
@@ -21,6 +22,15 @@ contract BasicContract {
     event TestEvent7( uint64 indexed _id, uint _val);
     event TestEvent8( uint64 indexed _id, uint _val);
     event EmptyEvent();
+
+    event DuplicateEvent(uint64 _p1);
+    event DuplicateEvent(uint256 _p1);
+    event DuplicateEvent(string _p1, string _p2);
+    event DuplicateEvent(uint32[] _p1);
+    event DuplicateEvent(uint32[4] _p1);
+    event DuplicateEvent(uint32[5] _p1);
+    event DuplicateEvent(uint32[5][7][9] _p1);
+    event DuplicateEvent(uint32[5][][9] _p1);
 
 	string public givenName;
 	bool public enabledThing;

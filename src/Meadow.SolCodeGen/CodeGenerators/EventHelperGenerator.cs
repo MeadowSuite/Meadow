@@ -41,14 +41,14 @@ namespace Meadow.SolCodeGen.CodeGenerators
             for (var i = 0; i < _eventMetadata.Count; i++)
             {
                 var eventLookupKey = $"{_eventMetadata[i].EventSignatureHash}_{_eventMetadata[i].IndexedArgsCounts.ToString("00", CultureInfo.InvariantCulture)}";
-                string caseStmt = $"case \"{eventLookupKey}\": return new {_eventMetadata[i].EventClrTypeName}(log);";
+                string caseStmt = $"case \"{eventLookupKey}\": return new {_eventMetadata[i].ClrTypeFullName}(log);";
                 if (!eventParsers.ContainsKey(eventLookupKey))
                 {
                     eventParsers.Add(eventLookupKey, caseStmt);
                 }
                 else
                 {
-                    string commentLine = $"{Environment.NewLine}// Event with duplicate signature: {_eventMetadata[i].EventClrTypeName}";
+                    string commentLine = $"{Environment.NewLine}// Event with duplicate signature: {_eventMetadata[i].ClrTypeFullName}";
                     eventParsers[eventLookupKey] += commentLine;
                 }
             }
