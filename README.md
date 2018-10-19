@@ -107,6 +107,13 @@ Solidity debugger extension for Visual Studio Code supporting breakpoints, stepp
     </tr>
     <tr>
       <td valign="top">
+        <a href="/src/Meadow.TestNode.Host">Meadow.TestNode.Host</a><br><br>
+        <a href="https://www.nuget.org/packages/Meadow.TestNode.Host"><img src="https://img.shields.io/nuget/v/Meadow.TestNode.Host.svg?colorB=blue"></a>
+      </td>
+      <td>Standalone test RPC node/server used as a command line tool.</td>
+    </tr>
+    <tr>
+      <td valign="top">
         <a href="/src/Meadow.SolCodeGen">Meadow.SolCodeGen</a><br><br>
         <a href="https://www.nuget.org/packages/Meadow.SolCodeGen"><img src="https://img.shields.io/nuget/v/Meadow.SolCodeGen.svg?colorB=blue"></a>
       </td>
