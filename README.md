@@ -44,7 +44,7 @@ Open your project directory in VSCode or your favorite C# IDE.
 
 * [Solidity Coverage Report](https://github.com/MeadowSuite/Meadow/wiki/Coverage-Report)
 
-* [Configuration](https://github.com/MeadowSuite/Meadow/wiki/Configuration) - Specifying gas defaults, solc version, solc optimizer, accounts, RPC host, etc..
+* [Configuration](https://github.com/MeadowSuite/Meadow/wiki/Configuration) - Specifying gas defaults, solc version, solc optimizer, accounts, RPC host, unit test parallelism, etc..
 
 * [Usage examples; miscellaneous](https://github.com/MeadowSuite/Meadow/wiki/Usage-Examples) - ABI & RLP encoding, ECSign / ECRecover, testing reverts, etc..
 ---
