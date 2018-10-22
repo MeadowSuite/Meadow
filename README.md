@@ -38,7 +38,7 @@ Open your project directory in VSCode or your favorite C# IDE.
 
 * [Writing unit tests](https://github.com/MeadowSuite/Meadow/wiki/Getting-Started-with-Unit-Tests) - getting started writing tests against Solidity contracts and generating code coverage reports.
 
-* [Using the CLI](src/Meadow.Cli/README.md) - contract deployment and interaction against testnode or production.
+* [Using the CLI](https://github.com/MeadowSuite/Meadow/wiki/Using-the-CLI) - contract deployment and interaction against testnode or production.
 
 * [VSCode Solidity Debugger](https://github.com/MeadowSuite/Meadow/wiki/Using-the-VSCode-Solidity-Debugger)
 
