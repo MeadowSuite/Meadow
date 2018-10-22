@@ -1,10 +1,7 @@
 ﻿using Meadow.Core.Cryptography.Ecdsa;
 using Meadow.Core.Utils;
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Meadow.Networking.Protocol.Addressing
@@ -30,6 +27,10 @@ namespace Meadow.Networking.Protocol.Addressing
         public const int NODE_ID_SIZE = EthereumEcdsa.PUBLIC_KEY_SIZE;
         #endregion
 
+        #region Fields
+        public string _nodeUri;
+        #endregion
+
         #region Properties
         /// <summary>
         /// The identifier for this node, which is represented by a hex string of the user's public key.
@@ -47,12 +48,10 @@ namespace Meadow.Networking.Protocol.Addressing
         /// The UDP port used for broadcasting/discovery.
         /// </summary>
         public int UDPDiscoveryPort { get; }
-
-        public string NodeUri { get; }
         #endregion
 
         #region Constructor
-        public ENode(string nodeUri)
+        public ENode(string nodeUriStr)
         {
             // We design our regular expression to capture data as follows:
             // 1) "^\s*{URI_SCHEME}\:\/\/" : Verifies the underlying URI scheme and the formatting surrounding it. Allows leading whitespace.
@@ -68,7 +67,7 @@ namespace Meadow.Networking.Protocol.Addressing
             Regex regularExpression = new Regex($@"^\s*{URI_SCHEME}\:\/\/([a-fA-F0-9]+)\@(\S+)\:(\d+)(?:\?discport=(\d+))?\s*$", RegexOptions.IgnoreCase);
 
             // Match the regular expression pattern against a text string.
-            Match match = regularExpression.Match(nodeUri);
+            Match match = regularExpression.Match(nodeUriStr);
 
             // Verify we matched, if not, then there was no location in the type to extract, instead the whole string is likely just base type.
             if (!match.Success)
@@ -120,9 +119,11 @@ namespace Meadow.Networking.Protocol.Addressing
                 }
             }
 
-            // Set our node URI
-            NodeUri = nodeUri;
+            // Next, we format our uri string
+            _nodeUri = BuildUriString();
         }
+
+        public ENode(Uri nodeUri) : this(nodeUri.ToString()) { }
 
         public ENode(byte[] nodeId, IPAddress address, int port) : this(nodeId, address, port, port) { }
 
@@ -135,7 +136,19 @@ namespace Meadow.Networking.Protocol.Addressing
             UDPDiscoveryPort = udpPort;
 
             // Next, we format our uri string
+            _nodeUri = BuildUriString();
+        }
+        #endregion
 
+        #region Functions
+        public static ENode Parse(string nodeUri)
+        {
+            // Try to parse an enode from this uri
+            return new ENode(nodeUri);
+        }
+
+        private string BuildUriString()
+        {
             // Obtain the username/node id as a string
             string nodeIdStr = NodeId.ToHexString(false);
 
@@ -148,18 +161,32 @@ namespace Meadow.Networking.Protocol.Addressing
             {
                 discPortStr = $"?discport={UDPDiscoveryPort}";
             }
-           
-            // Format the enode string.
-            NodeUri = $"{URI_SCHEME}://{nodeIdStr}@{endpointStr}{discPortStr}";
-        }
-        #endregion
 
-        #region Functions
+            // Format the enode string.
+            return $"{URI_SCHEME}://{nodeIdStr}@{endpointStr}{discPortStr}";
+        }
+
         public override string ToString()
         {
             // Return our uri
-            return NodeUri;
+            return _nodeUri;
         }
+
+        public override bool Equals(object obj)
+        {
+            // Determine if the object is an enode.
+            return obj is ENode other ? (_nodeUri == other._nodeUri) : false;
+        }
+
+        public override int GetHashCode()
+        {
+            return ~_nodeUri.GetHashCode();
+        }
+        #endregion
+
+        #region Operators
+        public static bool operator !=(ENode left, ENode right) => !(left == right);
+        public static bool operator ==(ENode left, ENode right) => left.Equals(right);
         #endregion
     }
 }
