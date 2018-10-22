@@ -265,15 +265,40 @@ namespace Meadow.SolCodeGen
             #region Generated hashes for solidity sources
             sw.Restart();
 
-            ContractInfo[] contractInfos = solcOutput.ContractsFlattened
-                .Select(c => new ContractInfo(
+            ContractInfo[] contractInfos = new ContractInfo[solcOutput.ContractsFlattened.Length];
+            var flattenedContracts = solcOutput.ContractsFlattened.OrderBy(c => c.SolFile).ToArray();
+
+            for (var i = 0; i < contractInfos.Length; i++)
+            {
+                // Check if any previous contracts have the same name as this one.
+                var c = flattenedContracts[i];
+                int dupNames = 0;
+                for (var f = 0; f < i; f++)
+                {
+                    if (flattenedContracts[f].ContractName == c.ContractName)
+                    {
+                        dupNames++;
+                    }
+                }
+
+                // If there are duplicate contract names, prepend a unique amount of underscore suffixes.
+                string dupeNameSuffix;
+                if (dupNames > 0)
+                {
+                    dupeNameSuffix = new string(Enumerable.Repeat('_', dupNames).ToArray());
+                }
+                else
+                {
+                    dupeNameSuffix = string.Empty;
+                }
+
+                contractInfos[i] = new ContractInfo(
                     Util.GetRelativeFilePath(_solSourceDirectory, c.SolFile),
-                    c.ContractName,
+                    c.ContractName + dupeNameSuffix,
                     c.Contract,
                     GetSourceHashesXor(c.Contract),
-                    c.Contract.Evm.Bytecode.Object))
-                .OrderBy(c => c.SolFile)
-                .ToArray();
+                    c.Contract.Evm.Bytecode.Object);
+            }
 
 
             for (var i = 0; i < contractInfos.Length; i++)
