@@ -225,3 +225,8 @@ contract BasicContract {
     }
 
 }
+
+
+contract DupeContractTest {
+
+}

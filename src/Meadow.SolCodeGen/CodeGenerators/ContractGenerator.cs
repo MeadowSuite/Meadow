@@ -82,7 +82,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
             string extraSummaryDoc = GetContractSummaryXmlDoc();
 
             return $@"
-                /// <summary>{extraSummaryDoc}</summary>
+                /// <summary>From file {_contractSolFileName}<para/>{extraSummaryDoc}</summary>
                 [{typeof(SolidityContractAttribute).FullName}(typeof({_contractName}), CONTRACT_SOL_FILE, CONTRACT_NAME, CONTRACT_BYTECODE_HASH, CONTRACT_BYTECODE_DEPLOYED_HASH)]
                 public class {_contractName} : {typeof(BaseContract).FullName}
                 {{
