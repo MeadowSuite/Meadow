@@ -27,7 +27,7 @@ namespace Meadow.EVM.Test
             }
         }
 
-        [Fact(Skip = "Too intensive for build server")]
+        [Fact]
         public void TestCacheGenerationSmall()
         {
             // Generate a cache for our future block.
@@ -49,7 +49,7 @@ namespace Meadow.EVM.Test
             AssertSHA1("CBFD542DF1457676C766997504074B7FB126C05C", cache.Span);
         }
 
-        [Fact(Skip = "Too intensive for build server")]
+        [Fact]
         public void TestPartialDataSet()
         {
             // This is based off a cut-up version of the full set generator. Thus if that is updated, this should be too! Look at the Full Data Set Test for more info about how full data sets are generated.
