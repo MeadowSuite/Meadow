@@ -121,8 +121,6 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
             {
                 return Double().Multiply(n / 2).Add(this);
             }
-            // Return a new vector with negated y.
-            return new FpVector3<T>(X, Y.Negate(), Z);
         }
 
         public FpVector3<T> Negate()

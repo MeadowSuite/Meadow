@@ -2,12 +2,9 @@
 <configuration>
     <appSettings>
         <clear />
-        <add key="SolcVersion" value="0.4.24" />
-        <add key="DefaultGasLimit" value="500000" />
-        <add key="DefaultGasPrice" value="100000000" />
+        <add key="SolcVersion" value="0.4.25" />
         <add key="AccountCount" value="25" />
         <add key="AccountBalance" value="1500" />
         <add key="NetworkHost" value="https://rinkeby.infura.io:443" />
-        <add key="NetworkPort" value="90000" />
     </appSettings>
 </configuration>

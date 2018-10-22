@@ -15,7 +15,9 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
     {
         #region Properties
         public ICollection<BigInteger> Coefficients { get; }
+
         public abstract ICollection<BigInteger> ModulusCoefficients { get; }
+
         public int Degree
         {
             get
@@ -23,7 +25,9 @@ namespace Meadow.Core.Cryptography.ECDSA.Bn128
                 return ModulusCoefficients.Count;
             }
         }
+
         public abstract T Zero { get; }
+
         public abstract T One { get; }
         #endregion
 
