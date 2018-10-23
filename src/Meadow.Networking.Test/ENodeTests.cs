@@ -1,6 +1,7 @@
 using Meadow.Core.Cryptography.Ecdsa;
 using Meadow.Core.Utils;
 using Meadow.Networking.Protocol.Addressing;
+using Meadow.Networking.Extensions;
 using System;
 using System.Net;
 using Xunit;
@@ -53,7 +54,7 @@ namespace Meadow.Networking.Test
             // If we are to assert the created uri, we do that now
             if (assertENodeUri)
             {
-                AssertENodeUri(actualStr, node.NodeId, node.Address, node.TCPListeningPort, node.UDPDiscoveryPort);
+                AssertENodeUri(actualStr, node.NodeId, IPAddress.Parse(node.Address), node.TCPListeningPort, node.UDPDiscoveryPort);
             }
         }
 
@@ -65,7 +66,7 @@ namespace Meadow.Networking.Test
             // Assert all components
             Assert.Equal(nodeId, node.NodeId);
             Assert.Equal(ENodeUri.NODE_ID_SIZE, node.NodeId.Length);
-            Assert.Equal(address, node.Address);
+            Assert.Equal(address.ToUriCompatibleString(), node.Address);
             Assert.Equal(tcpPort, node.TCPListeningPort);
             Assert.Equal(udpPort, node.UDPDiscoveryPort);
         }
@@ -116,7 +117,7 @@ namespace Meadow.Networking.Test
 
             // Verify the components
             Assert.Equal(expectedNodeId, node.NodeId);
-            Assert.Equal(expectedIPAddress, node.Address);
+            Assert.Equal(expectedIPAddress.ToUriCompatibleString(), node.Address);
             Assert.Equal(expectedTcpPort, node.TCPListeningPort);
             Assert.Equal(expectedUdpPort, node.UDPDiscoveryPort);
         }
@@ -140,7 +141,7 @@ namespace Meadow.Networking.Test
 
             // Verify the components
             Assert.Equal(expectedNodeId, node.NodeId);
-            Assert.Equal(expectedIPAddress, node.Address);
+            Assert.Equal(expectedIPAddress.ToUriCompatibleString(), node.Address);
             Assert.Equal(expectedTcpPort, node.TCPListeningPort);
             Assert.Equal(expectedUdpPort, node.UDPDiscoveryPort);
         }
@@ -164,7 +165,7 @@ namespace Meadow.Networking.Test
 
             // Verify the components
             Assert.Equal(expectedNodeId, node.NodeId);
-            Assert.Equal(expectedIPAddress, node.Address);
+            Assert.Equal(expectedIPAddress.ToUriCompatibleString(), node.Address);
             Assert.Equal(expectedTcpPort, node.TCPListeningPort);
             Assert.Equal(expectedUdpPort, node.UDPDiscoveryPort);
         }
@@ -225,9 +226,6 @@ namespace Meadow.Networking.Test
 
             // Verify our node fails with the incorrect size node id. (0x41 instead of expected 0x40)
             Assert.Throws<ArgumentException>(() => { ENodeUri node = new ENodeUri("enode://0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f4041@101.101.101.101:800?discport=801"); });
-
-            // Verify our node fails with the invalid IP.
-            Assert.Throws<ArgumentException>(() => { ENodeUri node = new ENodeUri("enode://0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40@256.101.101.101:800?discport=801"); });
 
             // Verify our node fails with the invalid TCP port. (Too Big)
             Assert.Throws<ArgumentException>(() => { ENodeUri node = new ENodeUri("enode://0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40@256.101.101.101:80000?discport=801"); });

@@ -254,7 +254,43 @@ namespace Meadow.Core.Cryptography.Ecdsa
                 // Return them.
                 return ((byte)recoveryId, BigIntegerConverter.GetBigInteger(r), BigIntegerConverter.GetBigInteger(s));
             }
-            
+        }
+
+        /// <summary>
+        /// Computes a shared secret among two keys using Elliptic Curve Diffie-Hellman ("ECDH"). Assumes this instance is of the private key, and requires a public key as input.
+        /// </summary>
+        /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
+        /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
+        public override byte[] ComputeSharedSecret(EthereumEcdsa publicKey)
+        {
+            // Verify the types of keys
+            if (KeyType != EthereumEcdsaKeyType.Private)
+            {
+                throw new ArgumentException("Could not calculate ECDH shared secret because called upon key was not a private key.");
+            }
+
+            using (AutoObjectPool<Secp256k1>.Get(out var secp256k1))
+            {
+                // Allocate memory for the signature and call our sign function.
+                byte[] result = new byte[ECDH_SHARED_SECRET_SIZE];
+
+                // Define the public key array
+                Span<byte> parsedPublicKeyData = new byte[PUBLIC_KEY_SIZE];
+
+                // Parse our public key from the serialized data.
+                if (!secp256k1.PublicKeyParse(parsedPublicKeyData, publicKey.ToPublicKeyArray(false, false)))
+                {
+                    throw new Exception("Unmanaged EC library failed to deserialize public key.");
+                }
+
+                // Calculate the shared secret
+                if (!secp256k1.Ecdh(result, publicKey.ToPublicKeyArray(false, true), ToPrivateKeyArray()))
+                {
+                    throw new Exception("Failed to compute shared secret.");
+                }
+
+                return result;
+            }
         }
 
         /// <summary>

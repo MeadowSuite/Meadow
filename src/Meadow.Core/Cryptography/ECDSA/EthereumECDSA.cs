@@ -25,6 +25,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
         public const int PRIVATE_KEY_SIZE = 32;
         public const int PUBLIC_KEY_SIZE = 64;
         public const int SIGNATURE_RS_SIZE = 64;
+        public const int ECDH_SHARED_SECRET_SIZE = 32;
 
         /// <summary>
         /// The type of key that is available in this ECDSA instance.
@@ -61,6 +62,13 @@ namespace Meadow.Core.Cryptography.Ecdsa
         public abstract (byte RecoveryID, BigInteger r, BigInteger s) SignData(Span<byte> hash);
 
         /// <summary>
+        /// Computes a shared secret among two keys using Elliptic Curve Diffie-Hellman ("ECDH"). Assumes this instance is of the private key, and requires a public key as input.
+        /// </summary>
+        /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
+        /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
+        public abstract byte[] ComputeSharedSecret(EthereumEcdsa publicKey);
+
+        /// <summary>
         /// Initializes an ECDSA instance given a key and the type of key which it is.
         /// </summary>
         /// <param name="key">The key data for either a public or private key.</param>
@@ -81,8 +89,15 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// Creates an ECDSA instance with a freshly generated keypair.
         /// </summary>
         /// <returns>Returns the ECDSA instance which has the generated keypair.</returns>
-        public static EthereumEcdsa Generate(IAccountDerivation accountFactory)
+        public static EthereumEcdsa Generate(IAccountDerivation accountFactory = null)
         {
+            // If the account factory is null, we use a random factory
+            if (accountFactory == null)
+            {
+                accountFactory = new SystemRandomAccountDerivation();
+            }
+
+            // Determine which library to use
             if (UseNativeLib)
             {
                 return EthereumEcdsaNative.Generate(accountFactory);

@@ -1,6 +1,8 @@
 ﻿using Meadow.Core.Cryptography.Ecdsa;
 using Meadow.Core.Utils;
+using Meadow.Networking.Extensions;
 using System;
+using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -37,9 +39,9 @@ namespace Meadow.Networking.Protocol.Addressing
         /// </summary>
         public byte[] NodeId { get; }
         /// <summary>
-        /// The IP address to reach the node at.
+        /// The host address to reach the node at. Can represent an IP Address or Host name.
         /// </summary>
-        public IPAddress Address { get; }
+        public string Address { get; }
         /// <summary>
         /// The TCP port which is used to listen for incoming connections on.
         /// </summary>
@@ -84,16 +86,8 @@ namespace Meadow.Networking.Protocol.Addressing
                 throw new ArgumentException($"Invalid NodeId provided when parsing ENode URI format. Expected length is {NODE_ID_SIZE} bytes. Given {NodeId.Length} bytes.");
             }
 
-            // Parse the address component of the uri
-            string ipAddressStr = match.Groups[2].Value;
-            if (IPAddress.TryParse(ipAddressStr, out IPAddress address))
-            {
-                Address = address;
-            }
-            else
-            {
-                throw new ArgumentException($"Invalid IP Address provided when parsing ENode URI format. Given: {ipAddressStr}");
-            }
+            // Set the address component of the uri
+            Address = match.Groups[2].Value;
 
             // Parse the TCP listening port (and set the UDP one as the same by default, if one is explicitly stated later, it'll be overriden).
             if (ushort.TryParse(match.Groups[3].Value, out ushort tcpListeningPort))
@@ -125,9 +119,9 @@ namespace Meadow.Networking.Protocol.Addressing
 
         public ENodeUri(Uri nodeUri) : this(nodeUri.ToString()) { }
 
-        public ENodeUri(byte[] nodeId, IPAddress address, int port) : this(nodeId, address, port, port) { }
+        public ENodeUri(byte[] nodeId, string address, int port) : this(nodeId, address, port, port) { }
 
-        public ENodeUri(byte[] nodeId, IPAddress address, int tcpPort, int udpPort)
+        public ENodeUri(byte[] nodeId, string address, int tcpPort, int udpPort)
         {
             // Set our properties
             NodeId = nodeId;
@@ -138,6 +132,10 @@ namespace Meadow.Networking.Protocol.Addressing
             // Next, we format our uri string
             _nodeUri = BuildUriString();
         }
+
+        public ENodeUri(byte[] nodeId, IPAddress address, int port) : this(nodeId, address.ToUriCompatibleString(), port, port) { }
+
+        public ENodeUri(byte[] nodeId, IPAddress address, int tcpPort, int udpPort) : this(nodeId, address.ToUriCompatibleString(), tcpPort, udpPort) { }
         #endregion
 
         #region Functions
@@ -158,18 +156,15 @@ namespace Meadow.Networking.Protocol.Addressing
             // Obtain the username/node id as a string
             string nodeIdStr = NodeId.ToHexString(false);
 
-            // Obtain the 
-            string endpointStr = new IPEndPoint(Address, TCPListeningPort).ToString();
-
             // Obtain the remainder of the string (port string).
-            string discPortStr = "";
+            string discPortStr = TCPListeningPort.ToString(CultureInfo.InvariantCulture);
             if (TCPListeningPort != UDPDiscoveryPort)
             {
-                discPortStr = $"?discport={UDPDiscoveryPort}";
+                discPortStr += $"?discport={UDPDiscoveryPort}";
             }
 
             // Format the enode string.
-            return $"{URI_SCHEME}://{nodeIdStr}@{endpointStr}{discPortStr}";
+            return $"{URI_SCHEME}://{nodeIdStr}@{Address}:{discPortStr}";
         }
 
         public override string ToString()
