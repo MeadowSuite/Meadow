@@ -14,6 +14,7 @@ using System.Xml;
 
 namespace Meadow.UnitTestTemplate
 {
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class MSTestRunner
     {
         string[] _assemblies;

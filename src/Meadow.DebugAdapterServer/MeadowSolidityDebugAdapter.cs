@@ -18,27 +18,31 @@ using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.JsonRpc.Client;
 using System.Text;
 
+
 namespace Meadow.DebugAdapterServer
 {
-    class ExampleCustomRequestWithResponse : DebugRequestWithResponse<ExampleRequestArgs, ExampleRequestResponse>
-    {
-        public ExampleCustomRequestWithResponse() : base("customRequestExample")
-        {
-        }
-    }
-
-    class ExampleRequestArgs
-    {
-        public string SessionID { get; set; }
-    }
-
-    class ExampleRequestResponse : ResponseBody
-    {
-        public string Response { get; set; }
-    }
-
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class MeadowSolidityDebugAdapter : DebugAdapterBase
     {
+
+        class ExampleCustomRequestWithResponse : DebugRequestWithResponse<ExampleRequestArgs, ExampleRequestResponse>
+        {
+            public ExampleCustomRequestWithResponse() : base("customRequestExample")
+            {
+            }
+        }
+
+        class ExampleRequestArgs
+        {
+            public string SessionID { get; set; }
+        }
+
+        class ExampleRequestResponse : ResponseBody
+        {
+            public string Response { get; set; }
+        }
+
+
         #region Constants
         private string _contractsDirectory = "Contracts";
         private const int SIMULTANEOUS_TRACE_COUNT = 1;

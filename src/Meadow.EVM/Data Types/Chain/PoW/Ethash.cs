@@ -15,6 +15,8 @@ namespace Meadow.EVM.Data_Types.Chain.PoW
     /// <summary>
     /// Ethereum hash implementation used for hashing blocks and proof of work. Increased difficulty and use of memory/storage to avoid Application Specific Integrated Circuit ("ASIC") hashing advantages.
     /// </summary>
+    // Code coverage disabled while tests are disabled for performance reasons.
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public abstract class Ethash
     {
         // Source: https://github.com/ethereum/wiki/wiki/Ethash
