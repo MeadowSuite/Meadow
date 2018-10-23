@@ -14,7 +14,7 @@ namespace Meadow.Networking.Protocol.Addressing
     /// <summary>
     /// Represents the URI scheme for an Ethereum node.
     /// </summary>
-    public class ENode
+    public class ENodeUri
     {
         #region Constant
         /// <summary>
@@ -51,7 +51,7 @@ namespace Meadow.Networking.Protocol.Addressing
         #endregion
 
         #region Constructor
-        public ENode(string nodeUriStr)
+        public ENodeUri(string nodeUriStr)
         {
             // We design our regular expression to capture data as follows:
             // 1) "^\s*{URI_SCHEME}\:\/\/" : Verifies the underlying URI scheme and the formatting surrounding it. Allows leading whitespace.
@@ -123,11 +123,11 @@ namespace Meadow.Networking.Protocol.Addressing
             _nodeUri = BuildUriString();
         }
 
-        public ENode(Uri nodeUri) : this(nodeUri.ToString()) { }
+        public ENodeUri(Uri nodeUri) : this(nodeUri.ToString()) { }
 
-        public ENode(byte[] nodeId, IPAddress address, int port) : this(nodeId, address, port, port) { }
+        public ENodeUri(byte[] nodeId, IPAddress address, int port) : this(nodeId, address, port, port) { }
 
-        public ENode(byte[] nodeId, IPAddress address, int tcpPort, int udpPort)
+        public ENodeUri(byte[] nodeId, IPAddress address, int tcpPort, int udpPort)
         {
             // Set our properties
             NodeId = nodeId;
@@ -141,10 +141,16 @@ namespace Meadow.Networking.Protocol.Addressing
         #endregion
 
         #region Functions
-        public static ENode Parse(string nodeUri)
+        public static ENodeUri Parse(string nodeUriString)
         {
             // Try to parse an enode from this uri
-            return new ENode(nodeUri);
+            return new ENodeUri(nodeUriString);
+        }
+
+        public static ENodeUri Parse(Uri nodeUri)
+        {
+            // Try to parse an enode from this uri
+            return new ENodeUri(nodeUri.ToString());
         }
 
         private string BuildUriString()
@@ -175,7 +181,7 @@ namespace Meadow.Networking.Protocol.Addressing
         public override bool Equals(object obj)
         {
             // Determine if the object is an enode.
-            return obj is ENode other ? (_nodeUri == other._nodeUri) : false;
+            return obj is ENodeUri other ? (_nodeUri == other._nodeUri) : false;
         }
 
         public override int GetHashCode()
@@ -185,8 +191,8 @@ namespace Meadow.Networking.Protocol.Addressing
         #endregion
 
         #region Operators
-        public static bool operator !=(ENode left, ENode right) => !(left == right);
-        public static bool operator ==(ENode left, ENode right) => left.Equals(right);
+        public static bool operator !=(ENodeUri left, ENodeUri right) => !(left == right);
+        public static bool operator ==(ENodeUri left, ENodeUri right) => left.Equals(right);
         #endregion
     }
 }
