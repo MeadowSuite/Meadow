@@ -220,6 +220,39 @@ namespace Meadow.SolCodeGen
 
             Console.WriteLine("Writing generated output to directory: " + _generatedContractsDirectory);
 
+
+            // Initial pass through contracts to get the generated class and file names.
+            (string GeneratedContractName, string SolFile, SolcNet.DataDescription.Output.Contract Contract)[] contracts = new (string, string, SolcNet.DataDescription.Output.Contract)[solcOutput.ContractsFlattened.Length];
+            var flattenedContracts = solcOutput.ContractsFlattened.OrderBy(c => c.SolFile).ToArray();
+
+            for (var i = 0; i < contracts.Length; i++)
+            {
+                // Check if any previous contracts have the same name as this one.
+                var c = flattenedContracts[i];
+                int dupNames = 0;
+                for (var f = 0; f < i; f++)
+                {
+                    if (flattenedContracts[f].ContractName == c.ContractName)
+                    {
+                        dupNames++;
+                    }
+                }
+
+                // If there are duplicate contract names, prepend a unique amount of underscore suffixes.
+                string dupeNameSuffix;
+                if (dupNames > 0)
+                {
+                    dupeNameSuffix = new string(Enumerable.Repeat('_', dupNames).ToArray());
+                }
+                else
+                {
+                    dupeNameSuffix = string.Empty;
+                }
+
+                contracts[i] = (c.ContractName + dupeNameSuffix, c.SolFile, c.Contract);
+
+            }
+
             #region Output directory cleanup
             if (!Directory.Exists(_generatedContractsDirectory))
             {
@@ -228,8 +261,8 @@ namespace Meadow.SolCodeGen
             }
             else
             {
-                var expectedFiles = solcOutput.Contracts.Values
-                    .SelectMany(c => c.Keys)
+                var expectedFiles = contracts
+                    .Select(c => c.GeneratedContractName)
                     .Concat(new[] { EventHelperFile, SolcOutputDataHelperFile })
                     .Select(c => NormalizePath($"{_generatedContractsDirectory}/{c}{G_CS_FILE_EXT}"))
                     .ToArray();
@@ -266,58 +299,18 @@ namespace Meadow.SolCodeGen
             sw.Restart();
 
             ContractInfo[] contractInfos = new ContractInfo[solcOutput.ContractsFlattened.Length];
-            var flattenedContracts = solcOutput.ContractsFlattened.OrderBy(c => c.SolFile).ToArray();
 
-            for (var i = 0; i < contractInfos.Length; i++)
+            for (var i = 0; i < contracts.Length; i++)
             {
-                // Check if any previous contracts have the same name as this one.
-                var c = flattenedContracts[i];
-                int dupNames = 0;
-                for (var f = 0; f < i; f++)
-                {
-                    if (flattenedContracts[f].ContractName == c.ContractName)
-                    {
-                        dupNames++;
-                    }
-                }
-
-                // If there are duplicate contract names, prepend a unique amount of underscore suffixes.
-                string dupeNameSuffix;
-                if (dupNames > 0)
-                {
-                    dupeNameSuffix = new string(Enumerable.Repeat('_', dupNames).ToArray());
-                }
-                else
-                {
-                    dupeNameSuffix = string.Empty;
-                }
-
+                var c = contracts[i];
                 contractInfos[i] = new ContractInfo(
                     Util.GetRelativeFilePath(_solSourceDirectory, c.SolFile),
-                    c.ContractName + dupeNameSuffix,
+                    c.GeneratedContractName,
                     c.Contract,
                     GetSourceHashesXor(c.Contract),
                     c.Contract.Evm.Bytecode.Object);
             }
 
-
-            for (var i = 0; i < contractInfos.Length; i++)
-            {
-                var cur = contractInfos[i];
-                for (var j = 0; j < contractInfos.Length; j++)
-                {
-                    if (i == j)
-                    {
-                        continue;
-                    }
-
-                    var other = contractInfos[j];
-                    if (cur.ContractName.Equals(other.ContractName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new Exception($"Duplicate contract names: '{cur.ContractName}' in {cur.SolFile} and '{other.ContractName}' in {other.SolFile}");
-                    }
-                }
-            }
 
             var contractPathsHash = KeccakHashString(string.Join("\n", contractInfos.SelectMany(c => new[] { c.SolFile, c.ContractName })));
             var codeBaseHash = XorAllHashes(contractInfos.Select(c => c.Hash).Concat(new[] { contractPathsHash }).ToArray());
@@ -370,6 +363,16 @@ namespace Meadow.SolCodeGen
             {
                 solcOutputDataResxWriter.Save(fs);
                 _genResults.GeneratedResxFilePath = outputResxFilePath;
+            }
+
+            var generator = new SolcOutputHelperGenerator(codeBaseHash, _namespace);
+            var (generatedContractCode, syntaxTree) = generator.GenerateSourceCode();
+            using (var fs = new StreamWriter(outputHelperFilePath, append: false, encoding: StringUtil.UTF8))
+            {
+                Console.WriteLine("Writing source file: " + outputHelperFilePath);
+                var hashHex = HexUtil.GetHexFromBytes(codeBaseHash);
+                fs.WriteLine("//" + hashHex);
+                fs.WriteLine(generatedContractCode);
             }
 
             if (_returnFullSources)

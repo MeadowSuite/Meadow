@@ -20,9 +20,6 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
         protected override string GenerateUsingDeclarations()
         {
-            var sourceAttrTypeName = typeof(GeneratedSolcDataAttribute).FullName;
-            var assemblyAttr = $"[assembly: {sourceAttrTypeName}]";
-
             var usings = $@"
                 using System;
                 using System.Collections.Generic;
@@ -30,7 +27,6 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 using System.Threading.Tasks;
                 using Meadow.JsonRpc.Types;
 
-                {assemblyAttr}
             ";
             return usings;
         }

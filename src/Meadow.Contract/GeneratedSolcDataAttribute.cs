@@ -9,10 +9,14 @@ namespace Meadow.Contract
     [AttributeUsage(AttributeTargets.Assembly)]
     public class GeneratedSolcDataAttribute : Attribute
     {
-        public GeneratedSolcDataAttribute()
+        public readonly string SolCodeBaseHash;
+
+        public GeneratedSolcDataAttribute(string solCodeBaseHash)
         {
+            SolCodeBaseHash = solCodeBaseHash;
         }
 
 
     }
+
 }
