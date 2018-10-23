@@ -11,6 +11,8 @@ using System.Text;
 
 namespace Meadow.EVM.Data_Types.Chain.PoW
 {
+    // Code coverage disabled while tests are disabled for performance reasons.
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class ChainPoW
     {
         #region Constants

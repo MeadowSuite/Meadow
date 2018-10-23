@@ -16,6 +16,8 @@ namespace Meadow.EVM.Data_Types.Chain.PoW
     /// <summary>
     /// Ethereum proof of work validation and proof of work calculation routines.
     /// </summary>
+    // Code coverage disabled while tests are disabled for performance reasons.
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public abstract class MiningPoW
     {
         #region Functions

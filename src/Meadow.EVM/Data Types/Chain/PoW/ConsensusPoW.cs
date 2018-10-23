@@ -13,6 +13,8 @@ namespace Meadow.EVM.Data_Types.Chain.PoW
     /// <summary>
     /// Ethereum proof-of-work consensus mechamism state transition and helper functions implementation.
     /// </summary>
+    // Code coverage disabled while tests are disabled for performance reasons.
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class ConsensusPoW : ConsensusBase
     {
         #region Functions
