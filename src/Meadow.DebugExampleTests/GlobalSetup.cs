@@ -29,7 +29,7 @@ namespace Meadow.DebugExampleTests
 
         public static void Main(string[] args)
         {
-            SolidityDebugger.Launch();
+            Global.Launch();
         }
     }
 }

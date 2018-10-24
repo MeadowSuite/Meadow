@@ -130,7 +130,7 @@ namespace Meadow.CoverageReport
                     continue;
                 }
 
-                sourceMaps.Add((entry.FilePath, entry.ContractName, entry.BytecodeHash), (sourceMapEntriesNonDeployed.ToArray(), sourceMapEntriesDeployed.ToArray()));
+                sourceMaps.Add((entry.FilePath, entry.ContractName, entry.Bytecode), (sourceMapEntriesNonDeployed.ToArray(), sourceMapEntriesDeployed.ToArray()));
             }
 
             // Get nodes with duplicates filtered out, and the useless/harmful node types fitlered out

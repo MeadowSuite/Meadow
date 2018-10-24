@@ -152,6 +152,8 @@ namespace Meadow.Contract
             return abi;
         }
 
+        public IReadOnlyDictionary<string, SolcNet.DataDescription.Output.Abi[]> ContractAbis => _contractAbis.Value;
+
         ConcurrentDictionary<(string CodeHex, bool IsDeployed), SolcBytecodeInfo> _codeHexCache = new ConcurrentDictionary<(string CodeHex, bool IsDeployed), SolcBytecodeInfo>();
 
         /// <summary>

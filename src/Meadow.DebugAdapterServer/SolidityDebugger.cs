@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Meadow.UnitTestTemplate
+namespace Meadow.DebugAdapterServer
 {
     public class SolidityDebugger : IDisposable
     {
@@ -22,35 +22,10 @@ namespace Meadow.UnitTestTemplate
 
         public static string SolidityDebugSessionID => Environment.GetEnvironmentVariable(DEBUG_SESSION_ID);
 
+        public static bool DebugStopOnEntry => (Environment.GetEnvironmentVariable(DEBUG_STOP_ON_ENTRY) ?? string.Empty).Equals("true", StringComparison.OrdinalIgnoreCase);
+
         public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
 
-
-        public static void Launch()
-        {
-            if (!HasSolidityDebugAttachRequest)
-            {
-                MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly());
-            }
-            else
-            {
-                var debugStopOnEntry = (Environment.GetEnvironmentVariable(DEBUG_STOP_ON_ENTRY) ?? string.Empty).Equals("true", StringComparison.OrdinalIgnoreCase);
-
-                if (debugStopOnEntry && !Debugger.IsAttached)
-                {
-                    Debugger.Launch();
-                }
-
-
-                var cancelToken = new CancellationTokenSource();
-
-                using (AttachSolidityDebugger(cancelToken))
-                {
-                    // Run all tests (blocking)
-                    MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken.Token);
-                    Console.WriteLine("Tests completed");
-                }
-            }
-        }
 
         public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null)
         {

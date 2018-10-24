@@ -70,8 +70,11 @@ namespace Meadow.SolCodeGen
             using (var pdbFileStream = new FileStream(_generatedPdbFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             using (var xmlDocFileStream = new FileStream(_generatedXmlDocFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             {
+                var emitOptions = new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb);
+
                 // Compile sources into assembly, pdb and xmldoc.
                 emitResult = compileContext.Emit(
+                    options: emitOptions,
                     peStream: asmFileStream,
                     pdbStream: pdbFileStream,
                     xmlDocumentationStream: xmlDocFileStream,
