@@ -308,16 +308,10 @@ namespace Meadow.Core.Cryptography.Ecdsa
             ecdhAgreement.Init(PrivateKey);
 
             // Calculate the agreement
-            byte[] sharedSecret = ecdhAgreement.CalculateAgreement(pubKeyParams).ToByteArray();
+            BigInteger agreementInt = ecdhAgreement.CalculateAgreement(pubKeyParams).ToNumericsBigInteger();
 
-            // Adjust the size of the shared secret accordingly.
-            if (sharedSecret.Length != ECDH_SHARED_SECRET_SIZE)
-            {
-                byte[] fixedSize = new byte[ECDH_SHARED_SECRET_SIZE];
-                int copySize = Math.Min(sharedSecret.Length, fixedSize.Length);
-                Array.Copy(sharedSecret, Math.Max(0, sharedSecret.Length - fixedSize.Length), fixedSize, fixedSize.Length - copySize, copySize);
-                sharedSecret = fixedSize;
-            }
+            // Obtain a data representation of the agreement.
+            byte[] sharedSecret = BigIntegerConverter.GetBytes(agreementInt, ECDH_SHARED_SECRET_SIZE);
 
             // Return the computed shared secret.
             return sharedSecret;

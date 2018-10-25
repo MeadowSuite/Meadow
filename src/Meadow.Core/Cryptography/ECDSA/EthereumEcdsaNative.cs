@@ -257,6 +257,22 @@ namespace Meadow.Core.Cryptography.Ecdsa
         }
 
         /// <summary>
+        /// Implements a hash algorithm function for Elliptic Curve Diffie Hellman, to be used to generate a shared secret.
+        /// This hash algorithm does not hash the resulting data, but simply returns the X parameter as is expected.
+        /// </summary>
+        /// <param name="output">Outputs the X parameter of the result.</param>
+        /// <param name="x">The X parameter of the pre-hashed result of ECDH.</param>
+        /// <param name="y">The X parameter of the pre-hashed result of ECDH.</param>
+        /// <param name="data">Arbitrary data that is passed through.</param>
+        /// <returns>Returns the X parameter of the newly constructed ECDH key.</returns>
+        private int ECDHHashAlgorithmNoHashReturnX(Span<byte> output, Span<byte> x, Span<byte> y, IntPtr data)
+        {
+            // Copy x to our output as is.
+            x.Slice(0, output.Length).CopyTo(output);
+            return 1;
+        }
+
+        /// <summary>
         /// Computes a shared secret among two keys using Elliptic Curve Diffie-Hellman ("ECDH"). Assumes this instance is of the private key, and requires a public key as input.
         /// </summary>
         /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
@@ -278,13 +294,15 @@ namespace Meadow.Core.Cryptography.Ecdsa
                 Span<byte> parsedPublicKeyData = new byte[PUBLIC_KEY_SIZE];
 
                 // Parse our public key from the serialized data.
-                if (!secp256k1.PublicKeyParse(parsedPublicKeyData, publicKey.ToPublicKeyArray(false, false)))
+                byte[] prefixedPublicKey = publicKey.ToPublicKeyArray(false, false);
+                if (!secp256k1.PublicKeyParse(parsedPublicKeyData, prefixedPublicKey))
                 {
                     throw new Exception("Unmanaged EC library failed to deserialize public key.");
                 }
 
                 // Calculate the shared secret
-                if (!secp256k1.Ecdh(result, publicKey.ToPublicKeyArray(false, true), ToPrivateKeyArray()))
+                byte[] privateKeyData = ToPrivateKeyArray();
+                if (!secp256k1.Ecdh(result, parsedPublicKeyData, privateKeyData, ECDHHashAlgorithmNoHashReturnX, IntPtr.Zero))
                 {
                     throw new Exception("Failed to compute shared secret.");
                 }
