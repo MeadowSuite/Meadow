@@ -62,11 +62,11 @@ namespace Meadow.Core.Cryptography.Ecdsa
         public abstract (byte RecoveryID, BigInteger r, BigInteger s) SignData(Span<byte> hash);
 
         /// <summary>
-        /// Computes a shared secret among two keys using Elliptic Curve Diffie-Hellman ("ECDH"). Assumes this instance is of the private key, and requires a public key as input.
+        /// Computes a shared key from the keys of two individuals by using Elliptic Curve Diffie-Hellman ("ECDH"). Assumes this instance is of the private key, and requires a public key as input.
         /// </summary>
         /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
         /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
-        public abstract byte[] ComputeSharedSecret(EthereumEcdsa publicKey);
+        public abstract byte[] ComputeECDHKey(EthereumEcdsa publicKey);
 
         /// <summary>
         /// Initializes an ECDSA instance given a key and the type of key which it is.

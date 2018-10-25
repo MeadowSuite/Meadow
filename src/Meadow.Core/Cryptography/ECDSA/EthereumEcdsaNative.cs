@@ -267,6 +267,12 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// <returns>Returns the X parameter of the newly constructed ECDH key.</returns>
         private int ECDHHashAlgorithmNoHashReturnX(Span<byte> output, Span<byte> x, Span<byte> y, IntPtr data)
         {
+            // Verify the size of the output buffer
+            if (output.Length != ECDH_SHARED_SECRET_SIZE)
+            {
+                return 0;
+            }
+
             // Copy x to our output as is.
             x.Slice(0, output.Length).CopyTo(output);
             return 1;
@@ -277,7 +283,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// </summary>
         /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
         /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
-        public override byte[] ComputeSharedSecret(EthereumEcdsa publicKey)
+        public override byte[] ComputeECDHKey(EthereumEcdsa publicKey)
         {
             // Verify the types of keys
             if (KeyType != EthereumEcdsaKeyType.Private)
@@ -304,7 +310,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
                 byte[] privateKeyData = ToPrivateKeyArray();
                 if (!secp256k1.Ecdh(result, parsedPublicKeyData, privateKeyData, ECDHHashAlgorithmNoHashReturnX, IntPtr.Zero))
                 {
-                    throw new Exception("Failed to compute shared secret.");
+                    throw new Exception("Failed to compute ECDH shared secret.");
                 }
 
                 return result;

@@ -286,7 +286,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// </summary>
         /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
         /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
-        public override byte[] ComputeSharedSecret(EthereumEcdsa publicKey)
+        public override byte[] ComputeECDHKey(EthereumEcdsa publicKey)
         {
             // Verify the types of keys
             if (KeyType != EthereumEcdsaKeyType.Private)

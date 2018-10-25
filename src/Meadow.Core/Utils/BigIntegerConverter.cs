@@ -136,6 +136,12 @@ namespace Meadow.Core.Utils
                 }
             }
 
+            // If the start index is 0, we return the array as is
+            if (startIndex == 0)
+            {
+                return result;
+            }
+
             // Return our sliced array
             byte[] resultSliced = new byte[result.Length - startIndex];
             Array.Copy(result, startIndex, resultSliced, 0, resultSliced.Length);

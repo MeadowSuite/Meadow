@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Meadow.Core.AccountDerivation;
+using Meadow.Core.Utils;
 using Xunit;
 
 namespace Meadow.Networking.Test
