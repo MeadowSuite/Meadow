@@ -45,11 +45,11 @@ namespace Meadow.Networking.Cryptography
             hmacSha256Key = _sha256.ComputeHash(hmacSha256Key);
 
             // We generate a counter for our aes-128-ctr operation.
-            byte[] counter = new byte[Aes128Ctr.BLOCK_SIZE];
+            byte[] counter = new byte[AesCtr.BLOCK_SIZE];
             _randomNumberGenerator.GetBytes(counter);
 
             // Encrypt the data accordingly.
-            byte[] encryptedData = Aes128Ctr.Encrypt(aesKey, data, counter);
+            byte[] encryptedData = AesCtr.Encrypt(aesKey, data, counter);
 
             // Obtain the sender's public key to compile our message.
             byte[] senderPublicKey = senderPrivateKey.ToPublicKeyArray(false, true);
@@ -115,7 +115,7 @@ namespace Meadow.Networking.Cryptography
             Memory<byte> senderPublicKeyData = message.Slice(offset, 64);
             EthereumEcdsa senderPublicKey = EthereumEcdsa.Create(senderPublicKeyData, EthereumEcdsaKeyType.Public);
             offset += senderPublicKeyData.Length;
-            Memory<byte> counter = message.Slice(offset, Aes128Ctr.BLOCK_SIZE);
+            Memory<byte> counter = message.Slice(offset, AesCtr.BLOCK_SIZE);
             offset += counter.Length;
             Memory<byte> encryptedData = message.Slice(offset, message.Length - offset - 32);
             offset += encryptedData.Length;
@@ -155,7 +155,7 @@ namespace Meadow.Networking.Cryptography
             }
 
             // Decrypt the data accordingly.
-            byte[] decryptedData = Aes128Ctr.Decrypt(aesKey, encryptedData.ToArray(), counter.ToArray());
+            byte[] decryptedData = AesCtr.Decrypt(aesKey, encryptedData.ToArray(), counter.ToArray());
 
             // Return the decrypted data.
             return decryptedData;

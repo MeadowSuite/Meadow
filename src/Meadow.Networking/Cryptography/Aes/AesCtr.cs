@@ -9,16 +9,14 @@ namespace Meadow.Networking.Cryptography.Aes
     /// <summary>
     /// Provides AES-128-CTR cryptographic implementation.
     /// </summary>
-    public class Aes128Ctr : ICryptoTransform
+    public class AesCtr : ICryptoTransform
     {
         /*
-         * AES-128-CTR encrypts data by xoring queued bytes from a big endian integer byte buffer 
+         * AES-CTR encrypts data by xoring queued bytes from a big endian integer byte buffer 
          * which is incremented (counter) as more bytes are needed for xoring/crypt operations. 
          */
         #region Constants
-        public const int BLOCK_SIZE = 16; // in bytes
-        public const int KEY_SIZE = 16; // in bytes
-        public const int IV_SIZE = 16; // in bytes
+        public const int BLOCK_SIZE = 16; // in bytes (128-bit)
         #endregion
 
         #region Fields
@@ -37,15 +35,29 @@ namespace Meadow.Networking.Cryptography.Aes
 
         public int OutputBlockSize => throw new NotImplementedException();
         public IReadOnlyCollection<byte> Counter => _counter;
+        public int KeySize
+        {
+            get
+            {
+                return _algorithm.KeySize;
+            }
+        }
         #endregion
 
         #region Constructor
-        public Aes128Ctr(byte[] key, byte[] counter = null)
+        public AesCtr(byte[] key, byte[] counter = null)
         {
+            // Verify the size of the data
+            int keyBitSize = key.Length * 8;
+            if (keyBitSize != 128 && keyBitSize != 192 && keyBitSize != 256)
+            {
+                throw new ArgumentException($"Key provided to AES-CTR must be of size 128, 192 or 256. Provided size: {keyBitSize}.");
+            }
+
             // Set the algorithm used
             _algorithm = new AesManaged()
             {
-                KeySize = KEY_SIZE * 8,
+                KeySize = keyBitSize,
                 BlockSize = BLOCK_SIZE * 8,
                 Mode = CipherMode.ECB,
                 Padding = PaddingMode.None
@@ -57,14 +69,14 @@ namespace Meadow.Networking.Cryptography.Aes
             // Verify the counter size
             if (_counter.Length != _algorithm.BlockSize / 8)
             {
-                throw new ArgumentException($"Counter provided to AES-128-CTR must be of equal to the block size of {BLOCK_SIZE}");
+                throw new ArgumentException($"Counter provided to AES-{keyBitSize}-CTR must be of equal to the block size of {BLOCK_SIZE}");
             }
 
             // Initialize the queue for hash bytes to cipher with
             _counterHashBytesQueue = new Queue<byte>();
 
             // Create our internal encryption provider.
-            _aesProvider = _algorithm.CreateEncryptor(key, new byte[_algorithm.KeySize / 8]);
+            _aesProvider = _algorithm.CreateEncryptor(key, new byte[BLOCK_SIZE]);
         }
         #endregion
 
@@ -72,7 +84,7 @@ namespace Meadow.Networking.Cryptography.Aes
         public static byte[] Encrypt(byte[] key, byte[] data, byte[] counter = null)
         {
             // Create a new aes-128-ctr provider.
-            Aes128Ctr aes = new Aes128Ctr(key, counter);
+            AesCtr aes = new AesCtr(key, counter);
             return aes.TransformFinalBlock(data, 0, data.Length);
         }
 
