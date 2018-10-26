@@ -23,7 +23,8 @@ namespace Meadow.Networking.Cryptography.Aes
         private ICryptoTransform _aesProvider;
         private SymmetricAlgorithm _algorithm;
         private byte[] _counter;
-        private Queue<byte> _counterHashBytesQueue;
+        private byte[] _counterHashBuffer;
+        private int _counterHashIndex;
         #endregion
 
         #region Properties
@@ -31,9 +32,9 @@ namespace Meadow.Networking.Cryptography.Aes
 
         public bool CanTransformMultipleBlocks => true;
 
-        public int InputBlockSize => throw new NotImplementedException();
+        public int InputBlockSize => BLOCK_SIZE;
 
-        public int OutputBlockSize => throw new NotImplementedException();
+        public int OutputBlockSize => BLOCK_SIZE;
         public IReadOnlyCollection<byte> Counter => _counter;
         public int KeySize
         {
@@ -72,8 +73,12 @@ namespace Meadow.Networking.Cryptography.Aes
                 throw new ArgumentException($"Counter provided to AES-{keyBitSize}-CTR must be of equal to the block size of {BLOCK_SIZE}");
             }
 
-            // Initialize the queue for hash bytes to cipher with
-            _counterHashBytesQueue = new Queue<byte>();
+            // Initialize the buffer for our counter hash which we xor with input data to encrypted/decrypt.
+            _counterHashBuffer = new byte[BLOCK_SIZE];
+
+            // Set our counter hash index to the end of the buffer so it is re-evaluated immediately
+            _counterHashIndex = _counterHashBuffer.Length;
+
 
             // Create our internal encryption provider.
             _aesProvider = _algorithm.CreateEncryptor(key, new byte[BLOCK_SIZE]);
@@ -105,19 +110,13 @@ namespace Meadow.Networking.Cryptography.Aes
             for (int i = 0; i < inputCount; i++)
             {
                 // If we have no more queued bytes, we increment our counter and hash it.
-                if (_counterHashBytesQueue.Count == 0)
+                if (_counterHashIndex == _counterHashBuffer.Length)
                 {
-                    // Create a buffer to output the transformed block.
-                    byte[] transformedBlock = new byte[_algorithm.BlockSize / 8];
+                    // Reset our counter hash index to the start of the buffer.
+                    _counterHashIndex = 0;
 
-                    // Transform the counter block.
-                    _aesProvider.TransformBlock(_counter, 0, _counter.Length, transformedBlock, 0);
-
-                    // Queue all bytes from the transformed block
-                    for (int x = 0; x < transformedBlock.Length; x++)
-                    {
-                        _counterHashBytesQueue.Enqueue(transformedBlock[x]);
-                    }
+                    // Encrypt the counter and put the output in our counter hash buffer.
+                    _aesProvider.TransformBlock(_counter, 0, _counter.Length, _counterHashBuffer, 0);
 
                     // The counter must be incremented. It represents an integer in big-endian order.
                     for (int x = _counter.Length - 1; x >= 0; x--)
@@ -134,7 +133,7 @@ namespace Meadow.Networking.Cryptography.Aes
                 }
 
                 // Perform a xor operation on our indexed byte 
-                outputBuffer[outputOffset + i] = (byte)(inputBuffer[inputOffset + i] ^ _counterHashBytesQueue.Dequeue());
+                outputBuffer[outputOffset + i] = (byte)(inputBuffer[inputOffset + i] ^ _counterHashBuffer[_counterHashIndex++]);
             }
 
             // Return the amount of bytes read.
