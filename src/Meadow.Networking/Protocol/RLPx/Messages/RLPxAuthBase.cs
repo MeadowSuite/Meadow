@@ -47,7 +47,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
         /// </summary>
         /// <param name="receiverPrivateKey">The private key of the receiver used to generate the shared secret.</param>
         /// <returns>Returns the remote ephemeral public key for the keypair which signed this authentication data.</returns>
-        public virtual EthereumEcdsa RecoverRemoteEphemeralKey(EthereumEcdsa receiverPrivateKey)
+        public virtual (EthereumEcdsa remoteEphemeralPublicKey, uint? chainId) RecoverDataFromSignature(EthereumEcdsa receiverPrivateKey)
         {
             // Create an EC provider with the given public key.
             EthereumEcdsa publicKey = EthereumEcdsa.Create(PublicKey, EthereumEcdsaKeyType.Public);
@@ -61,7 +61,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // We want our signature in r,s,v format.
             BigInteger ecdsa_r = BigIntegerConverter.GetBigInteger(R, false, 32);
             BigInteger ecdsa_s = BigIntegerConverter.GetBigInteger(S, false, 32);
-            byte recoveryId = EthereumEcdsa.GetRecoveryIDFromV(V);
+            (byte recoveryId, uint? chainId) = EthereumEcdsa.GetRecoveryAndChainIDFromV(V);
 
             // Recover the public key from the data provided.
             EthereumEcdsa remoteEphemeralPublickey = EthereumEcdsa.Recover(transformedNonceData, recoveryId, ecdsa_r, ecdsa_s);
@@ -69,7 +69,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // Verify the key is valid
 
             // Return the ephemeral key
-            return remoteEphemeralPublickey;
+            return (remoteEphemeralPublickey, chainId);
         }
 
         public virtual void Sign(EthereumEcdsa localPrivateKey, EthereumEcdsa ephemeralPrivateKey, EthereumEcdsa receiverPublicKey, uint? chainID = null)

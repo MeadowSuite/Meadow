@@ -37,7 +37,7 @@ namespace Meadow.Networking.Test
             Assert.Equal(authPacket.UseSessionToken, deserializedPacket.UseSessionToken);
 
             // Try to recover the public key
-            EthereumEcdsa recoveredEphemeralPublicKey = deserializedPacket.RecoverRemoteEphemeralKey(receiverPrivateKey);
+            EthereumEcdsa recoveredEphemeralPublicKey = deserializedPacket.RecoverDataFromSignature(receiverPrivateKey).remoteEphemeralPublicKey;
 
             // Verify our public key hashes match
             Assert.Equal(ephemeralPrivateKey.GetPublicKeyHash().ToHexString(), recoveredEphemeralPublicKey.GetPublicKeyHash().ToHexString());
@@ -67,7 +67,7 @@ namespace Meadow.Networking.Test
             Assert.Equal(authPacket.V, deserializedPacket.V);
 
             // Try to recover the public key
-            EthereumEcdsa recoveredEphemeralPublicKey = deserializedPacket.RecoverRemoteEphemeralKey(receiverPrivateKey);
+            EthereumEcdsa recoveredEphemeralPublicKey = deserializedPacket.RecoverDataFromSignature(receiverPrivateKey).remoteEphemeralPublicKey;
 
             // Verify our public key hashes match
             Assert.Equal(ephemeralPrivateKey.GetPublicKeyHash().ToHexString(), recoveredEphemeralPublicKey.GetPublicKeyHash().ToHexString());

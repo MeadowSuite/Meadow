@@ -31,7 +31,13 @@ namespace Meadow.Networking.Protocol.RLPx
         #endregion
 
         #region Properties
+        /// <summary>
+        /// Indicates the role of this current RLPx session object/user.
+        /// </summary>
         public RLPxSessionRole Role { get; }
+        /// <summary>
+        /// The private key of this user, used to sign 
+        /// </summary>
         public EthereumEcdsa LocalPrivateKey { get; }
         public EthereumEcdsa EphemeralPrivateKey { get; }
 
@@ -95,6 +101,12 @@ namespace Meadow.Networking.Protocol.RLPx
         #endregion
 
         #region Functions
+        /// <summary>
+        /// Creates authentication data to send to the responder.
+        /// </summary>
+        /// <param name="receiverPublicKey">The responder/receiver's public key.</param>
+        /// <param name="nonce">The nonce to use for the authentication data. If null, new data is generated.</param>
+        /// <returns>Returns the encrypted serialized authentication data.</returns>
         public byte[] CreateAuthentiation(EthereumEcdsa receiverPublicKey, byte[] nonce = null)
         {
             // Verify this is the initiator role.
@@ -147,6 +159,12 @@ namespace Meadow.Networking.Protocol.RLPx
             }
         }
 
+        /// <summary>
+        /// Verifies the provided encrypted serialized authentication data received from the initiator.
+        /// If verification fails, an appropriate exception will be thrown. If no exception is thrown,
+        /// the verification has succeeded.
+        /// </summary>
+        /// <param name="authenticationData">The encrypted serialized authentication data to verify.</param>
         public void VerifyAuthentication(byte[] authenticationData)
         {
             // Verify this is the responder role.
@@ -184,7 +202,7 @@ namespace Meadow.Networking.Protocol.RLPx
                 catch (Exception authEip8Ex)
                 {
                     string exceptionMessage = "Could not deserialize RLPx Authentication data in either standard or EIP8 format.\r\n";
-                    exceptionMessage += $"Authentication Error: {authStandardEx.Message}\r\n";
+                    exceptionMessage += $"Standard Authentication Error: {authStandardEx.Message}\r\n";
                     exceptionMessage += $"EIP8 Authentication Error: {authEip8Ex.Message}";
                     throw new Exception(exceptionMessage);
                 }
@@ -192,7 +210,10 @@ namespace Meadow.Networking.Protocol.RLPx
 
             // Try to recover the public key (with the "receiver" private key, which in this case is our local private key, since our role is responder).
             // If this fails, it will throw an exception as we expect this method to if any failure occurs.
-            RemoteEphermalPublicKey = authenticationMessage.RecoverRemoteEphemeralKey(LocalPrivateKey);
+            (EthereumEcdsa remoteEphermalPublicKey, uint? chainId) = authenticationMessage.RecoverDataFromSignature(LocalPrivateKey);
+            RemoteEphermalPublicKey = remoteEphermalPublicKey;
+
+            // TODO: Verify the chain id.
         }
         #endregion
     }

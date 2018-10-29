@@ -184,7 +184,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// </summary>
         /// <param name="v">The v which has the recovery ID embedded in it which we wish to extract.</param>
         /// <returns>Returns the recovery ID embedded in v.</returns>
-        public static byte GetRecoveryIDFromV(byte v)
+        public static (byte recoveryId, uint? chainId) GetRecoveryAndChainIDFromV(byte v)
         {
             // Recovery ID is in V, which could also have ChainID and other things embedded, so we need special cases to extract it.
             // Geth also used 0, 1 before fixing, while Ethereum typically uses 27 or 28 if not past spurious dragon. If it is, it embeds it past 35.
@@ -192,17 +192,19 @@ namespace Meadow.Core.Cryptography.Ecdsa
             if (v >= 35)
             {
                 // If it's above 35, we assume it has a chain ID embedded. Chain ID is multiplied by 2, so if it's odd, we know the recover ID should be 1, otherwise 0.
-                return (byte)(1 - (v % 2));
+                byte recoveryId = (byte)(1 - (v % 2));
+                uint? chainId = (uint)((v - 35 - recoveryId) / 2);
+                return (recoveryId, chainId);
             }
             else if (v >= 27)
             {
                 // If it's above 27, we assume it's 27/28 so we just assume odd numbers are recovery ID 0 and even are 1 (since the first index 0 (even) started at 27 (odd))
-                return (byte)((v - 27) % 2);
+                return ((byte)((v - 27) % 2), null);
             }
             else
             {
                 // Otherwise we'll just modulus divide by 2 to get a 0, 1 and hope it's right (this will also handle the Geth case of it using 0, 1).
-                return (byte)(v % 2);
+                return ((byte)(v % 2), null);
             }
         }
 

@@ -31,10 +31,10 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
         #endregion
 
         #region Functions
-        public override EthereumEcdsa RecoverRemoteEphemeralKey(EthereumEcdsa receiverPrivateKey)
+        public override (EthereumEcdsa remoteEphemeralPublicKey, uint? chainId) RecoverDataFromSignature(EthereumEcdsa receiverPrivateKey)
         {
             // Obtain the remote ephemeral key with our base method.
-            EthereumEcdsa remoteEphemeralKey = base.RecoverRemoteEphemeralKey(receiverPrivateKey);
+            (EthereumEcdsa remoteEphemeralKey, uint? chainId) = base.RecoverDataFromSignature(receiverPrivateKey);
 
             // Next we hash the public key to verify it matches our ephemeral public key hash.
             byte[] remoteEphemeralKeyHash = remoteEphemeralKey.GetPublicKeyHash();
@@ -46,7 +46,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             }
 
             // Return the key
-            return remoteEphemeralKey;
+            return (remoteEphemeralKey, chainId);
         }
 
         public override void Sign(EthereumEcdsa localPrivateKey, EthereumEcdsa ephemeralPrivateKey, EthereumEcdsa remotePublicKey, uint? chainId = null)
