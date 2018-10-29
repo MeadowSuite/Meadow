@@ -34,27 +34,31 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // Verify the sizes of all components.
             if (!rlpList.Items[0].IsByteArray)
             {
-                throw new ArgumentException("RLPx EIP8 Authentication packet's first item (signature) was not a byte array.");
+                throw new ArgumentException("RLPx EIP8 auth packet's first item (signature) was not a byte array.");
             }
             else if (((byte[])rlpList.Items[0]).Length != EthereumEcdsa.SIGNATURE_RSV_SIZE)
             {
-                throw new ArgumentException("RLPx EIP8 Authentication packet's first item (signature) was the incorrect size.");
+                throw new ArgumentException("RLPx EIP8 auth packet's first item (signature) was the incorrect size.");
             }
             else if (!rlpList.Items[1].IsByteArray)
             {
-                throw new ArgumentException("RLPx EIP8 Authentication packet's second item (public key) was not a byte array.");
+                throw new ArgumentException("RLPx EIP8 auth packet's second item (public key) was not a byte array.");
             }
             else if (((byte[])rlpList.Items[1]).Length != EthereumEcdsa.PUBLIC_KEY_SIZE)
             {
-                throw new ArgumentException("RLPx EIP8 Authentication packet's second item (public key) was the incorrect size.");
+                throw new ArgumentException("RLPx EIP8 auth packet's second item (public key) was the incorrect size.");
             }
             else if (!rlpList.Items[2].IsByteArray)
             {
-                throw new ArgumentException("RLPx EIP8 Authentication packet's third item (nonce) was not a byte array.");
+                throw new ArgumentException("RLPx EIP8 auth packet's third item (nonce) was not a byte array.");
             }
-            else if (((byte[])rlpList.Items[2]).Length != NONCE_SIZE)
+            else if (((byte[])rlpList.Items[2]).Length != RLPxSession.NONCE_SIZE)
             {
-                throw new ArgumentException("RLPx EIP8 Authentication packet's third item (nonce) was the incorrect size.");
+                throw new ArgumentException("RLPx EIP8 auth packet's third item (nonce) was the incorrect size.");
+            }
+            else if (rlpList.Items.Count >= 4 && !rlpList.Items[3].IsByteArray)
+            {
+                throw new ArgumentException("RLPx EIP8 auth packet's fourth item (version) was not a byte array.");
             }
 
             // Obtain all components.
@@ -74,23 +78,8 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
 
         public override byte[] Serialize()
         {
-            // Verify the components are the correct size
-            if (R?.Length != 32)
-            {
-                throw new ArgumentException("RLPx Authentication (EIP8) Serialization failed because the signature R component must be 32 bytes.");
-            }
-            else if (S?.Length != 32)
-            {
-                throw new ArgumentException("RLPx Authentication (EIP8) Serialization failed because the signature R component must be 32 bytes.");
-            }
-            else if (PublicKey?.Length != EthereumEcdsa.PUBLIC_KEY_SIZE)
-            {
-                throw new ArgumentException($"RLPx Authentication (EIP8) Serialization failed because the public key must be {EthereumEcdsa.PUBLIC_KEY_SIZE} bytes in size.");
-            }
-            else if (Nonce?.Length != NONCE_SIZE)
-            {
-                throw new ArgumentException($"RLPx Authentication (EIP8) Serialization failed because the nonce must be {NONCE_SIZE} bytes in size.");
-            }
+            // Verify our underlying properties
+            VerifyProperties();
 
             // Create an RLP item to contain all of our data
             RLPList rlpList = new RLPList();

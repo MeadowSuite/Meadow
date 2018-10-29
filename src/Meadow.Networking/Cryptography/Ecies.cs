@@ -17,6 +17,12 @@ namespace Meadow.Networking.Cryptography
     {
         #region Constants
         private const byte ECIES_HEADER_BYTE = 0x04;
+        /// <summary>
+        /// ECIES encryption formats data as shown:
+        /// ECIES_HEADER_BYTE (1 byte) || sender's public key (64 bytes) || counter (16 bytes) || encrypted data (arbitrary length) || tag (32 bytes)
+        /// This gives us a total size of 113 + data.Length
+        /// </summary>
+        public const int ECIES_ADDITIONAL_OVERHEAD = 113;
         #endregion
 
         #region Fields
@@ -57,7 +63,7 @@ namespace Meadow.Networking.Cryptography
             // We'll want to put this data into the message in the following order (where || is concatenation):
             // ECIES_HEADER_BYTE (1 byte) || sender's public key (64 bytes) || counter (16 bytes) || encrypted data (arbitrary length) || tag (32 bytes)
             // This gives us a total size of 113 + data.Length
-            byte[] result = new byte[113 + encryptedData.Length];
+            byte[] result = new byte[ECIES_ADDITIONAL_OVERHEAD + encryptedData.Length];
 
             // Define a pointer and copy in our data as suggested.
             int offset = 0;
@@ -99,7 +105,7 @@ namespace Meadow.Networking.Cryptography
             }
 
             // Verify the size of our message (layout specified in Encrypt() describes this value)
-            if (message.Length <= 113)
+            if (message.Length <= ECIES_ADDITIONAL_OVERHEAD)
             {
                 throw new ArgumentException("ECIES could not decrypt data because the provided data did not contain enough information.");
             }

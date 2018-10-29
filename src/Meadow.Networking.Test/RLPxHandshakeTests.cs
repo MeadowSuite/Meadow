@@ -85,24 +85,35 @@ namespace Meadow.Networking.Test
             EthereumEcdsa responderEphemeralKeypair = EthereumEcdsa.Generate();
 
             // Initiate RLPx sessions for each role.
-            RLPxSession initiatorSession = new RLPxSession(RLPxSessionRole.Initiator, initiatorKeyPair, initiatorEphemeralKeyPair);
-            initiatorSession.UsingEIP8Authentication = useEip8;
+            RLPxSession initiatorSession = new RLPxSession(RLPxSessionRole.Initiator, initiatorKeyPair, initiatorEphemeralKeyPair, useEip8);
             RLPxSession responderSession = new RLPxSession(RLPxSessionRole.Responder, responderKeyPair, responderEphemeralKeypair);
 
             // Create authentication data (initiator) (should work)
-            byte[] authenticationData = initiatorSession.CreateAuthentiation(responderKeyPair);
+            byte[] authData = initiatorSession.CreateAuthentiation(responderKeyPair);
 
             // Create authentication data (responder) (should fail, responder should only be receiving auth data, not creating it).
             Assert.Throws<Exception>(() => { responderSession.CreateAuthentiation(initiatorKeyPair); });
 
             // Verify the authentication data (responder) (should work)
-            responderSession.VerifyAuthentication(authenticationData);
+            responderSession.VerifyAuthentication(authData);
 
             // Verify the authentication data (initiator) (should fail, responder should only be creating auth data, not verifying/receiving it).
-            Assert.Throws<Exception>(() => { initiatorSession.VerifyAuthentication(authenticationData); });
+            Assert.Throws<Exception>(() => { initiatorSession.VerifyAuthentication(authData); });
 
             // After verification, the responder session should have set it's EIP8 status accordingly based off of what was received.
             Assert.Equal(useEip8, responderSession.UsingEIP8Authentication);
+
+            // Create an authentication acknowledgement (responder) (should work)
+            byte[] authAckData = responderSession.CreateAuthenticationAcknowledgement();
+
+            // Create an authentication acknowledgement (initiator) (should fail, initiator should only receiving auth-ack)
+            Assert.Throws<Exception>(() => { initiatorSession.CreateAuthenticationAcknowledgement(); });
+
+            // Verify the authentication acknowledgement (initiator) (should work)
+            initiatorSession.VerifyAuthenticationAcknowledgement(authAckData);
+
+            // Verify the authentication acknowledgement (responder) (should fail, responder should not be verifying/receiving auth-ack)
+            Assert.Throws<Exception>(() => { responderSession.VerifyAuthenticationAcknowledgement(authAckData); });
         }
     }
 }

@@ -17,14 +17,10 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
     * */
 
     /// <summary>
-    /// Represents the base for an RLPx authentication packet, in order t
+    /// Represents the base for an RLPx authentication data, exposing common variables among all authentication types.
     /// </summary>
     public abstract class RLPxAuthBase : IRLPxMessage
     {
-        #region Constants
-        protected const int NONCE_SIZE = 32;
-        #endregion
-
         #region Fields
         protected static RandomNumberGenerator _randomNumberGenerator = RandomNumberGenerator.Create();
         #endregion
@@ -40,6 +36,30 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
         #region Functions
         public abstract byte[] Serialize();
         public abstract void Deserialize(byte[] data);
+
+        protected void VerifyProperties()
+        {
+            // If our nonce is null, generate a new one
+            Nonce = Nonce ?? RLPxSession.GenerateNonce();
+
+            // Verify the components are the correct size
+            if (R?.Length != 32)
+            {
+                throw new ArgumentException("RLPx EIP8 auth serialization failed because the signature R component must be 32 bytes.");
+            }
+            else if (S?.Length != 32)
+            {
+                throw new ArgumentException("RLPx EIP8 auth serialization failed because the signature R component must be 32 bytes.");
+            }
+            else if (PublicKey?.Length != EthereumEcdsa.PUBLIC_KEY_SIZE)
+            {
+                throw new ArgumentException($"RLPx EIP8 auth serialization failed because the public key must be {EthereumEcdsa.PUBLIC_KEY_SIZE} bytes in size.");
+            }
+            else if (Nonce.Length != RLPxSession.NONCE_SIZE)
+            {
+                throw new ArgumentException($"RLPx EIP8 auth serialization failed because the nonce must be {RLPxSession.NONCE_SIZE} bytes in size.");
+            }
+        }
 
         /// <summary>
         /// Recovers the ephemeral key used to sign the transformed nonce in the authentication data.
@@ -77,16 +97,14 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // Generate the shared secret using ECDH between our local private key and this remote public key
             byte[] ecdhKey = localPrivateKey.ComputeECDHKey(receiverPublicKey);
 
-            // Generate a nonce for our authentication message if the one provided is null.
-            if (Nonce == null)
-            {
-                Nonce = new byte[NONCE_SIZE];
-                _randomNumberGenerator.GetBytes(Nonce);
-            }
-            else if (Nonce.Length != NONCE_SIZE)
+            // If our nonce is null, generate a new one
+            Nonce = Nonce ?? RLPxSession.GenerateNonce();
+
+            // Verify the nonce is the correct length.
+            if (Nonce.Length != RLPxSession.NONCE_SIZE)
             {
                 // Throw an exception if an invalid nonce was provided.
-                throw new ArgumentException($"Invalid size nonce provided for RLPx session when signing authentication message. Should be {NONCE_SIZE} bytes but was {Nonce.Length}.");
+                throw new ArgumentException($"Invalid size nonce provided for RLPx session when signing auth message. Should be {RLPxSession.NONCE_SIZE} bytes but was {Nonce?.Length}.");
             }
 
             // Obtain our transformed nonce data.

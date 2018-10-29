@@ -11,7 +11,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
     public class RLPxAuthStandard : RLPxAuthBase
     {
         #region Constants
-        private const int STANDARD_AUTH_SIZE = EthereumEcdsa.SIGNATURE_RSV_SIZE + KeccakHash.HASH_SIZE + EthereumEcdsa.PUBLIC_KEY_SIZE + NONCE_SIZE + 1; // R (32) || S (32) || V (1) || EphermalPublicKeyHash (32) || PublicKey (64) || Nonce (32) || UseSessionToken (1)
+        private const int STANDARD_AUTH_SIZE = EthereumEcdsa.SIGNATURE_RSV_SIZE + KeccakHash.HASH_SIZE + EthereumEcdsa.PUBLIC_KEY_SIZE + RLPxSession.NONCE_SIZE + 1; // R (32) || S (32) || V (1) || EphermalPublicKeyHash (32) || PublicKey (64) || Nonce (32) || UseSessionToken (1)
         #endregion
 
         #region Properties
@@ -42,7 +42,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // Verify the public key
             if (!EphermalPublicKeyHash.SequenceEqual(remoteEphemeralKeyHash))
             {
-                throw new ArgumentException("Recovered ephemeral key from authentication data did not match the provided ephemeral public key hash.");
+                throw new ArgumentException("Recovered ephemeral key from auth data did not match the provided ephemeral public key hash.");
             }
 
             // Return the key
@@ -63,7 +63,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // Verify the size of the data
             if (data.Length != STANDARD_AUTH_SIZE)
             {
-                throw new ArgumentException("Could not deserialize RLPx Authentication data because the provided serialized data is the incorrect size.");
+                throw new ArgumentException("Could not deserialize RLPx auth data because the provided serialized data is the incorrect size.");
             }
 
             // Copy the components out of the data buffer.
@@ -78,13 +78,16 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             offset += EphermalPublicKeyHash.Length;
             PublicKey = dataMem.Slice(offset, EthereumEcdsa.PUBLIC_KEY_SIZE).ToArray();
             offset += PublicKey.Length;
-            Nonce = dataMem.Slice(offset, NONCE_SIZE).ToArray();
+            Nonce = dataMem.Slice(offset, RLPxSession.NONCE_SIZE).ToArray();
             offset += Nonce.Length;
             UseSessionToken = (dataMem.Span[offset++] != 0);
         }
 
         public override byte[] Serialize()
         {
+            // Verify our underlying properties
+            VerifyProperties();
+
             // We serialize our data in the following format:
             byte[] result = new byte[STANDARD_AUTH_SIZE];
 
@@ -106,13 +109,12 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             // Verify the data size
             if (offset != result.Length)
             {
-                throw new ArgumentException("Could not serialize RLPx Authentication data because the resulting size was invalid.");
+                throw new ArgumentException("Could not serialize RLPx auth data because the resulting size was invalid.");
             }
 
             // Return the resulting data.
             return result;
         }
         #endregion
-
     }
 }
