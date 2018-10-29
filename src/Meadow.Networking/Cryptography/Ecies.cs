@@ -25,7 +25,7 @@ namespace Meadow.Networking.Cryptography
         #endregion
 
         #region Functions
-        public static byte[] Encrypt(EthereumEcdsa receiverPublicKey, byte[] data, byte[] sharedMacData = null)
+        public static byte[] Encrypt(EthereumEcdsa remotePublicKey, byte[] data, byte[] sharedMacData = null)
         {
             // If we have no shared mac data, we set it as a blank array
             sharedMacData = sharedMacData ?? Array.Empty<byte>();
@@ -34,7 +34,7 @@ namespace Meadow.Networking.Cryptography
             EthereumEcdsa senderPrivateKey = EthereumEcdsa.Generate(new SystemRandomAccountDerivation());
 
             // Generate the elliptic curve diffie hellman ("ECDH") shared key
-            byte[] ecdhKey = senderPrivateKey.ComputeECDHKey(receiverPublicKey);
+            byte[] ecdhKey = senderPrivateKey.ComputeECDHKey(remotePublicKey);
 
             // Perform NIST SP 800-56 Concatenation Key Derivation Function ("KDF")
             Memory<byte> keyData = DeriveKeyKDF(ecdhKey, 32);
@@ -52,7 +52,7 @@ namespace Meadow.Networking.Cryptography
             byte[] encryptedData = AesCtr.Encrypt(aesKey, data, counter);
 
             // Obtain the sender's public key to compile our message.
-            byte[] senderPublicKey = senderPrivateKey.ToPublicKeyArray(false, true);
+            byte[] localPublicKey = senderPrivateKey.ToPublicKeyArray(false, true);
 
             // We'll want to put this data into the message in the following order (where || is concatenation):
             // ECIES_HEADER_BYTE (1 byte) || sender's public key (64 bytes) || counter (16 bytes) || encrypted data (arbitrary length) || tag (32 bytes)
@@ -62,8 +62,8 @@ namespace Meadow.Networking.Cryptography
             // Define a pointer and copy in our data as suggested.
             int offset = 0;
             result[offset++] = ECIES_HEADER_BYTE;
-            Array.Copy(senderPublicKey, 0, result, offset, senderPublicKey.Length);
-            offset += senderPublicKey.Length;
+            Array.Copy(localPublicKey, 0, result, offset, localPublicKey.Length);
+            offset += localPublicKey.Length;
             Array.Copy(counter, 0, result, offset, counter.Length);
             offset += counter.Length;
             Array.Copy(encryptedData, 0, result, offset, encryptedData.Length);
@@ -90,10 +90,10 @@ namespace Meadow.Networking.Cryptography
             return result;
         }
 
-        public static byte[] Decrypt(EthereumEcdsa privateKey, Memory<byte> message, Memory<byte> sharedMacData)
+        public static byte[] Decrypt(EthereumEcdsa localPrivateKey, Memory<byte> message, Memory<byte> sharedMacData)
         {
             // Verify our provided key type
-            if (privateKey.KeyType != EthereumEcdsaKeyType.Private)
+            if (localPrivateKey.KeyType != EthereumEcdsaKeyType.Private)
             {
                 throw new ArgumentException("ECIES could not decrypt data because the provided key was not a private key.");
             }
@@ -112,9 +112,9 @@ namespace Meadow.Networking.Cryptography
             }
 
             // Extract the sender's public key from the data.
-            Memory<byte> senderPublicKeyData = message.Slice(offset, 64);
-            EthereumEcdsa senderPublicKey = EthereumEcdsa.Create(senderPublicKeyData, EthereumEcdsaKeyType.Public);
-            offset += senderPublicKeyData.Length;
+            Memory<byte> remotePublicKeyData = message.Slice(offset, 64);
+            EthereumEcdsa remotePublicKey = EthereumEcdsa.Create(remotePublicKeyData, EthereumEcdsaKeyType.Public);
+            offset += remotePublicKeyData.Length;
             Memory<byte> counter = message.Slice(offset, AesCtr.BLOCK_SIZE);
             offset += counter.Length;
             Memory<byte> encryptedData = message.Slice(offset, message.Length - offset - 32);
@@ -123,7 +123,7 @@ namespace Meadow.Networking.Cryptography
             offset += tag.Length;
 
             // Generate the elliptic curve diffie hellman ("ECDH") shared key
-            byte[] ecdhKey = privateKey.ComputeECDHKey(senderPublicKey);
+            byte[] ecdhKey = localPrivateKey.ComputeECDHKey(remotePublicKey);
 
             // Perform NIST SP 800-56 Concatenation Key Derivation Function ("KDF")
             Memory<byte> keyData = DeriveKeyKDF(ecdhKey, 32);

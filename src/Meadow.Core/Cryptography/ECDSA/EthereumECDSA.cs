@@ -25,6 +25,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
         public const int PRIVATE_KEY_SIZE = 32;
         public const int PUBLIC_KEY_SIZE = 64;
         public const int SIGNATURE_RS_SIZE = 64;
+        public const int SIGNATURE_RSV_SIZE = SIGNATURE_RS_SIZE + 1;
         public const int ECDH_SHARED_SECRET_SIZE = 32;
 
         /// <summary>
