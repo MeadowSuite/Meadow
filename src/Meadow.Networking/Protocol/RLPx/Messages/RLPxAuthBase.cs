@@ -9,6 +9,13 @@ using System.Text;
 
 namespace Meadow.Networking.Protocol.RLPx.Messages
 {
+    /*
+    * References:
+    * https://github.com/ethereum/devp2p/blob/master/rlpx.md
+    * https://github.com/ethereum/EIPs/blob/master/EIPS/eip-8.md
+    * https://github.com/ethereum/homestead-guide/blob/master/old-docs-for-reference/go-ethereum-wiki.rst/RLPx-Encryption.rst
+    * */
+
     /// <summary>
     /// Represents the base for an RLPx authentication packet, in order t
     /// </summary>
@@ -32,7 +39,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
 
         #region Functions
         public abstract byte[] Serialize();
-        public abstract bool Deserialize(byte[] data);
+        public abstract void Deserialize(byte[] data);
 
         /// <summary>
         /// Recovers the ephemeral key used to sign the transformed nonce in the authentication data.
@@ -49,7 +56,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             byte[] ecdhKey = receiverPrivateKey.ComputeECDHKey(publicKey);
 
             // Obtain our transformed nonce data.
-            byte[] transformedNonceData = TransformNonce(ecdhKey);
+            byte[] transformedNonceData = GetTransformedNonce(ecdhKey);
 
             // We want our signature in r,s,v format.
             BigInteger ecdsa_r = BigIntegerConverter.GetBigInteger(R, false, 32);
@@ -83,7 +90,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             }
 
             // Obtain our transformed nonce data.
-            byte[] transformedNonceData = TransformNonce(ecdhKey);
+            byte[] transformedNonceData = GetTransformedNonce(ecdhKey);
 
             // Sign the transformed data.
             var signature = ephemeralPrivateKey.SignData(transformedNonceData);
@@ -97,7 +104,7 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             PublicKey = localPrivateKey.ToPublicKeyArray(false, true);
         }
 
-        private byte[] TransformNonce(byte[] ecdhKey)
+        private byte[] GetTransformedNonce(byte[] ecdhKey)
         {
             // Xor the nonce and shared secret (this will be used to sign, and we will provide the receiver with the nonce so they can verify the signed data too).
             byte[] transformedNonceData = new byte[Nonce.Length];

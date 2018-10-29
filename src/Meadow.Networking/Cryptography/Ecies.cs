@@ -74,7 +74,7 @@ namespace Meadow.Networking.Cryptography
             // We copy the data into a buffer for this hash computation since counter + encrypted data are already aligned.
             byte[] tagPreimage = new byte[counter.Length + encryptedData.Length + sharedMacData.Length];
             Array.Copy(result, 65, tagPreimage, 0, counter.Length + encryptedData.Length);
-            Array.Copy(sharedMacData, 0, result, counter.Length + encryptedData.Length, sharedMacData.Length);
+            Array.Copy(sharedMacData, 0, tagPreimage, counter.Length + encryptedData.Length, sharedMacData.Length);
 
             // Obtain a HMACSHA256 provider
             HMACSHA256 hmacSha256 = new HMACSHA256(hmacSha256Key);
@@ -140,7 +140,7 @@ namespace Meadow.Networking.Cryptography
             Memory<byte> tagPreimageMemory = tagPreimage;
             counter.CopyTo(tagPreimageMemory);
             encryptedData.CopyTo(tagPreimageMemory.Slice(counter.Length, encryptedData.Length));
-            sharedMacData.CopyTo(tagPreimage.Slice(counter.Length + encryptedData.Length));
+            sharedMacData.CopyTo(tagPreimageMemory.Slice(counter.Length + encryptedData.Length));
 
             // Obtain a HMACSHA256 provider
             HMACSHA256 hmacSha256 = new HMACSHA256(hmacSha256Key);

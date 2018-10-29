@@ -22,7 +22,6 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
         #region Constructor
         public RLPxAuthStandard()
         {
-
         }
 
         public RLPxAuthStandard(byte[] serializedData)
@@ -59,12 +58,12 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             EphermalPublicKeyHash = ephemeralPrivateKey.GetPublicKeyHash();
         }
 
-        public override bool Deserialize(byte[] data)
+        public override void Deserialize(byte[] data)
         {
             // Verify the size of the data
             if (data.Length != STANDARD_AUTH_SIZE)
             {
-                return false;
+                throw new ArgumentException("Could not deserialize RLPx Authentication data because the provided serialized data is the incorrect size.");
             }
 
             // Copy the components out of the data buffer.
@@ -82,9 +81,6 @@ namespace Meadow.Networking.Protocol.RLPx.Messages
             Nonce = dataMem.Slice(offset, NONCE_SIZE).ToArray();
             offset += Nonce.Length;
             UseSessionToken = (dataMem.Span[offset++] != 0);
-
-            // We successfully deserialized the data, return success status
-            return true;
         }
 
         public override byte[] Serialize()
