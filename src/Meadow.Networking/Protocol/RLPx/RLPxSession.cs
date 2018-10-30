@@ -26,6 +26,9 @@ namespace Meadow.Networking.Protocol.RLPx
         #region Constants
         public const int MAX_SUPPORTED_VERSION = 4;
         public const int NONCE_SIZE = 32;
+
+        private const int AUTH_STANDARD_ENCRYPTED_SIZE = 307;
+        private const int AUTH_ACK_STANDARD_ENCRYPTED_SIZE = 210;
         #endregion
 
         #region Fields
@@ -47,8 +50,29 @@ namespace Meadow.Networking.Protocol.RLPx
         public EthereumEcdsa RemoteEphermalPublicKey { get; private set; }
         public BigInteger RemoteVersion { get; private set; }
 
+        public byte[] AuthData { get; private set; }
+        public byte[] AuthAckData { get; private set; }
+
+        /// <summary>
+        /// The nonce value chosen by the initiator.
+        /// </summary>
         public byte[] InitiatorNonce { get; private set; }
+        /// <summary>
+        /// The nonce value chosen by the responder.
+        /// </summary>
         public byte[] ResponderNonce { get; private set; }
+
+        public byte[] Token { get; private set; }
+        public byte[] AesSecret { get; private set; }
+        public byte[] MacSecret { get; private set; }
+        /// <summary>
+        /// Message authentication code that is updated as encrypted data is sent.
+        /// </summary>
+        public byte[] EgressMac { get; private set; }
+        /// <summary>
+        /// Message authentication code that is updated as encrypted data is received.
+        /// </summary>
+        public byte[] IngressMac { get; private set; }
 
         /// <summary>
         /// Indicates whether or not this session is using EIP8. (For the initiator, this means creating EIP8 auth, for receiver, this means we received an EIP8 auth).
@@ -151,19 +175,22 @@ namespace Meadow.Networking.Protocol.RLPx
             // Encrypt the data accordingly (standard uses no shared mac data, EIP8 has 2 bytes which prefix the resulting encrypted data).
             if (UsingEIP8Authentication)
             {
-                // Generate two bytes of random mac data.
-                byte[] sharedMacData = new byte[2];
-                _randomNumberGenerator.GetBytes(sharedMacData);
+                // Obtain two bytes of mac data by EIP8 standards (big endian 16-bit unsigned integer equal to the size of the resulting ECIES encrypted data).
+                // We can calculate this as the amount of overhead data ECIES adds is static in size.
+                byte[] sharedMacData = BigIntegerConverter.GetBytes(serializedData.Length + Ecies.ECIES_ADDITIONAL_OVERHEAD, 2);
 
-                // Encrypt the serialized data with the shared mac data, and return the result prefixed with it.
+                // Encrypt the serialized data with the shared mac data, and prefix the result with it.
                 byte[] encryptedSerializedData = Ecies.Encrypt(RemotePublicKey, serializedData, sharedMacData);
-                return sharedMacData.Concat(encryptedSerializedData);
+                AuthData = sharedMacData.Concat(encryptedSerializedData);
             }
             else
             {
-                // Encrypt it using ECIES and return it without any shared mac data.
-                return Ecies.Encrypt(RemotePublicKey, serializedData, null);
+                // Encrypt it using ECIES without any shared mac data.
+                AuthData = Ecies.Encrypt(RemotePublicKey, serializedData, null);
             }
+
+            // Return the auth data
+            return AuthData;
         }
 
         /// <summary>
@@ -185,8 +212,11 @@ namespace Meadow.Networking.Protocol.RLPx
             RLPxAuthBase authenticationMessage = null;
             try
             {
+                // Set the auth data
+                AuthData = authData.Slice(0, AUTH_STANDARD_ENCRYPTED_SIZE);
+
                 // The authentication data can simply be decrypted without any shared mac.
-                byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, authData, null);
+                byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, AuthData, null);
 
                 // Try to parse the decrypted authentication data.
                 authenticationMessage = new RLPxAuthStandard(decryptedAuthData);
@@ -199,11 +229,17 @@ namespace Meadow.Networking.Protocol.RLPx
             {
                 try
                 {
-                    // EIP8 has the first two bytes as the shared mac data, and the remainder is the data to decrypt.
+                    // EIP8 has a uint16 denoting encrypted data size, and the data to decrypt follows.
                     Memory<byte> authDataMem = authData;
+                    Memory<byte> sharedMacDataMem = authDataMem.Slice(0, 2);
+                    ushort encryptedSize = (ushort)BigIntegerConverter.GetBigInteger(sharedMacDataMem.Span, false, sharedMacDataMem.Length);
+                    Memory<byte> encryptedData = authDataMem.Slice(2, encryptedSize);
+
+                    // Set our auth data
+                    AuthData = authDataMem.Slice(0, sharedMacDataMem.Length + encryptedSize).ToArray();
 
                     // Split the shared mac from the authentication data
-                    byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, authDataMem.Slice(2), authDataMem.Slice(0, 2));
+                    byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, encryptedData, sharedMacDataMem);
 
                     // Try to parse the decrypted EIP8 authentication data.
                     RLPxAuthEIP8 authEip8Message = new RLPxAuthEIP8(decryptedAuthData);
@@ -238,6 +274,13 @@ namespace Meadow.Networking.Protocol.RLPx
             // TODO: Verify the chain id.
         }
 
+        /// <summary>
+        /// Creates authentication acknowledgement data to send to the initiator, signalling that their authentication 
+        /// data was successfully verified, and providing the initiator with information that they have already provided
+        /// to the responder (so they can both derive the same shared secrets).
+        /// </summary>
+        /// <param name="nonce">The nonce to use for the authentication data. If null, new data is generated.</param>
+        /// <returns>Returns the encrypted serialized authentication acknowledgement data.</returns>
         public byte[] CreateAuthenticationAcknowledgement(byte[] nonce = null)
         {
             // Verify this is the responder role.
@@ -289,17 +332,26 @@ namespace Meadow.Networking.Protocol.RLPx
                 // We can calculate this as the amount of overhead data ECIES adds is static in size.
                 byte[] sharedMacData = BigIntegerConverter.GetBytes(serializedData.Length + Ecies.ECIES_ADDITIONAL_OVERHEAD, 2);
 
-                // Encrypt the serialized data with the shared mac data, and return the result prefixed with it.
+                // Encrypt the serialized data with the shared mac data, prefix the result with it.
                 byte[] encryptedSerializedData = Ecies.Encrypt(RemotePublicKey, serializedData, sharedMacData);
-                return sharedMacData.Concat(encryptedSerializedData);
+                AuthAckData = sharedMacData.Concat(encryptedSerializedData);
             }
             else
             {
-                // Encrypt it using ECIES and return it without any shared mac data.
-                return Ecies.Encrypt(RemotePublicKey, serializedData, null);
+                // Encrypt it using ECIES without any shared mac data.
+                AuthAckData = Ecies.Encrypt(RemotePublicKey, serializedData, null);
             }
+
+            // Return the auth-ack data
+            return AuthAckData;
         }
 
+        /// <summary>
+        /// Verifies the provided encrypted serialized authentication acknowledgement data received from the initiator.
+        /// If verification fails, an appropriate exception will be thrown. If no exception is thrown, the verification
+        /// has succeeded.
+        /// </summary>
+        /// <param name="authAckData">The encrypted serialized authentication acknowledgement data to verify.</param>
         public void VerifyAuthenticationAcknowledgement(byte[] authAckData)
         {
             // Verify this is the initiator role.
@@ -313,8 +365,11 @@ namespace Meadow.Networking.Protocol.RLPx
             RLPxAuthAckBase authAckMessage = null;
             try
             {
+                // Set the auth-ack data
+                AuthAckData = authAckData.Slice(0, AUTH_ACK_STANDARD_ENCRYPTED_SIZE);
+
                 // The authentication data can simply be decrypted without any shared mac.
-                byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, authAckData, null);
+                byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, AuthAckData, null);
 
                 // Try to parse the decrypted authentication data.
                 authAckMessage = new RLPxAuthAckStandard(decryptedAuthData);
@@ -327,17 +382,14 @@ namespace Meadow.Networking.Protocol.RLPx
             {
                 try
                 {
-                    // EIP8 has the first two bytes as the shared mac data, and the remainder is the data to decrypt.
-                    Memory<byte> authDataMem = authAckData;
-                    Memory<byte> sharedMacDataMem = authDataMem.Slice(0, 2);
-                    BigInteger encryptedSize = BigIntegerConverter.GetBigInteger(sharedMacDataMem.Span, false, sharedMacDataMem.Length);
-                    Memory<byte> encryptedData = authDataMem.Slice(2);
+                    // EIP8 has a uint16 denoting encrypted data size, and the data to decrypt follows.
+                    Memory<byte> authAckDataMem = authAckData;
+                    Memory<byte> sharedMacDataMem = authAckDataMem.Slice(0, 2);
+                    ushort encryptedSize = (ushort)BigIntegerConverter.GetBigInteger(sharedMacDataMem.Span, false, sharedMacDataMem.Length);
+                    Memory<byte> encryptedData = authAckDataMem.Slice(2, encryptedSize);
 
-                    // Verify the shared mac data represents the total size of the signed data.
-                    if (encryptedSize != encryptedData.Length)
-                    {
-                        throw new Exception("RLPx auth-ack data had invalid shared mac data. It should describe the size of the ECIES encrypted buffer.");
-                    }
+                    // Set our auth-ack data
+                    AuthAckData = authAckDataMem.Slice(0, sharedMacDataMem.Length + encryptedSize).ToArray();
 
                     // Split the shared mac from the authentication data
                     byte[] decryptedAuthData = Ecies.Decrypt(LocalPrivateKey, encryptedData, sharedMacDataMem);
@@ -366,6 +418,33 @@ namespace Meadow.Networking.Protocol.RLPx
 
             // Set the remote public key.
             RemoteEphermalPublicKey = EthereumEcdsa.Create(authAckMessage.EphemeralPublicKey, EthereumEcdsaKeyType.Public);
+        }
+
+        public void DeriveEncryptionParameters()
+        {
+            // Verify we have all required information
+            if (AuthData == null || AuthAckData == null || RemoteEphermalPublicKey == null || InitiatorNonce == null || ResponderNonce == null)
+            {
+                throw new Exception("RLPx deriving encryption information failed: Handshaking has not successfully completed yet.");
+            }
+
+            // Generate the ecdh key with both ephemeral keys
+            byte[] ecdhEphemeralKey = EphemeralPrivateKey.ComputeECDHKey(RemoteEphermalPublicKey);
+
+            // Generate a shared secret: Keccak256(ecdhEphemeralKey || Keccak256(ResponderNonce || InitiatorNonce))
+            byte[] combinedNonceHash = KeccakHash.ComputeHashBytes(ResponderNonce.Concat(InitiatorNonce));
+            byte[] sharedSecret = KeccakHash.ComputeHashBytes(ecdhEphemeralKey.Concat(combinedNonceHash));
+
+            // Derive the token as a hash of the shared secret.
+            Token = KeccakHash.ComputeHashBytes(sharedSecret);
+
+            // Derive AES secret: Keccak256(ecdhEphemeralKey || sharedSecret)
+            AesSecret = KeccakHash.ComputeHashBytes(ecdhEphemeralKey.Concat(sharedSecret));
+
+            // Derive Mac secret: Keccak256(ecdhEphemeralKey || AesSecret)
+            MacSecret = KeccakHash.ComputeHashBytes(ecdhEphemeralKey.Concat(AesSecret));
+
+            // TODO: Derive ingress + egress mac. (Requires Keccak implementation that can update)
         }
 
         public static byte[] GenerateNonce()
