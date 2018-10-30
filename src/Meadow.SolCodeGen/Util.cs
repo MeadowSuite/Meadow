@@ -9,6 +9,11 @@ namespace Meadow.SolCodeGen
     {
         public static string GetRelativeFilePath(string solSourceDir, string absolutePath)
         {
+            if (string.IsNullOrEmpty(solSourceDir))
+            {
+                return absolutePath;
+            }
+
             if (absolutePath.StartsWith(solSourceDir, StringComparison.OrdinalIgnoreCase))
             {
                 absolutePath = absolutePath.Substring(solSourceDir.Length).TrimStart(new[] { '\\', '/' });

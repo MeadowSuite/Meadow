@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GeneratePackageOnBuild Condition="'$(Configuration)' == 'Release'">true</GeneratePackageOnBuild>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>meadow-debugsol</ToolCommandName>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
+    <PackageReference Include="Secp256k1.Native" Version="0.1.18" ExcludeAssets="native" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\Meadow.DebugAdapterServer\Meadow.DebugAdapterServer.csproj" />
+    <ProjectReference Include="..\Meadow.SolCodeGen\Meadow.SolCodeGen.csproj" />
+    <ProjectReference Include="..\Meadow.TestNode\Meadow.TestNode.csproj" />
+  </ItemGroup>
+
+</Project>

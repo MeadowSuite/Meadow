@@ -27,9 +27,9 @@ namespace Meadow.DebugAdapterServer
         public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
 
 
-        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null)
+        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null, bool useContractsSubDir = true)
         {
-            var debuggingInstance = new SolidityDebugger(SolidityDebugSessionID);
+            var debuggingInstance = new SolidityDebugger(SolidityDebugSessionID, useContractsSubDir);
 
             debuggingInstance.InitializeDebugConnection();
             IsSolidityDebuggerAttached = true;
@@ -57,11 +57,12 @@ namespace Meadow.DebugAdapterServer
         public event Action OnDebuggerDisconnect;
 #pragma warning restore CA1710 // Identifiers should have correct suffix
 
-        private SolidityDebugger(string debugSessionID)
+        private SolidityDebugger(string debugSessionID, bool useContractsSubDir)
         {
             _debugSessionID = debugSessionID;
+
             _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-            _debugAdapter = new MeadowSolidityDebugAdapter();
+            _debugAdapter = new MeadowSolidityDebugAdapter(useContractsSubDir);
             _debugAdapter.OnDebuggerDisconnect += DebugAdapter_OnDebuggerDisconnect;
             _debugAdapter.OnDebuggerDisconnect += TeardownRpcDebuggingHook;
         }
@@ -131,7 +132,15 @@ namespace Meadow.DebugAdapterServer
                 _debugAdapter.Protocol.WaitForReader();
             }
 
-            _pipeServer.Disconnect();
+            try
+            {
+                if (_pipeServer.IsConnected)
+                {
+                    _pipeServer.Disconnect();
+                }
+            }
+            catch { }
+
             _pipeServer.Dispose();
         }
     }

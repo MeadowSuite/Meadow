@@ -8,7 +8,7 @@ import { DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
 export async function resolveMeadowDebugAdapter(context: vscode.ExtensionContext, debugSessionID: string, debugConfig?: ISolidityMeadowDebugConfig): Promise<IDebugAdapterExecutable> {
 
 	Logger.log("Resolving debug adapter execution info.");
-
+	
 	let debugServerFilePath: string;
 
 	if (debugConfig && debugConfig.debugAdapterFile) {

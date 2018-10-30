@@ -16,6 +16,12 @@
             "console": "internalConsole"
         },
         {
+            "type": "solidity",
+            "request": "launch",
+            "name": "Debug Sol Files",
+            "entryPoint": "MainContract"
+        },
+        {
             "type": "solidityMeadow",
             "request": "launch",
             "name": "Debug Solidity (via unit test run)"

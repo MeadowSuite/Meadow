@@ -41,11 +41,12 @@
     "publish": "vsce publish"
   },
   "engines": {
-    "vscode": "^1.26.0",
+    "vscode": "^1.28.0",
     "node": "^8.12.0"
   },
   "dependencies": {
-    "semver": "^5.5.1",
+    "lockfile": "^1.0.4",
+    "semver": "^5.6.0",
     "uuid": "^3.3.2",
     "vscode-debugadapter": "^1.32.1",
     "vscode-debugprotocol": "^1.32.0"
@@ -53,10 +54,10 @@
   "devDependencies": {
     "@types/node": "^8.10.0",
     "tslint": "^5.11.0",
-    "typescript": "^3.1.1",
-    "vsce": "^1.51.1",
+    "typescript": "^3.1.3",
+    "vsce": "^1.52.0",
     "vscode": "^1.1.21",
-    "vscode-debugadapter-testsupport": "^1.31.0",
+    "vscode-debugadapter-testsupport": "^1.32.0",
     "trash": "^4.3.0"
   },
   "activationEvents": [
@@ -89,9 +90,53 @@
         "label": "Meadow C# Unit Test Hook"
       },
       {
-        "type": "solidityMeadow",
+        "type": "solidity",
         "label": "Solidity Debug",
-        "adapterExecutableCommand": "extension.meadow.vscode.debugger.getDebuggerPath",
+        "languages": [
+          "solidity"
+        ],
+        "configurationAttributes": {
+          "attach": {
+            "properties": {
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              }
+            }
+          },
+          "launch": {
+            "properties": {
+              "entryPoint": {
+                "type": "string",
+                "description": "The contract and function to be deployed and called in the format of 'ContractName.FunctionName'. The contract constructor and given function should not contain any input parameters.",
+                "default": "Main"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Automatically stop after launch.",
+                "default": true
+              },
+              "trace": {
+                "type": "boolean",
+                "description": "Enable logging of the Debug Adapter Protocol.",
+                "default": true
+              },
+              "breakDebugAdapter": {
+                "type": "boolean",
+                "description": "Attach debugger in the debug adapter executable when its launched."
+              },
+              "breakDebugServer": {
+                "type": "boolean",
+                "description": "Attach debugger in the debug server when its launched."
+              }
+            }
+          }
+        }
+      },
+      {
+        "type": "solidityMeadow",
+        "label": "Solidity Debugging w/ Unit Tests",
         "configurationAttributes": {
           "attach": {
             "properties": {
@@ -143,7 +188,16 @@
         },
         "configurationSnippets": [
           {
-            "label": "Solidity Debug: Launch",
+            "label": "Solidity Debug",
+            "description": "A new configuration for debugging Solidity with a contract entry point.",
+            "body": {
+              "type": "solidity",
+              "request": "launch",
+              "name": "Debug Solidity (via contract entry point)"
+            }
+          },
+          {
+            "label": "Solidity Debug: Launch Tests",
             "description": "A new configuration for debugging Solidity with Meadow via unit test run.",
             "body": {
               "type": "solidityMeadow",

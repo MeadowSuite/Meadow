@@ -1,21 +1,16 @@
 import * as vscode from 'vscode';
-import * as debugConfigProvider from './solDebugConfigProvider';
+import { MeadowTestsDebugConfigProvider } from './meadowTestsDebugConfigProvider';
 import { Logger } from './logger';
-import { resolveMeadowDebugAdapter } from './solDebugAdapterExecutable';
+import { resolveMeadowDebugAdapter } from './meadowDebugAdapter';
 import { SOLIDITY_MEADOW_TYPE } from './constants';
 import { ClrDebugConfigProvider } from './clrDebugConfigProvider';
+
+import { SolidityDebugConfigProvider } from './solidityDebugConfigProvider';
 
 
 export function activate(context: vscode.ExtensionContext) {
 
 	Logger.log("Extension activation.");
-
-	// TODO: is it reasonable to support debugging a single .sol file - how would it work with deployments and interaction?
-
-	context.subscriptions.push(vscode.commands.registerCommand('extension.meadow.vscode.debugger.getDebuggerPath', async (config) => {
-		let debugServerFilePath = await resolveMeadowDebugAdapter(context, vscode.env.sessionId);
-		return debugServerFilePath;
-	}));
 
 	/*
 	vscode.debug.onDidChangeActiveDebugSession(e => {
@@ -35,10 +30,14 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 	*/
 
+	const solidityDebugProvider = new SolidityDebugConfigProvider(context);
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("solidity", solidityDebugProvider));
+	context.subscriptions.push(solidityDebugProvider);
+
 	// register a configuration provider for the debug type
-	const provider = new debugConfigProvider.SolidityMeadowConfigurationProvider(context);
-	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(SOLIDITY_MEADOW_TYPE, provider));
-	context.subscriptions.push(provider);
+	const meadowTestDebugProvider = new MeadowTestsDebugConfigProvider(context);
+	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider(SOLIDITY_MEADOW_TYPE, meadowTestDebugProvider));
+	context.subscriptions.push(meadowTestDebugProvider);
 
 	// Register config provider for coreclr / omnisharp to hook in our solidity debugger.
 	const coreClrProvider = new ClrDebugConfigProvider(context);
