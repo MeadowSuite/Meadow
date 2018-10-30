@@ -4,13 +4,15 @@ import { Logger } from './logger';
 import { resolveMeadowDebugAdapter } from './meadowDebugAdapter';
 import { SOLIDITY_MEADOW_TYPE } from './constants';
 import { ClrDebugConfigProvider } from './clrDebugConfigProvider';
-
+import * as common from './common';
+import * as debugSolSourcesTool from './debugSolSourcesTool';
 import { SolidityDebugConfigProvider } from './solidityDebugConfigProvider';
 
 
 export function activate(context: vscode.ExtensionContext) {
 
 	Logger.log("Extension activation.");
+	common.setExtensionPath(context.extensionPath);
 
 	/*
 	vscode.debug.onDidChangeActiveDebugSession(e => {
@@ -30,6 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}));
 	*/
 
+
 	const solidityDebugProvider = new SolidityDebugConfigProvider(context);
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("solidity", solidityDebugProvider));
 	context.subscriptions.push(solidityDebugProvider);
@@ -42,6 +45,13 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register config provider for coreclr / omnisharp to hook in our solidity debugger.
 	const coreClrProvider = new ClrDebugConfigProvider(context);
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("coreclr", coreClrProvider));
+
+	// Check for updates to debugSolSources tool.
+	debugSolSourcesTool.update().catch(err => {
+		Logger.log("Error running update on DebugSolSources tool:");
+		Logger.log(err);
+	});
+
 }
 
 

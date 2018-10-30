@@ -7,6 +7,7 @@ import * as child_process from "child_process";
 import { Logger } from './logger';
 import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
 import { resolveMeadowDebugAdapter } from './meadowDebugAdapter';
+import * as debugSolSourcesTool from './debugSolSourcesTool';
 import * as common from './common';
 import { debug } from 'util';
 
@@ -24,51 +25,70 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 	// Notice: this is working in latest stable vscode but is preview.
 	provideDebugAdapter?(session: vscode.DebugSession, folder: vscode.WorkspaceFolder | undefined, executable: IDebugAdapterExecutable | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
 		
-		let debugConfig = <ISolidityMeadowDebugConfig>config;
+		return (async () => {
 
-		let debugSessionID: string;
+			let debugConfig = <ISolidityMeadowDebugConfig>config;
 
-		if (debugConfig.debugSessionID) {
-			debugSessionID = debugConfig.debugSessionID;
-		}
-		else {
-			debugSessionID = debugConfig.debugSessionID = uuid();
-		}
+			let debugSessionID: string;
 
-		// TODO: get this from debugSolSourcesTool..
-		let testAssembly = "C:/Users/matt/Projects/Meadow/src/Meadow.DebugSolSources/bin/Debug/netcoreapp2.1/Meadow.DebugSolSources.dll";
-		let args = [ testAssembly ];
-
-		if (debugConfig.workspaceDirectory) {
-			args.push("--directory", debugConfig.workspaceDirectory);
-		}
-
-		if (debugConfig.entryPoint) {
-			args.push("--entry", debugConfig.entryPoint);
-		}
-
-		if (debugConfig.singleFile) {
-			args.push("--singleFile", debugConfig.singleFile)
-		}
-
-		let opts : child_process.ExecFileOptions = { 
-			env: {
-				[DEBUG_SESSION_ID]: debugSessionID
+			if (debugConfig.debugSessionID) {
+				debugSessionID = debugConfig.debugSessionID;
 			}
-		};
-
-		if (debugConfig.breakDebugServer) {
-			opts.env["DEBUG_STOP_ON_ENTRY"] = "true";
-		}
-
-		child_process.execFile("dotnet", args, opts, (err, stdout, stderr) => {
-			Logger.log("Meadow.DebugSolSources execution finished.");
-			if (stderr) {
-				Logger.log(stderr);
+			else {
+				debugSessionID = debugConfig.debugSessionID = uuid();
 			}
-        });
 
-		return resolveMeadowDebugAdapter(this._context, debugSessionID, config);
+
+			let args : string[] = [  ];
+
+			if (debugConfig.workspaceDirectory) {
+				args.push("--directory", debugConfig.workspaceDirectory);
+			}
+
+			if (debugConfig.entryPoint) {
+				args.push("--entry", debugConfig.entryPoint);
+			}
+
+			if (debugConfig.singleFile) {
+				args.push("--singleFile", debugConfig.singleFile)
+			}
+
+			let opts : child_process.ExecFileOptions = { 
+				env: {
+					[DEBUG_SESSION_ID]: debugSessionID
+				}
+			};
+
+			if (debugConfig.breakDebugServer) {
+				opts.env["DEBUG_STOP_ON_ENTRY"] = "true";
+			}
+
+			if (debugConfig.testAssembly) {
+				args.unshift(debugConfig.testAssembly);
+				child_process.execFile("dotnet", args, opts, (err, stdout, stderr) => {
+					if (err) {
+						Logger.log(err.toString());
+					}
+					if (stderr) {
+						Logger.log(stderr);
+					}
+				});
+			}
+			else {
+				let testAssembly = await debugSolSourcesTool.getDebugToolPath();
+				child_process.execFile(testAssembly, args, opts, (err, stdout, stderr) => {
+					if (err) {
+						Logger.log(err.toString());
+					}
+					if (stderr) {
+						Logger.log(stderr);
+					}
+				});
+			}
+
+			// TODO: we should be able to avoid the pipe proxy adapter and use the server directory.
+			return resolveMeadowDebugAdapter(this._context, debugSessionID, config);
+		})();
 	}
 
 	provideDebugConfigurations?(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration[]> {

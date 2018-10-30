@@ -19,7 +19,8 @@
             "type": "solidity",
             "request": "launch",
             "name": "Debug Sol Files",
-            "entryPoint": "MainContract"
+            "entryPoint": "MainContract",
+            "testAssembly": "../Meadow.DebugSolSources/bin/Debug/netcoreapp2.1/Meadow.DebugSolSources.dll"
         },
         {
             "type": "solidityMeadow",
