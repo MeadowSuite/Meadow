@@ -72,10 +72,10 @@ namespace Meadow.CoverageReport
             foreach (var (coverageMap, contractInst) in coverageMaps)
             {
                 // Find the sourcemap matching this contract file name and contract name.
-                var sourceMapNonDeployed = analysis.SourceMaps[(contractInst.FilePath, contractInst.ContractName, contractInst.BytecodeHash)].NonDeployed;
+                var sourceMapNonDeployed = analysis.SourceMaps[(contractInst.FilePath, contractInst.ContractName, contractInst.Bytecode)].NonDeployed;
 
                 // Find the sourcemap matching this contract file name and contract name.
-                var sourceMapDeployed = analysis.SourceMaps[(contractInst.FilePath, contractInst.ContractName, contractInst.BytecodeHash)].Deployed;
+                var sourceMapDeployed = analysis.SourceMaps[(contractInst.FilePath, contractInst.ContractName, contractInst.Bytecode)].Deployed;
 
                 // Find the SourceFileMap (viewmodel used by the html templating) matching this contract file name.
                 var (sourceIndex, sourceFileMap) = sourceFileMaps.FirstOrDefault(s => s.Value.SourceFilePath == contractInst.FilePath);

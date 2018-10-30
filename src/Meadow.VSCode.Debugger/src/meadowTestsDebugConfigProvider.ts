@@ -6,11 +6,11 @@ import * as uuid from 'uuid/v1';
 import * as dotnetLaunchDebug from './clrLaunchDebug';
 import { Logger } from './logger';
 import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
-import { resolveMeadowDebugAdapter } from './solDebugAdapterExecutable';
+import { resolveMeadowDebugAdapter } from './meadowDebugAdapter';
 import * as common from './common';
 
 
-export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigurationProvider {
+export class MeadowTestsDebugConfigProvider implements vscode.DebugConfigurationProvider {
 
 	private _server?: Net.Server;
 
@@ -87,7 +87,7 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 
 		let workspaceRoot = common.getWorkspaceFolder().uri.fsPath;
 
-		//common.validateDotnetVersion();
+		common.validateDotnetVersion();
 
 		let checksReady = false;
 		if (checksReady) {

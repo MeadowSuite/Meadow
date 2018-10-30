@@ -16,6 +16,13 @@
             "console": "internalConsole"
         },
         {
+            "type": "solidity",
+            "request": "launch",
+            "name": "Debug Sol Files",
+            "entryPoint": "MainContract",
+            "testAssembly": "../Meadow.DebugSolSources/bin/Debug/netcoreapp2.1/Meadow.DebugSolSources.dll"
+        },
+        {
             "type": "solidityMeadow",
             "request": "launch",
             "name": "Debug Solidity (via unit test run)"

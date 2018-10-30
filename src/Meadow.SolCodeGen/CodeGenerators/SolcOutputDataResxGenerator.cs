@@ -85,9 +85,6 @@ namespace Meadow.SolCodeGen.CodeGenerators
                     var bytecode = bytecodeObj.Value<string>("object");
                     var bytecodeDeployed = deployedBytecodeObj.Value<string>("object");
 
-                    var bytecodeHash = KeccakHash.ComputeHash(HexUtil.HexToBytes(bytecode)).ToHexString();
-                    var bytecodeDeployedHash = KeccakHash.ComputeHash(HexUtil.HexToBytes(bytecodeDeployed)).ToHexString();
-
                     solcBytecodeInfos.Add(new SolcBytecodeInfo
                     {
                         FilePath = fileName,
@@ -97,9 +94,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                         SourceMapDeployed = sourceMapDeployed,
                         OpcodesDeployed = opcodesDeployed,
                         Bytecode = bytecode,
-                        BytecodeDeployed = bytecodeDeployed,
-                        BytecodeHash = bytecodeHash,
-                        BytecodeDeployedHash = bytecodeDeployedHash
+                        BytecodeDeployed = bytecodeDeployed
                     });
 
                 }

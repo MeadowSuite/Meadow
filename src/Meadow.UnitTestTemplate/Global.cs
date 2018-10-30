@@ -3,6 +3,7 @@ using Meadow.Core.AccountDerivation;
 using Meadow.Core.Utils;
 using Meadow.CoverageReport;
 using Meadow.CoverageReport.Debugging;
+using Meadow.DebugAdapterServer;
 using Meadow.JsonRpc;
 using Meadow.JsonRpc.Client;
 using Meadow.JsonRpc.Types;
@@ -118,12 +119,19 @@ namespace Meadow.UnitTestTemplate
         static (string Key, string Value)[] appConfigValues;
 
         static Action _debuggerCleanup;
+        static readonly CancellationTokenSource _debuggerCancellationToken;
 
         static Global()
         {
+            if (SolidityDebugger.DebugStopOnEntry && !Debugger.IsAttached)
+            {
+                Debugger.Launch();
+            }
+
             if (!SolidityDebugger.IsSolidityDebuggerAttached && SolidityDebugger.HasSolidityDebugAttachRequest)
             {
-                var debuggerDisposal = SolidityDebugger.AttachSolidityDebugger();
+                _debuggerCancellationToken = new CancellationTokenSource();
+                var debuggerDisposal = SolidityDebugger.AttachSolidityDebugger(_debuggerCancellationToken);
                 _debuggerCleanup = () =>
                 {
                     _debuggerCleanup = null;
@@ -163,6 +171,18 @@ namespace Meadow.UnitTestTemplate
 
             //File.AppendAllLines("/Users/matthewlittle/Desktop/log.txt", new[] { "ENV TEST: " + debugSessionID });
         }
+
+
+        /// <summary>
+        /// Launches MSTest runner. Connects to debugger if detected via env params.
+        /// </summary>
+        public static void Launch()
+        {
+            var cancelToken = _debuggerCancellationToken?.Token ?? CancellationToken.None;
+            MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken);
+            Console.WriteLine("Tests completed");
+        }
+
 
         static void OnProcessExit()
         {

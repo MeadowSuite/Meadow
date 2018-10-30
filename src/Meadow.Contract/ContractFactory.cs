@@ -18,13 +18,12 @@ namespace Meadow.Contract
         /// </summary>
         /// <param name="abiEncodedConstructorArgs">ABI encoded function selector and constructor parameters</param>
         public static async Task<Address> Deploy(
-            SolidityContractAttribute contractAttribute,
             IJsonRpcClient rpcClient,
             byte[] bytecode,
             TransactionParams sendParams,
             ReadOnlyMemory<byte> abiEncodedConstructorArgs = default)
         {
-            (JsonRpcError error, Hash transactionHash) = await TryDeploy(expectException: false, contractAttribute, rpcClient, bytecode, sendParams, abiEncodedConstructorArgs);
+            (JsonRpcError error, Hash transactionHash) = await TryDeploy(expectException: false, rpcClient, bytecode, sendParams, abiEncodedConstructorArgs);
             if (error != null)
             {
                 if (rpcClient.ErrorFormatter != null)
@@ -63,7 +62,6 @@ namespace Meadow.Contract
 
         public static async Task<(JsonRpcError Error, Hash TransactionHash)> TryDeploy(
             bool expectException,
-            SolidityContractAttribute contractAttribute,
             IJsonRpcClient rpcClient,
             byte[] bytecode,
             TransactionParams sendParams,

@@ -2,6 +2,16 @@ import * as vscode from 'vscode';
 import * as semver from 'semver';
 import * as child_process from "child_process";
 
+let extensionPath: string;
+
+export function setExtensionPath(path: string) {
+    extensionPath = path;
+}
+
+export function getExtensionPath() : string {
+    return extensionPath;
+}
+
 export function getWorkspaceFolder(): vscode.WorkspaceFolder {
     let workspaceFolder: vscode.WorkspaceFolder;
     if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {

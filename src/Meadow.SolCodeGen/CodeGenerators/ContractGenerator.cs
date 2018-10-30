@@ -74,8 +74,6 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 eventTypesString = ", " + string.Join(", ", eventTypes);
             }
 
-            string bytecodeHash = KeccakHash.ComputeHash(_contract.Evm.Bytecode.ObjectBytes).ToHexString();
-            string bytecodeDeployedHash = KeccakHash.ComputeHash(_contract.Evm.DeployedBytecode.ObjectBytes).ToHexString();
             string devDocJson = JsonConvert.SerializeObject(_contract.Devdoc).Replace("\"", "\"\"", StringComparison.Ordinal);
             string userDocJson = JsonConvert.SerializeObject(_contract.Userdoc).Replace("\"", "\"\"", StringComparison.Ordinal);
 
@@ -83,7 +81,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
             return $@"
                 /// <summary>From file {_contractSolFileName}<para/>{extraSummaryDoc}</summary>
-                [{typeof(SolidityContractAttribute).FullName}(typeof({_contractName}), CONTRACT_SOL_FILE, CONTRACT_NAME, CONTRACT_BYTECODE_HASH, CONTRACT_BYTECODE_DEPLOYED_HASH)]
+                [{typeof(SolidityContractAttribute).FullName}(typeof({_contractName}), CONTRACT_SOL_FILE, CONTRACT_NAME)]
                 public class {_contractName} : {typeof(BaseContract).FullName}
                 {{
 
@@ -91,13 +89,9 @@ namespace Meadow.SolCodeGen.CodeGenerators
 
                     public const string CONTRACT_SOL_FILE = ""{_contractSolFileName}"";
                     public const string CONTRACT_NAME = ""{_contractName}"";
-                    public const string CONTRACT_BYTECODE_HASH = ""{bytecodeHash}"";
-                    public const string CONTRACT_BYTECODE_DEPLOYED_HASH = ""{bytecodeDeployedHash}"";
 
                     protected override string ContractSolFilePath => CONTRACT_SOL_FILE;
                     protected override string ContractName => CONTRACT_NAME;
-                    protected override string ContractBytecodeHash => CONTRACT_BYTECODE_HASH;
-                    protected override string ContractBytecodeDeployedHash => CONTRACT_BYTECODE_DEPLOYED_HASH;
 
                     private {_contractName}({JsonRpcClientType} rpcClient, {typeof(Address).FullName} address, {typeof(Address).FullName} defaultFromAccount)
                         : base(rpcClient, address, defaultFromAccount)
@@ -187,8 +181,6 @@ namespace Meadow.SolCodeGen.CodeGenerators
             var (summaryDoc, paramsDoc) = constructorAbi != null ? GetSummaryXmlDoc(constructorAbi) : (string.Empty, string.Empty);
             string extraSummaryDoc = GetContractSummaryXmlDoc();
 
-            var contractAttrString = $"TypeAttributeCache<{_contractName}, {typeof(SolidityContractAttribute).FullName}>.Attribute";
-
             string deploymentLine;
             string encodedParamsLine = string.Empty;
             if (constructorAbi?.Inputs?.Length > 0)
@@ -204,7 +196,7 @@ namespace Meadow.SolCodeGen.CodeGenerators
                 encodedParamsLine = "var encodedParams = Array.Empty<byte>();";
             }
 
-            deploymentLine = $"var contractAddr = await ContractFactory.Deploy({contractAttrString}, rpcClient, BYTECODE_BYTES.Value, transactionParams, encodedParams);";
+            deploymentLine = $"var contractAddr = await ContractFactory.Deploy(rpcClient, BYTECODE_BYTES.Value, transactionParams, encodedParams);";
 
             string xmlDoc = $@"
                     /// <summary>

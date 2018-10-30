@@ -11,7 +11,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Meadow.UnitTestTemplate
+namespace Meadow.DebugAdapterServer
 {
     public class SolidityDebugger : IDisposable
     {
@@ -22,39 +22,14 @@ namespace Meadow.UnitTestTemplate
 
         public static string SolidityDebugSessionID => Environment.GetEnvironmentVariable(DEBUG_SESSION_ID);
 
+        public static bool DebugStopOnEntry => (Environment.GetEnvironmentVariable(DEBUG_STOP_ON_ENTRY) ?? string.Empty).Equals("true", StringComparison.OrdinalIgnoreCase);
+
         public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
 
 
-        public static void Launch()
+        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null, bool useContractsSubDir = true)
         {
-            if (!HasSolidityDebugAttachRequest)
-            {
-                MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly());
-            }
-            else
-            {
-                var debugStopOnEntry = (Environment.GetEnvironmentVariable(DEBUG_STOP_ON_ENTRY) ?? string.Empty).Equals("true", StringComparison.OrdinalIgnoreCase);
-
-                if (debugStopOnEntry && !Debugger.IsAttached)
-                {
-                    Debugger.Launch();
-                }
-
-
-                var cancelToken = new CancellationTokenSource();
-
-                using (AttachSolidityDebugger(cancelToken))
-                {
-                    // Run all tests (blocking)
-                    MSTestRunner.RunAllTests(Assembly.GetExecutingAssembly(), cancelToken.Token);
-                    Console.WriteLine("Tests completed");
-                }
-            }
-        }
-
-        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null)
-        {
-            var debuggingInstance = new SolidityDebugger(SolidityDebugSessionID);
+            var debuggingInstance = new SolidityDebugger(SolidityDebugSessionID, useContractsSubDir);
 
             debuggingInstance.InitializeDebugConnection();
             IsSolidityDebuggerAttached = true;
@@ -82,11 +57,12 @@ namespace Meadow.UnitTestTemplate
         public event Action OnDebuggerDisconnect;
 #pragma warning restore CA1710 // Identifiers should have correct suffix
 
-        private SolidityDebugger(string debugSessionID)
+        private SolidityDebugger(string debugSessionID, bool useContractsSubDir)
         {
             _debugSessionID = debugSessionID;
+
             _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-            _debugAdapter = new MeadowSolidityDebugAdapter();
+            _debugAdapter = new MeadowSolidityDebugAdapter(useContractsSubDir);
             _debugAdapter.OnDebuggerDisconnect += DebugAdapter_OnDebuggerDisconnect;
             _debugAdapter.OnDebuggerDisconnect += TeardownRpcDebuggingHook;
         }
@@ -156,7 +132,15 @@ namespace Meadow.UnitTestTemplate
                 _debugAdapter.Protocol.WaitForReader();
             }
 
-            _pipeServer.Disconnect();
+            try
+            {
+                if (_pipeServer.IsConnected)
+                {
+                    _pipeServer.Disconnect();
+                }
+            }
+            catch { }
+
             _pipeServer.Dispose();
         }
     }

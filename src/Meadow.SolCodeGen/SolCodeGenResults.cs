@@ -32,6 +32,8 @@ namespace Meadow.SolCodeGen
         public string GeneratedResxFilePath { get; set; }
         public IReadOnlyDictionary<string, string> GeneratedResxResources { get; set; }
 
+        public string SolcCodeBaseHash { get; set; }
+
         public SolCodeGenCompilationResults CompilationResults { get; set; }
     }
 }
