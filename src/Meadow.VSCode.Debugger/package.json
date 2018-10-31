@@ -1,7 +1,7 @@
 {
   "name": "solidity-debugger",
   "displayName": "Solidity Debugger",
-  "version": "0.0.5",
+  "version": "0.1.1",
   "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
   "categories": [
     "Debuggers"
@@ -29,7 +29,7 @@
     "ms-vscode.csharp"
   ],
   "icon": "meadow-icon-256x256.png",
-  "preview": true,
+  "preview": false,
   "private": true,
   "scripts": {
     "vscode:prepublish": "(npm run compile && npm run preparePackage)",

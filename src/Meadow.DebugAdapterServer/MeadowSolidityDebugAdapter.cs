@@ -104,6 +104,12 @@ namespace Meadow.DebugAdapterServer
             });
         }
 
+        public void SendProblemMessage(string message, string exception)
+        {
+            Protocol.SendEvent(new OutputEvent { Output = message, Category = OutputEvent.CategoryValue.Stderr });
+            Protocol.SendEvent(new ProblemDebugEvent { Message = message, Exception = exception });
+        }
+
         public async Task ProcessExecutionTraceAnalysis(IJsonRpcClient rpcClient, ExecutionTraceAnalysis traceAnalysis, bool expectingException)
         {
             // We don't have real threads here, only a unique execution context

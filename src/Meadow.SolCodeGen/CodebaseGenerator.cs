@@ -277,12 +277,16 @@ namespace Meadow.SolCodeGen
             sw.Stop();
             _logger($"Compiling solidity completed in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
 
-
-            _logger("Writing generated output to directory: " + _generatedContractsDirectory);
-
-
             #region Generated hashes for solidity sources
             sw.Restart();
+
+            // Calculate a deterministic hash of the solidity source code base, including file paths and the Meadow assembly version.
+            var codeBaseHash = KeccakHash.FromString(string.Join('|', soliditySourceContent
+                .OrderBy(k => k.Key)
+                .SelectMany(k => new[] { k.Key, k.Value })
+                .Concat(new[] { _assemblyVersion })));
+
+            _genResults.SolcCodeBaseHash = HexUtil.GetHexFromBytes(codeBaseHash);
 
             var flattenedContracts = solcOutput.ContractsFlattened.OrderBy(c => c.SolFile).ToArray();
             ContractInfo[] contractInfos = new ContractInfo[solcOutput.ContractsFlattened.Length];
@@ -318,14 +322,13 @@ namespace Meadow.SolCodeGen
             }
 
 
-            var contractPathsHash = KeccakHashString(string.Join("\n", contractInfos.SelectMany(c => new[] { c.SolFile, c.ContractName })));
-            var codeBaseHash = XorAllHashes(contractInfos.Select(c => c.Hash).Concat(new[] { contractPathsHash }).ToArray());
-            _genResults.SolcCodeBaseHash = HexUtil.GetHexFromBytes(codeBaseHash);
 
             _logger($"Generated sol source file hashes in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
             sw.Stop();
             #endregion
 
+
+            _logger("Writing generated output to directory: " + _generatedContractsDirectory);
 
             #region Output directory cleanup
             if (!Directory.Exists(_generatedContractsDirectory))
@@ -343,6 +346,7 @@ namespace Meadow.SolCodeGen
 
                 var existingFiles = Directory
                     .GetFiles(_generatedContractsDirectory, $"*{G_CS_FILE_EXT}", SearchOption.TopDirectoryOnly)
+                    .Where(f => f.EndsWith(".sol.cs", StringComparison.Ordinal) || f.EndsWith(".sol.resx", StringComparison.Ordinal))
                     .Select(f => NormalizePath(f))
                     .ToArray();
 
@@ -367,7 +371,6 @@ namespace Meadow.SolCodeGen
                 }
             }
             #endregion
-
 
             #region AST output generation
             sw.Restart();
@@ -598,30 +601,6 @@ namespace Meadow.SolCodeGen
             }
 
             return resultBuffer;
-        }
-
-        static byte[] XorAllHashes(byte[][] hashes)
-        {
-            byte[] codeBaseHash = new byte[32];
-            Span<ulong> int64Span = MemoryMarshal.Cast<byte, ulong>(codeBaseHash);
-
-            for (var i = 0; i < hashes.Length; i++)
-            {
-                if (i == 0)
-                {
-                    new Span<byte>(hashes[i]).CopyTo(codeBaseHash);
-                }
-                else
-                {
-                    Span<ulong> inputSpan = MemoryMarshal.Cast<byte, ulong>(hashes[i]);
-                    for (var j = 0; j < int64Span.Length; j++)
-                    {
-                        int64Span[j] ^= inputSpan[j];
-                    }
-                }
-            }
-
-            return codeBaseHash;
         }
 
         static byte[] KeccakHashString(string str)

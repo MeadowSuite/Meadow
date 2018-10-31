@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as util from 'util';
 
 export class Logger {
 
@@ -12,7 +13,7 @@ export class Logger {
             this.show();
         }
         this.outputChannel.appendLine(message);
-        params.forEach(p => this.outputChannel.appendLine(p));
+        params.forEach(p => this.outputChannel.appendLine(util.inspect(p)));
 
         if (this._isDebugging) {
             console.log(message);

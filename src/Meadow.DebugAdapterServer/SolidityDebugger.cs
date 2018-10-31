@@ -28,7 +28,7 @@ namespace Meadow.DebugAdapterServer
 
         public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
 
-        public static IDisposable AttachSolidityDebugger(IDebuggerTransport debuggerTransport, CancellationTokenSource cancelToken = null, bool useContractsSubDir = true)
+        public static SolidityDebugger AttachSolidityDebugger(IDebuggerTransport debuggerTransport, CancellationTokenSource cancelToken = null, bool useContractsSubDir = true)
         {
             var debuggingInstance = new SolidityDebugger(debuggerTransport, useContractsSubDir);
 
@@ -49,8 +49,8 @@ namespace Meadow.DebugAdapterServer
             return debuggingInstance;
         }
 
+        public MeadowSolidityDebugAdapter DebugAdapter { get; }
 
-        readonly MeadowSolidityDebugAdapter _debugAdapter;
         readonly IDebuggerTransport _debuggerTransport;
 
 #pragma warning disable CA1710 // Identifiers should have correct suffix
@@ -60,23 +60,23 @@ namespace Meadow.DebugAdapterServer
         private SolidityDebugger(IDebuggerTransport debuggerTransport, bool useContractsSubDir)
         {
             _debuggerTransport = debuggerTransport;
-            _debugAdapter = new MeadowSolidityDebugAdapter(useContractsSubDir);
-            _debugAdapter.OnDebuggerDisconnect += DebugAdapter_OnDebuggerDisconnect;
-            _debugAdapter.OnDebuggerDisconnect += TeardownRpcDebuggingHook;
+            DebugAdapter = new MeadowSolidityDebugAdapter(useContractsSubDir);
+            DebugAdapter.OnDebuggerDisconnect += DebugAdapter_OnDebuggerDisconnect;
+            DebugAdapter.OnDebuggerDisconnect += TeardownRpcDebuggingHook;
         }
 
         public void InitializeDebugConnection()
         {
             // Connect IPC stream to debug adapter handler.
-            _debugAdapter.InitializeStream(_debuggerTransport.InputStream, _debuggerTransport.OutputStream);
+            DebugAdapter.InitializeStream(_debuggerTransport.InputStream, _debuggerTransport.OutputStream);
 
             // Starts the debug protocol dispatcher background thread.
-            _debugAdapter.Protocol.Run();
+            DebugAdapter.Protocol.Run();
 
             // Wait until the debug protocol handshake has completed.
-            _debugAdapter.CompletedConfigurationDoneRequest.Task.Wait();
+            DebugAdapter.CompletedConfigurationDoneRequest.Task.Wait();
 
-            _debugAdapter.Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = 1 });
+            DebugAdapter.Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = 1 });
         }
 
         public void SetupRpcDebuggingHook()
@@ -111,19 +111,19 @@ namespace Meadow.DebugAdapterServer
             var executionTraceAnalysis = new ExecutionTraceAnalysis(executionTrace);
 
             // Process our execution trace in the debug adapter.
-            await _debugAdapter.ProcessExecutionTraceAnalysis(client, executionTraceAnalysis, expectingException);
+            await DebugAdapter.ProcessExecutionTraceAnalysis(client, executionTraceAnalysis, expectingException);
 
             await Task.CompletedTask;
         }
 
         public void Dispose()
         {
-            if (_debugAdapter.Protocol?.IsRunning == true)
+            if (DebugAdapter.Protocol?.IsRunning == true)
             {
                 // Cleanly close down debugging
-                _debugAdapter.SendTerminateAndExit();
-                _debugAdapter.Protocol.Stop(2000);
-                _debugAdapter.Protocol.WaitForReader();
+                DebugAdapter.SendTerminateAndExit();
+                DebugAdapter.Protocol.Stop(2000);
+                DebugAdapter.Protocol.WaitForReader();
             }
 
             _debuggerTransport.Dispose();
