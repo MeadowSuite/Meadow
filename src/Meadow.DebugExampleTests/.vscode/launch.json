@@ -20,8 +20,8 @@
             "request": "launch",
             "name": "Debug Sol Files",
             "entryPoint": "MainContract",
-            "debugAdapterFile": "../Meadow.DebugSolSources/bin/Debug/netcoreapp2.1/Meadow.DebugSolSources.dll",
-            "breakDebugAdapter": true,
+            //"debugAdapterFile": "../Meadow.DebugSolSources/bin/Debug/netcoreapp2.1/Meadow.DebugSolSources.dll",
+            //"breakDebugAdapter": true,
         },
         {
             "type": "solidityMeadow",
