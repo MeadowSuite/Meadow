@@ -20,7 +20,7 @@ const FILE_LOCK_STALE_MS = 1 * 60 * 1000;
 const FILE_LOCK_WAIT_MS = 5 * 60 * 1000;
 
 function getToolDir() { return path.join(common.getExtensionPath(), TOOL_DIR); }
-function getToolFilePath() { return path.join(common.getExtensionPath(), TOOL_DIR, TOOL_EXECUTABLE_NAME); }
+function getToolFilePath() { return path.join(common.getExtensionPath(), TOOL_DIR, TOOL_EXECUTABLE_NAME) + (process.platform === "win32" ? ".exe" : ""); }
 function getLockFilePath() { return path.join(common.getExtensionPath(), LOCK_FILE); }
 
 function isFileLocked() { return lockFile.checkSync(getLockFilePath(), { stale: FILE_LOCK_STALE_MS }); }
