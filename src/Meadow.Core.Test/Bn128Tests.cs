@@ -38,7 +38,7 @@ namespace Meadow.Core.Test
         [Fact]
         public void TestFp12()
         {
-            Fp12 x = new Fp12(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0); ;
+            Fp12 x = new Fp12(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
             Fp12 f = new Fp12(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
             Fp12 fpx = new Fp12(2, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
 
