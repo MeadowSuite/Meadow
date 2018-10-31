@@ -34,7 +34,7 @@ namespace Meadow.SolCodeGen
             CommandArgs appArgs = null;
             Exception parseException = null;
 
-            if (!CommandArgs.TryParse(args, out appArgs, out parseException))
+            if (!CommandArgs.TryParse(args, Console.WriteLine, out appArgs, out parseException))
             {
                 if (parseException.Data.Contains(CommandArgs.MISSING_SOL_FILES))
                 {
@@ -110,7 +110,7 @@ namespace Meadow.SolCodeGen
 
         public static SolCodeGenResults Run(string[] args)
         {
-            if (!CommandArgs.TryParse(args, out var appArgs, out var parseException))
+            if (!CommandArgs.TryParse(args, Console.WriteLine, out var appArgs, out var parseException))
             {
                 throw parseException;
             }

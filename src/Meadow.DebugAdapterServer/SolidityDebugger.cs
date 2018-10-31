@@ -1,18 +1,20 @@
 ﻿using Meadow.CoverageReport.Debugging;
 using Meadow.DebugAdapterServer;
+using Meadow.DebugAdapterServer.DebuggerTransport;
 using Meadow.JsonRpc.Client;
 using Microsoft.VisualStudio.Shared.VSCodeDebugProtocol.Messages;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO.Pipes;
 using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace Meadow.DebugAdapterServer
 {
+
     public class SolidityDebugger : IDisposable
     {
         const string DEBUG_SESSION_ID = "DEBUG_SESSION_ID";
@@ -26,10 +28,9 @@ namespace Meadow.DebugAdapterServer
 
         public static bool HasSolidityDebugAttachRequest => !string.IsNullOrWhiteSpace(SolidityDebugSessionID);
 
-
-        public static IDisposable AttachSolidityDebugger(CancellationTokenSource cancelToken = null, bool useContractsSubDir = true)
+        public static IDisposable AttachSolidityDebugger(IDebuggerTransport debuggerTransport, CancellationTokenSource cancelToken = null, bool useContractsSubDir = true)
         {
-            var debuggingInstance = new SolidityDebugger(SolidityDebugSessionID, useContractsSubDir);
+            var debuggingInstance = new SolidityDebugger(debuggerTransport, useContractsSubDir);
 
             debuggingInstance.InitializeDebugConnection();
             IsSolidityDebuggerAttached = true;
@@ -42,26 +43,23 @@ namespace Meadow.DebugAdapterServer
                 if (!Debugger.IsAttached)
                 {
                     cancelToken?.Cancel();
-                    //Environment.Exit(0);
                 }
             };
 
             return debuggingInstance;
         }
 
-        readonly string _debugSessionID;
-        readonly NamedPipeServerStream _pipeServer;
+
         readonly MeadowSolidityDebugAdapter _debugAdapter;
+        readonly IDebuggerTransport _debuggerTransport;
 
 #pragma warning disable CA1710 // Identifiers should have correct suffix
         public event Action OnDebuggerDisconnect;
 #pragma warning restore CA1710 // Identifiers should have correct suffix
 
-        private SolidityDebugger(string debugSessionID, bool useContractsSubDir)
+        private SolidityDebugger(IDebuggerTransport debuggerTransport, bool useContractsSubDir)
         {
-            _debugSessionID = debugSessionID;
-
-            _pipeServer = new NamedPipeServerStream(_debugSessionID, PipeDirection.InOut, 1, PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
+            _debuggerTransport = debuggerTransport;
             _debugAdapter = new MeadowSolidityDebugAdapter(useContractsSubDir);
             _debugAdapter.OnDebuggerDisconnect += DebugAdapter_OnDebuggerDisconnect;
             _debugAdapter.OnDebuggerDisconnect += TeardownRpcDebuggingHook;
@@ -69,11 +67,8 @@ namespace Meadow.DebugAdapterServer
 
         public void InitializeDebugConnection()
         {
-            // Wait for debug adapter proxy to connect.
-            _pipeServer.WaitForConnection();
-
             // Connect IPC stream to debug adapter handler.
-            _debugAdapter.InitializeStream(_pipeServer, _pipeServer);
+            _debugAdapter.InitializeStream(_debuggerTransport.InputStream, _debuggerTransport.OutputStream);
 
             // Starts the debug protocol dispatcher background thread.
             _debugAdapter.Protocol.Run();
@@ -82,7 +77,6 @@ namespace Meadow.DebugAdapterServer
             _debugAdapter.CompletedConfigurationDoneRequest.Task.Wait();
 
             _debugAdapter.Protocol.SendEvent(new StoppedEvent(StoppedEvent.ReasonValue.Breakpoint) { ThreadId = 1 });
-
         }
 
         public void SetupRpcDebuggingHook()
@@ -132,16 +126,7 @@ namespace Meadow.DebugAdapterServer
                 _debugAdapter.Protocol.WaitForReader();
             }
 
-            try
-            {
-                if (_pipeServer.IsConnected)
-                {
-                    _pipeServer.Disconnect();
-                }
-            }
-            catch { }
-
-            _pipeServer.Dispose();
+            _debuggerTransport.Dispose();
         }
     }
 }

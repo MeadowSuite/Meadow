@@ -63,20 +63,6 @@ export class MeadowTestsDebugConfigProvider implements vscode.DebugConfiguration
 
 		Logger.log(`Resolving debug configuration: ${JSON.stringify(config)}`);
 
-		// if launch.json is missing or empty
-		/*
-		if (!config.type && !config.request && !config.name) {
-			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === 'solidity') {
-				config.type = SOLIDITY_MEADOW_TYPE;
-				config.name = 'Launch';
-				config.request = 'launch';
-				config.program = '${file}';
-				config.stopOnEntry = true;
-			}
-		}
-		*/
-
 		let debugConfig = <ISolidityMeadowDebugConfig>config;
 		
 		if (debugConfig.withoutSolidityDebugging) {
@@ -107,23 +93,11 @@ export class MeadowTestsDebugConfigProvider implements vscode.DebugConfiguration
 
 		}
 		
-
 		debugConfig.workspaceDirectory = workspaceRoot;
 
-		for (let pathProp of ['debugAdapterFile', 'testAssembly', 'logFile']) {
-			let pathItem = debugConfig[pathProp];
-			if (pathItem) {
-				pathItem = pathItem.replace('${workspaceFolder}', workspaceRoot);
-				if (!path.isAbsolute(pathItem)) {
-					pathItem = path.resolve(workspaceRoot, pathItem);
-				}
-				else {
-					pathItem = path.resolve(pathItem);
-				}
-				debugConfig[pathProp] = pathItem;
-			}
-		}
-	
+		let pathKeys = ['debugAdapterFile', 'testAssembly', 'logFile'];
+		common.expandConfigPath(workspaceRoot, debugConfig, pathKeys);
+
 		Logger.log(`Using debug configuration: ${JSON.stringify(debugConfig)}`);
 
 		return debugConfig;

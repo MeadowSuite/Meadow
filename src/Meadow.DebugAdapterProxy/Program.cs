@@ -38,9 +38,9 @@ namespace Meadow.DebugAdapterProxy
         [Option("--vscode_debug", "Is started from VSCode.", CommandOptionType.NoValue)]
         public bool VSCodeDebug { get; set; }
 
-        public static ProcessArgs Parse(string[] args)
+        public static ProcessArgs Parse(string[] args, bool throwOnUnexpectedArg = true)
         {
-            var app = new CommandLineApplication<ProcessArgs>(throwOnUnexpectedArg: true);
+            var app = new CommandLineApplication<ProcessArgs>(throwOnUnexpectedArg: throwOnUnexpectedArg);
             app.Conventions.UseDefaultConventions();
             app.Parse(args);
             return app.Model;

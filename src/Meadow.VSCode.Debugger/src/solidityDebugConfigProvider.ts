@@ -5,8 +5,7 @@ import * as path from 'path';
 import * as uuid from 'uuid/v1';
 import * as child_process from "child_process";
 import { Logger } from './logger';
-import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
-import { resolveMeadowDebugAdapter } from './meadowDebugAdapter';
+import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID } from './constants';
 import * as debugSolSourcesTool from './debugSolSourcesTool';
 import * as common from './common';
 import { debug } from 'util';
@@ -29,17 +28,7 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 
 			let debugConfig = <ISolidityMeadowDebugConfig>config;
 
-			let debugSessionID: string;
-
-			if (debugConfig.debugSessionID) {
-				debugSessionID = debugConfig.debugSessionID;
-			}
-			else {
-				debugSessionID = debugConfig.debugSessionID = uuid();
-			}
-
-
-			let args : string[] = [  ];
+			let args : string[] = [ ];
 
 			if (debugConfig.workspaceDirectory) {
 				args.push("--directory", debugConfig.workspaceDirectory);
@@ -53,41 +42,36 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 				args.push("--singleFile", debugConfig.singleFile)
 			}
 
-			let opts : child_process.ExecFileOptions = { 
-				env: {
-					[DEBUG_SESSION_ID]: debugSessionID
-				}
-			};
+			let env : { [key: string]: string } = { };
 
-			if (debugConfig.breakDebugServer) {
-				opts.env["DEBUG_STOP_ON_ENTRY"] = "true";
+			if (debugConfig.breakDebugAdapter) {
+				env["DEBUG_STOP_ON_ENTRY"] = "true";
 			}
 
-			if (debugConfig.testAssembly) {
-				args.unshift(debugConfig.testAssembly);
-				child_process.execFile("dotnet", args, opts, (err, stdout, stderr) => {
-					if (err) {
-						Logger.log(err.toString());
-					}
-					if (stderr) {
-						Logger.log(stderr);
-					}
-				});
+			let launchInfo : IDebugAdapterExecutable;
+
+			if (debugConfig.debugAdapterFile) {
+				args.unshift(debugConfig.debugAdapterFile);
+				launchInfo = {
+					type: "executable",
+					command: "dotnet",
+					args: args,
+					env: env
+				};
 			}
 			else {
-				let testAssembly = await debugSolSourcesTool.getDebugToolPath();
-				child_process.execFile(testAssembly, args, opts, (err, stdout, stderr) => {
-					if (err) {
-						Logger.log(err.toString());
-					}
-					if (stderr) {
-						Logger.log(stderr);
-					}
-				});
+				let debugAdapterFile = await debugSolSourcesTool.getDebugToolPath();
+				launchInfo = {
+					type: "executable",
+					command: debugAdapterFile,
+					args: args,
+					env: env
+				};
 			}
-
-			// TODO: we should be able to avoid the pipe proxy adapter and use the server directory.
-			return resolveMeadowDebugAdapter(this._context, debugSessionID, config);
+		
+			Logger.log(`Launching debug adapter with: ${JSON.stringify(launchInfo)}`);
+		
+			return launchInfo;
 		})();
 	}
 
@@ -150,19 +134,8 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 			}
 
 			if (debugConfig.workspaceDirectory) {
-				for (let pathProp of ['debugAdapterFile', 'testAssembly', 'logFile']) {
-					let pathItem = debugConfig[pathProp];
-					if (pathItem) {
-						pathItem = pathItem.replace('${workspaceFolder}', debugConfig.workspaceDirectory);
-						if (!path.isAbsolute(pathItem)) {
-							pathItem = path.resolve(debugConfig.workspaceDirectory, pathItem);
-						}
-						else {
-							pathItem = path.resolve(pathItem);
-						}
-						debugConfig[pathProp] = pathItem;
-					}
-				}
+				let pathKeys =  ['debugAdapterFile', 'testAssembly', 'logFile'];
+				common.expandConfigPath(debugConfig.workspaceDirectory, debugConfig, pathKeys);
 			}
 		
 			Logger.log(`Using debug configuration: ${JSON.stringify(debugConfig)}`);

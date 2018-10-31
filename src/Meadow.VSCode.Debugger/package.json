@@ -122,13 +122,13 @@
                 "description": "Enable logging of the Debug Adapter Protocol.",
                 "default": true
               },
+              "debugAdapterFile": {
+                "type": "string",
+                "description": "Specify the debug adapter assembly file to use."
+              },
               "breakDebugAdapter": {
                 "type": "boolean",
                 "description": "Attach debugger in the debug adapter executable when its launched."
-              },
-              "breakDebugServer": {
-                "type": "boolean",
-                "description": "Attach debugger in the debug server when its launched."
               }
             }
           }
