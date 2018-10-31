@@ -4,6 +4,7 @@ using Meadow.Core.Utils;
 using Meadow.CoverageReport;
 using Meadow.CoverageReport.Debugging;
 using Meadow.DebugAdapterServer;
+using Meadow.DebugAdapterServer.DebuggerTransport;
 using Meadow.JsonRpc;
 using Meadow.JsonRpc.Client;
 using Meadow.JsonRpc.Types;
@@ -131,7 +132,8 @@ namespace Meadow.UnitTestTemplate
             if (!SolidityDebugger.IsSolidityDebuggerAttached && SolidityDebugger.HasSolidityDebugAttachRequest)
             {
                 _debuggerCancellationToken = new CancellationTokenSource();
-                var debuggerDisposal = SolidityDebugger.AttachSolidityDebugger(_debuggerCancellationToken);
+                var namedPipeDebuggerTransport = new NamedPipeServerDebuggerTransport();
+                var debuggerDisposal = SolidityDebugger.AttachSolidityDebugger(namedPipeDebuggerTransport, _debuggerCancellationToken);
                 _debuggerCleanup = () =>
                 {
                     _debuggerCleanup = null;

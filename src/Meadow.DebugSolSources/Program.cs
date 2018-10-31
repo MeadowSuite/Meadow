@@ -4,6 +4,7 @@ using Meadow.Core.AbiEncoding;
 using Meadow.Core.Utils;
 using Meadow.CoverageReport.Debugging;
 using Meadow.DebugAdapterServer;
+using Meadow.DebugAdapterServer.DebuggerTransport;
 using Meadow.JsonRpc;
 using Meadow.JsonRpc.Client;
 using Meadow.JsonRpc.Types;
@@ -11,6 +12,7 @@ using Meadow.SolCodeGen;
 using Meadow.TestNode;
 using SolcNet.DataDescription.Output;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -96,19 +98,21 @@ namespace Meadow.DebugSolSources
 
             // Hook up debugger callbacks.
             var debuggerCancelToken = new CancellationTokenSource();
-            var debuggerDisposable = SolidityDebugger.AttachSolidityDebugger(debuggerCancelToken, useContractsSubDir: false);
+            var stdInOutDebuggerTransport = new StandardInputOutputDebuggerTransport();
+            var debuggerDisposable = SolidityDebugger.AttachSolidityDebugger(stdInOutDebuggerTransport, debuggerCancelToken, useContractsSubDir: false);
 
             try
             {
                 // Perform sol compilation if out-of-date.
-                var solCodeGenResults = CodebaseGenerator.Generate(new CommandArgs
+                var solCodeGenArgs = new CommandArgs
                 {
                     Generate = GenerateOutputType.Source | GenerateOutputType.Assembly,
                     Namespace = generatedNamespace,
                     OutputDirectory = srcOutputDir,
                     AssemblyOutputDirectory = buildOutputDir,
                     SolSourceDirectory = solCompilationSourcePath
-                });
+                };
+                var solCodeGenResults = CodebaseGenerator.Generate(solCodeGenArgs, logger: msg => { });
 
                 // Load compiled assembly.
                 var generatedAsm = AppDomain.CurrentDomain.Load(

@@ -9,7 +9,6 @@ import * as https from 'https';
 import * as stream from 'stream';
 import * as common from './common';
 import { Logger } from './logger';
-import { version } from 'punycode';
 
 const TOOL_DIR : string = '.debugSolSourcesTool';
 const LOCK_FILE : string = '.debugSolSourcesTool.lock';
@@ -51,7 +50,7 @@ export async function update(){
         else {
             let latestVersion = await getLatestToolVersion();
             let versionOkay = semver.gte(installedVersion, latestVersion);
-            if (!versionOkay || true) {
+            if (!versionOkay) {
                 // Tool is installed but not update to date so update it.
                 showInfo("Debugger tool is outdated. Updating now..");
                 await updateTool();

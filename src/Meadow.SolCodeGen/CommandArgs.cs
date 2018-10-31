@@ -38,7 +38,7 @@ namespace Meadow.SolCodeGen
 
         public const string MISSING_SOL_FILES = "missingsolfiles";
 
-        public static bool TryParse(string[] args, out CommandArgs argResult, out Exception parseException)
+        public static bool TryParse(string[] args, LoggerDelegate logger, out CommandArgs argResult, out Exception parseException)
         {
             try
             {
@@ -67,7 +67,7 @@ namespace Meadow.SolCodeGen
                         }
 
                         result.SolSourceDirectory = opt;
-                        Console.WriteLine("Solidity source directory specified: " + opt);
+                        logger("Solidity source directory specified: " + opt);
                         return ValidationResult.Success;
                     });
 
@@ -111,7 +111,7 @@ namespace Meadow.SolCodeGen
                             }
 
                             result.LegacySolcPath = opt;
-                            Console.WriteLine($"Legacy solc lib set: {opt}");
+                            logger($"Legacy solc lib set: {opt}");
                         }
 
                         return ValidationResult.Success;
@@ -130,7 +130,7 @@ namespace Meadow.SolCodeGen
                             }
 
                             result.SolcVersion = solcVersionParsed;
-                            Console.WriteLine($"Solc version specified: {solcVersionParsed}");
+                            logger($"Solc version specified: {solcVersionParsed}");
                         }
 
                         return ValidationResult.Success;
@@ -151,7 +151,7 @@ namespace Meadow.SolCodeGen
                             if (solcOptimizerRuns > 0)
                             {
                                 result.SolcOptimizer = solcOptimizerRuns;
-                                Console.WriteLine($"Solc optimizer enabled with run count: {solcOptimizerRuns}");
+                                logger($"Solc optimizer enabled with run count: {solcOptimizerRuns}");
                             }
                         }
 
