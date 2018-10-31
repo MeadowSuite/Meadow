@@ -352,7 +352,7 @@ namespace Meadow.CoverageReport.Debugging
                 }
 
                 // Find the solc output for this contract address
-                var bytecodeInfo = _solcData.SolcBytecodeInfo.Single(s => s.FilePath == info.FilePath && s.ContractName == info.ContractName && s.BytecodeDeployedHash == info.BytecodeDeployedHash);
+                var bytecodeInfo = _solcData.SolcBytecodeInfo.Single(s => s.FilePath == info.FilePath && s.ContractName == info.ContractName && s.BytecodeDeployed.Equals(info.BytecodeDeployed, StringComparison.Ordinal));
 
                 // Parse the opcode string to do offset to index number lookups
                 var opcodes = tracepoint.ContractDeployed ? bytecodeInfo.OpcodesDeployed : bytecodeInfo.Opcodes;

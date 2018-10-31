@@ -18,27 +18,31 @@ using Meadow.CoverageReport.Debugging.Variables.Pairing;
 using Meadow.JsonRpc.Client;
 using System.Text;
 
+
 namespace Meadow.DebugAdapterServer
 {
-    class ExampleCustomRequestWithResponse : DebugRequestWithResponse<ExampleRequestArgs, ExampleRequestResponse>
-    {
-        public ExampleCustomRequestWithResponse() : base("customRequestExample")
-        {
-        }
-    }
-
-    class ExampleRequestArgs
-    {
-        public string SessionID { get; set; }
-    }
-
-    class ExampleRequestResponse : ResponseBody
-    {
-        public string Response { get; set; }
-    }
-
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class MeadowSolidityDebugAdapter : DebugAdapterBase
     {
+
+        class ExampleCustomRequestWithResponse : DebugRequestWithResponse<ExampleRequestArgs, ExampleRequestResponse>
+        {
+            public ExampleCustomRequestWithResponse() : base("customRequestExample")
+            {
+            }
+        }
+
+        class ExampleRequestArgs
+        {
+            public string SessionID { get; set; }
+        }
+
+        class ExampleRequestResponse : ResponseBody
+        {
+            public string Response { get; set; }
+        }
+
+
         #region Constants
         private string _contractsDirectory = "Contracts";
         private const int SIMULTANEOUS_TRACE_COUNT = 1;
@@ -53,6 +57,8 @@ namespace Meadow.DebugAdapterServer
         private System.Threading.SemaphoreSlim _processTraceSemaphore = new System.Threading.SemaphoreSlim(SIMULTANEOUS_TRACE_COUNT, SIMULTANEOUS_TRACE_COUNT);
 
         readonly ConcurrentDictionary<string, int[]> _sourceBreakpoints = new ConcurrentDictionary<string, int[]>();
+
+        readonly bool _useContractsSubDir;
         #endregion
 
         #region Properties
@@ -75,8 +81,10 @@ namespace Meadow.DebugAdapterServer
         int _threadIDCounter = 0;
 
         #region Constructor
-        public MeadowSolidityDebugAdapter()
+        public MeadowSolidityDebugAdapter(bool useContractsSubDir)
         {
+            _useContractsSubDir = useContractsSubDir;
+
             // Initialize our thread state lookup.
             ThreadStates = new ConcurrentDictionary<int, MeadowDebugAdapterThreadState>();
 
@@ -470,17 +478,17 @@ namespace Meadow.DebugAdapterServer
         void SetupConfigurationProperties(Dictionary<string, JToken> configProperties)
         {
             ConfigurationProperties = JObject.FromObject(configProperties).ToObject<SolidityMeadowConfigurationProperties>();
-            if (Directory.Exists(Path.Combine(ConfigurationProperties.WorkspaceDirectory, "Contracts")))
+
+            if (_useContractsSubDir)
             {
-                _contractsDirectory = "Contracts";
-            }
-            else if (Directory.Exists(Path.Combine(ConfigurationProperties.WorkspaceDirectory, "contracts")))
-            {
-                _contractsDirectory = "contracts";
-            }
-            else
-            {
-                throw new Exception("No contracts directory found");
+                var dirEntries = Directory.GetDirectories(ConfigurationProperties.WorkspaceDirectory, "*contracts", SearchOption.TopDirectoryOnly);
+                var contractsDir = dirEntries.FirstOrDefault(d => Path.GetFileName(d).Equals("contracts", StringComparison.OrdinalIgnoreCase));
+                if (contractsDir == null)
+                {
+                    throw new Exception("No contracts directory found");
+                }
+
+                _contractsDirectory = Path.GetFileName(contractsDir);
             }
         }
 
@@ -702,12 +710,26 @@ namespace Meadow.DebugAdapterServer
                     {
                         sourceFilePath = sourceFilePath.Replace('/', Path.DirectorySeparatorChar);
                     }
-                
+
+                    string sourcePath;
+                    if (Path.IsPathRooted(sourceFilePath))
+                    {
+                        sourcePath = sourceFilePath;
+                    }
+                    else if (_useContractsSubDir)
+                    {
+                        sourcePath = Path.Join(ConfigurationProperties.WorkspaceDirectory, _contractsDirectory, sourceFilePath);
+                    }
+                    else
+                    {
+                        sourcePath = Path.Join(ConfigurationProperties.WorkspaceDirectory, sourceFilePath);
+                    }
+
                     // Create our source object
                     Source stackFrameSource = new Source()
                     {
                         Name = currentStackFrame.CurrentPositionLines[0].SourceFileMapParent.SourceFileName,
-                        Path = Path.Join(ConfigurationProperties.WorkspaceDirectory, _contractsDirectory, sourceFilePath)
+                        Path = sourcePath
                     };
 
                     // Create our stack frame
@@ -1012,13 +1034,21 @@ namespace Meadow.DebugAdapterServer
         #endregion
 
 
-        private string ConvertVSCodePathToInternalPath(string vsCodePath)
+        private string ConvertVSCodePathToInternalPath(string vsCodePath, string workspacePath)
         {
-            var relativeFilePath = vsCodePath.Substring(ConfigurationProperties.WorkspaceDirectory.Length);
+            var relativeFilePath = vsCodePath.Substring(workspacePath.Length + 1);
+            string internalPath;
 
             // Strip our contracts folder from our VS Code Path
-            int index = relativeFilePath.IndexOf(_contractsDirectory, StringComparison.InvariantCultureIgnoreCase);
-            string internalPath = relativeFilePath.Trim().Substring(index + _contractsDirectory.Length + 1);
+            if (_useContractsSubDir)
+            {
+                int index = relativeFilePath.IndexOf(_contractsDirectory, StringComparison.InvariantCultureIgnoreCase);
+                internalPath = relativeFilePath.Trim().Substring(index + _contractsDirectory.Length + 1);
+            }
+            else
+            {
+                internalPath = relativeFilePath.Trim();
+            }
 
             // Make path platform agnostic
             internalPath = internalPath.Replace('\\', '/');
@@ -1036,9 +1066,24 @@ namespace Meadow.DebugAdapterServer
                 return;
             }
 
-            if (!responder.Arguments.Source.Path.StartsWith(ConfigurationProperties.WorkspaceDirectory, StringComparison.OrdinalIgnoreCase))
+            string sourceFilePath = responder.Arguments.Source.Path;
+
+            if (!string.IsNullOrEmpty(ConfigurationProperties.WorkspaceDirectory) && responder.Arguments.Source.Path.StartsWith(ConfigurationProperties.WorkspaceDirectory, StringComparison.OrdinalIgnoreCase))
             {
-                throw new Exception($"Unexpected breakpoint source path: {responder.Arguments.Source.Path}, workspace: {ConfigurationProperties.WorkspaceDirectory}");
+                // Obtain our internal path from a vs code path
+                sourceFilePath = ConvertVSCodePathToInternalPath(responder.Arguments.Source.Path, ConfigurationProperties.WorkspaceDirectory);
+            }
+            else
+            {
+                var pathRoot = Path.GetPathRoot(sourceFilePath);
+                if (pathRoot.Length > 0)
+                {
+                    sourceFilePath = pathRoot.ToLowerInvariant() + sourceFilePath.Substring(pathRoot.Length);
+                }
+
+                sourceFilePath = sourceFilePath.Replace('\\', '/');
+                
+                //throw new Exception($"Unexpected breakpoint source path: {responder.Arguments.Source.Path}, workspace: {ConfigurationProperties.WorkspaceDirectory}");
             }
 
             if (responder.Arguments.SourceModified.GetValueOrDefault())
@@ -1046,11 +1091,7 @@ namespace Meadow.DebugAdapterServer
                 throw new Exception("Debugging modified sources is not supported.");
             }
 
-
-            // Obtain our internal path from a vs code path
-            var relativeFilePath = ConvertVSCodePathToInternalPath(responder.Arguments.Source.Path);
-
-            _sourceBreakpoints[relativeFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
+            _sourceBreakpoints[sourceFilePath] = responder.Arguments.Breakpoints.Select(b => b.Line).ToArray();
             
             responder.SetResponse(new SetBreakpointsResponse());
         }

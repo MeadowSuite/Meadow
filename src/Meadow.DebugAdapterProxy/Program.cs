@@ -16,6 +16,7 @@ using System.IO.Pipelines;
 using System.Buffers.Text;
 using McMaster.Extensions.CommandLineUtils.Abstractions;
 using System.Collections.Generic;
+using System.IO.Pipes;
 
 namespace Meadow.DebugAdapterProxy
 {
@@ -37,9 +38,9 @@ namespace Meadow.DebugAdapterProxy
         [Option("--vscode_debug", "Is started from VSCode.", CommandOptionType.NoValue)]
         public bool VSCodeDebug { get; set; }
 
-        public static ProcessArgs Parse(string[] args)
+        public static ProcessArgs Parse(string[] args, bool throwOnUnexpectedArg = true)
         {
-            var app = new CommandLineApplication<ProcessArgs>(throwOnUnexpectedArg: true);
+            var app = new CommandLineApplication<ProcessArgs>(throwOnUnexpectedArg: throwOnUnexpectedArg);
             app.Conventions.UseDefaultConventions();
             app.Parse(args);
             return app.Model;
@@ -91,10 +92,34 @@ namespace Meadow.DebugAdapterProxy
             _cancellationTokenSource.Cancel();
         }
 
+        static async Task ConnectStream(Stream from, Stream to, Stream copy = null, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var buffer = new byte[1024];
+                int read;
+                while (from.CanRead && to.CanWrite)
+                {
+                    read = await from.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+                    if (copy != null)
+                    {
+                        await copy.WriteAsync(buffer, 0, read, cancellationToken);
+                        await copy.FlushAsync(cancellationToken);
+                    }
+
+                    await to.WriteAsync(buffer, 0, read, cancellationToken);
+                    await to.FlushAsync(cancellationToken);
+                }
+            }
+            catch (NotSupportedException) { }
+            catch (OperationCanceledException) { }
+            catch (IOException) { }
+        }
+
         static async Task StartIpcProxyClient(string pipeName, CancellationToken cancellationToken)
         {
             // forward stdin/stdout from this process to a named pipe server
-            using (var pipeClient = NamedPipes.CreatePipeClient(pipeName))
+            using (var pipeClient = new NamedPipeClientStream(".", pipeName, System.IO.Pipes.PipeDirection.InOut, System.IO.Pipes.PipeOptions.Asynchronous))
             {
                 _logger?.Log("Connecting to debug server pipe...");
                 await pipeClient.ConnectAsync(cancellationToken);
@@ -122,10 +147,10 @@ namespace Meadow.DebugAdapterProxy
                         streamTasks.Add(verboseProxyLogTask);
                     }
 
-                    var pipeInputTask = NamedPipes.ConnectStream(stdIn, pipeClient, proxyStreamInput, cancellationToken);
-                    var pipeOutputTask = NamedPipes.ConnectStream(pipeClient, stdOut, proxyStreamOutput, cancellationToken);
+                    var pipeInputTask = ConnectStream(stdIn, pipeClient, proxyStreamInput, cancellationToken);
+                    var pipeOutputTask = ConnectStream(pipeClient, stdOut, proxyStreamOutput, cancellationToken);
 
-                    var checkClosedTask = Task.Run(() => 
+                    var checkClosedTask = Task.Run(() =>
                     {
                         while (pipeClient.IsConnected)
                         {

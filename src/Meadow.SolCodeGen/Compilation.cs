@@ -51,7 +51,7 @@ namespace Meadow.SolCodeGen
                 .WithGeneralDiagnosticOption(ReportDiagnostic.Warn)
                 .WithReportSuppressedDiagnostics(true)
                 .WithPlatform(Platform.AnyCpu)
-                .WithOptimizationLevel(OptimizationLevel.Debug);
+                .WithOptimizationLevel(OptimizationLevel.Release);
 
             // Add runtime, Meadow, and other dependency assembly references.
             var metadataReferences = GetReferencedAssemblies(typeof(BaseContract).Assembly)
@@ -63,15 +63,18 @@ namespace Meadow.SolCodeGen
                 syntaxTrees: _codeGenResults.GeneratedCSharpEntries.Select(g => g.SyntaxTree),
                 references: metadataReferences,
                 options: compilationOptions);
-
+            
             EmitResult emitResult;
 
             using (var asmFileStream = new FileStream(_generatedAssemblyFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             using (var pdbFileStream = new FileStream(_generatedPdbFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             using (var xmlDocFileStream = new FileStream(_generatedXmlDocFile, FileMode.OpenOrCreate, FileAccess.ReadWrite))
             {
+                var emitOptions = new EmitOptions(debugInformationFormat: DebugInformationFormat.PortablePdb);
+
                 // Compile sources into assembly, pdb and xmldoc.
                 emitResult = compileContext.Emit(
+                    options: emitOptions,
                     peStream: asmFileStream,
                     pdbStream: pdbFileStream,
                     xmlDocumentationStream: xmlDocFileStream,

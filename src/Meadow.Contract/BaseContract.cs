@@ -30,8 +30,26 @@ namespace Meadow.Contract
 
         string ContractSolFilePath { get; }
         string ContractName { get; }
-        string ContractBytecodeHash { get; }
-        string ContractBytecodeDeployedHash { get; }
+    }
+
+    public class ContractInstance : BaseContract
+    {
+        protected override string ContractSolFilePath { get; }
+
+        protected override string ContractName { get; }
+
+        public ContractInstance(
+            string contractSolFilePath, string contractName,
+            IJsonRpcClient rpcClient, Address contractAddress, Address defaultFromAccount) 
+            : base(rpcClient, contractAddress, defaultFromAccount)
+        {
+            ContractAddress = contractAddress;
+            DefaultFromAccount = defaultFromAccount;
+            JsonRpcClient = rpcClient;
+
+            ContractSolFilePath = contractSolFilePath;
+            ContractName = contractName;
+        }
     }
 
     public abstract class BaseContract : IContractInstanceSetup
@@ -46,13 +64,9 @@ namespace Meadow.Contract
 
         protected abstract string ContractSolFilePath { get; }
         protected abstract string ContractName { get; }
-        protected abstract string ContractBytecodeHash { get; }
-        protected abstract string ContractBytecodeDeployedHash { get; }
 
         string IContractInstanceSetup.ContractSolFilePath => ContractSolFilePath;
         string IContractInstanceSetup.ContractName => ContractName;
-        string IContractInstanceSetup.ContractBytecodeHash => ContractBytecodeHash;
-        string IContractInstanceSetup.ContractBytecodeDeployedHash => ContractBytecodeDeployedHash;
 
         public BaseContract(IJsonRpcClient rpcClient, Address contractAddress, Address defaultFromAccount) : this()
         {

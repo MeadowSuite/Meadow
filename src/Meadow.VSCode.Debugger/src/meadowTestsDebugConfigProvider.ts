@@ -6,11 +6,11 @@ import * as uuid from 'uuid/v1';
 import * as dotnetLaunchDebug from './clrLaunchDebug';
 import { Logger } from './logger';
 import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID, SOLIDITY_MEADOW_TYPE } from './constants';
-import { resolveMeadowDebugAdapter } from './solDebugAdapterExecutable';
+import { resolveMeadowDebugAdapter } from './meadowDebugAdapter';
 import * as common from './common';
 
 
-export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigurationProvider {
+export class MeadowTestsDebugConfigProvider implements vscode.DebugConfigurationProvider {
 
 	private _server?: Net.Server;
 
@@ -63,20 +63,6 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 
 		Logger.log(`Resolving debug configuration: ${JSON.stringify(config)}`);
 
-		// if launch.json is missing or empty
-		/*
-		if (!config.type && !config.request && !config.name) {
-			const editor = vscode.window.activeTextEditor;
-			if (editor && editor.document.languageId === 'solidity') {
-				config.type = SOLIDITY_MEADOW_TYPE;
-				config.name = 'Launch';
-				config.request = 'launch';
-				config.program = '${file}';
-				config.stopOnEntry = true;
-			}
-		}
-		*/
-
 		let debugConfig = <ISolidityMeadowDebugConfig>config;
 		
 		if (debugConfig.withoutSolidityDebugging) {
@@ -87,7 +73,7 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 
 		let workspaceRoot = common.getWorkspaceFolder().uri.fsPath;
 
-		//common.validateDotnetVersion();
+		common.validateDotnetVersion();
 
 		let checksReady = false;
 		if (checksReady) {
@@ -107,23 +93,11 @@ export class SolidityMeadowConfigurationProvider implements vscode.DebugConfigur
 
 		}
 		
-
 		debugConfig.workspaceDirectory = workspaceRoot;
 
-		for (let pathProp of ['debugAdapterFile', 'testAssembly', 'logFile']) {
-			let pathItem = debugConfig[pathProp];
-			if (pathItem) {
-				pathItem = pathItem.replace('${workspaceFolder}', workspaceRoot);
-				if (!path.isAbsolute(pathItem)) {
-					pathItem = path.resolve(workspaceRoot, pathItem);
-				}
-				else {
-					pathItem = path.resolve(pathItem);
-				}
-				debugConfig[pathProp] = pathItem;
-			}
-		}
-	
+		let pathKeys = ['debugAdapterFile', 'testAssembly', 'logFile'];
+		common.expandConfigPath(workspaceRoot, debugConfig, pathKeys);
+
 		Logger.log(`Using debug configuration: ${JSON.stringify(debugConfig)}`);
 
 		return debugConfig;

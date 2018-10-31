@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 using System.Globalization;
+using Meadow.Core.EthTypes;
 
 [assembly: CollectionBehavior(DisableTestParallelization = true)]
 
@@ -40,6 +41,140 @@ namespace Meadow.TestNode.Test
         }
 
         [Fact]
+        public async Task GetBalanceTest()
+        {
+            var accounts = await Client.Accounts();
+            var balance = await Client.GetBalance(accounts[0], DefaultBlockParameter.Default);
+            Assert.Equal(2e21, balance);
+        }
+
+        [Fact]
+        public async Task GetCodeTest()
+        {
+            var accounts = await Client.Accounts();
+            var code = await Client.GetCode(accounts[0], DefaultBlockParameter.Default);
+
+            await Client.GetCode(accounts[0], 9999999);
+        }
+
+        [Fact]
+        public async Task IncreaseTimeTest()
+        {
+            ulong seconds = 1500;
+            await _fixture.Client.Mine();
+            var time1 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Timestamp;
+            await _fixture.Client.IncreaseTime(seconds);
+            await _fixture.Client.Mine();
+            var time2 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Timestamp;
+            var diff = time2 - time1;
+            Assert.Equal(seconds, diff);
+        }
+
+        [Fact]
+        public async Task GasPriceTest()
+        {
+            var price = await Client.GasPrice();
+            Assert.Equal(0, price);
+        }
+
+        [Fact]
+        public async Task CoinbaseTest()
+        {
+            var coinbase = await Client.Coinbase();
+            Assert.Equal("0x7777777777777777777777777777777777777777", coinbase);
+        }
+
+        [Fact]
+        public async Task TestChainID()
+        {
+            var chainID = await Client.ChainID();
+            Assert.Equal(77UL, chainID);
+        }
+
+        [Fact]
+        public async Task MineTest()
+        {
+            var blockNum1 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Number.Value;
+            await _fixture.Client.Mine();
+            var blockNum2 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Number.Value;
+            Assert.Equal(1UL, blockNum2 - blockNum1);
+        }
+
+        [Fact]
+        public async Task GetBlockTest()
+        {
+            var blockNum = await Client.BlockNumber();
+            var block1 = await Client.GetBlockByNumber(false, blockNum);
+            var block2 = await Client.GetBlockByHash(block1.Hash.Value, false);
+            Assert.Equal(block1.Hash.Value, block2.Hash.Value);
+        }
+
+        [Fact]
+        public async Task GetTransactionByHash()
+        {
+            var accounts = await Client.Accounts();
+            var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
+            var txHash = await contract.getValCounter().SendTransaction();
+            var tx = await Client.GetTransactionByHash(txHash);
+            Assert.Equal(txHash, tx.Hash);
+        }
+
+        [Fact]
+        public async Task GetTransactionByBlockHashAndIndexTest()
+        {
+            var accounts = await Client.Accounts();
+            var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
+            var txHash = await contract.getValCounter().SendTransaction();
+            var curBlock = await Client.GetBlockByNumber(true, DefaultBlockParameter.Default);
+            var tx = await Client.GetTransactionByBlockHashAndIndex(curBlock.Hash.Value, 0);
+            Assert.Equal(txHash, tx.Hash);
+        }
+
+
+        [Fact]
+        public async Task GetBlockTransactionCountTest()
+        {
+            var accounts = await Client.Accounts();
+            var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
+            var txHash = await contract.getValCounter().SendTransaction();
+
+            var curBlock = await Client.GetBlockByNumber(true, DefaultBlockParameter.Default);
+
+            var count1 = await Client.GetBlockTransactionCountByHash(curBlock.Hash.Value);
+            Assert.Equal(1UL, count1);
+
+            var count2 = await Client.GetBlockTransactionCountByNumber(curBlock.Number.Value);
+            Assert.Equal(1UL, count2);
+        }
+
+        [Fact]
+        public async Task GetTransactionCountTest()
+        {
+            var accounts = await Client.Accounts();
+            var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
+            var txHash = await contract.getValCounter().SendTransaction(new TransactionParams(from: accounts[2]));
+
+            var curBlock = await Client.GetBlockByNumber(true, DefaultBlockParameter.Default);
+
+            var count = await Client.GetTransactionCount(accounts[2], DefaultBlockParameter.Default);
+            Assert.Equal(1UL, count);
+        }
+
+        [Fact]
+        public async Task ClientVersionTest()
+        {
+            var version = await Client.ClientVersion();
+            Assert.Contains("Meadow-TestServer", version, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task SyncingTest()
+        {
+            var syncing = await Client.Syncing();
+            Assert.False(syncing.IsSyncing);
+        }
+
+        [Fact]
         public async Task SnapshotRevertWithCoverageTest()
         {
             await Client.SetCoverageEnabled(true);
@@ -62,6 +197,7 @@ namespace Meadow.TestNode.Test
             await Client.Revert(snapshotID2);
 
             var coverage = await Client.GetCoverageMap(contract.ContractAddress);
+            await Client.ClearCoverage(contract.ContractAddress);
         }
 
         #region Tests

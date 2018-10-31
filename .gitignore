@@ -341,3 +341,5 @@ src/coverage/
 src/report/
 src/reportgenerator/
 src/Meadow.VSCode.Debugger/solidity-debugger*.vsix
+**/*/.meadow-generated/
+**/*.debugSolSourcesTool/

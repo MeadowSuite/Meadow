@@ -1,6 +1,17 @@
 import * as vscode from 'vscode';
 import * as semver from 'semver';
+import * as path from 'path';
 import * as child_process from "child_process";
+
+let extensionPath: string;
+
+export function setExtensionPath(path: string) {
+    extensionPath = path;
+}
+
+export function getExtensionPath() : string {
+    return extensionPath;
+}
 
 export function getWorkspaceFolder(): vscode.WorkspaceFolder {
     let workspaceFolder: vscode.WorkspaceFolder;
@@ -33,6 +44,24 @@ export function validateDotnetVersion() {
     let dotnetVersionSatisfied = semver.gte(dotnetVersionString, minVersion);
     if (!dotnetVersionSatisfied) {
         throw new Error(`Invalid dotnet version "${dotnetVersionString}" - must be ${minVersion} or greater. Download SDK from https://www.microsoft.com/net/download`);
+    }
+
+}
+
+export function expandConfigPath(workspaceDir: string, config: {}, pathItems: string[]) {
+
+    for (let pathProp of pathItems) {
+        let pathItem = config[pathProp];
+        if (pathItem && typeof pathItem === "string") {
+            pathItem = pathItem.replace('${workspaceFolder}', workspaceDir);
+            if (!path.isAbsolute(pathItem)) {
+                pathItem = path.resolve(workspaceDir, pathItem);
+            }
+            else {
+                pathItem = path.resolve(pathItem);
+            }
+            config[pathProp] = pathItem;
+        }
     }
 
 }

@@ -48,12 +48,6 @@ namespace Meadow.Contract
         [JsonProperty("bytecodeDeployed")]
         public string BytecodeDeployed { get; set; }
 
-        [JsonProperty("bytecodeHash")]
-        public string BytecodeHash { get; set; }
-
-        [JsonProperty("bytecodeDeployedHash")]
-        public string BytecodeDeployedHash { get; set; }
-
         public SolcBytecodeInfo()
         {
 

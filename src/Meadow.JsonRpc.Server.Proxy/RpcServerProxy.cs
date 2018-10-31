@@ -13,6 +13,8 @@ using Microsoft.Extensions.Logging;
 
 namespace Meadow.JsonRpc.Server.Proxy
 {
+
+    [System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage]
     public class RpcServerProxy : IRpcController, IDisposable
     {
         readonly IJsonRpcClient _proxyClient;

@@ -13,11 +13,15 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Meadow.SolCodeGen
 {
+
+    public delegate void LoggerDelegate(string message);
+
     public class CodebaseGenerator
     {        
         
@@ -37,6 +41,7 @@ namespace Meadow.SolCodeGen
         readonly bool _returnFullSources;
 
         readonly string _solSourceDirectory;
+        readonly string _solSourceSingleFile;
         readonly string _generatedContractsDirectory;
         readonly string _generatedAssemblyDirectory;
         readonly string _namespace;
@@ -45,15 +50,18 @@ namespace Meadow.SolCodeGen
         readonly string _solidityCompilerVersion;
         readonly SolcLib _solcLib;
         readonly int _solcOptimzer;
+        readonly LoggerDelegate _logger;
 
-        public static SolCodeGenResults Generate(CommandArgs appArgs, bool returnFullSources = false)
+        public static SolCodeGenResults Generate(CommandArgs appArgs, bool returnFullSources = false, LoggerDelegate logger = null)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
+            logger = (logger ?? Console.WriteLine);
+
             var isGenerateAssemblyEnabled = appArgs.Generate.HasFlag(GenerateOutputType.Assembly);
 
-            var generator = new CodebaseGenerator(appArgs, returnFullSources | isGenerateAssemblyEnabled);
+            var generator = new CodebaseGenerator(appArgs, returnFullSources | isGenerateAssemblyEnabled, logger);
             generator.GenerateSources();
             if (isGenerateAssemblyEnabled)
             {
@@ -61,18 +69,26 @@ namespace Meadow.SolCodeGen
             }
 
             sw.Stop();
-            Console.WriteLine($"SolCodeGen completed in: {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
+            logger($"SolCodeGen completed in: {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
             return generator._genResults;
         }
 
-        private CodebaseGenerator(CommandArgs appArgs, bool returnFullSources)
+        private CodebaseGenerator(CommandArgs appArgs, bool returnFullSources, LoggerDelegate logger)
         {
+            _logger = logger;
             _assemblyVersion = typeof(Program).Assembly.GetName().Version.ToString();
             _returnFullSources = returnFullSources;
             _genResults = new SolCodeGenResults();
 
             // Normalize source directory
             _solSourceDirectory = Path.GetFullPath(appArgs.SolSourceDirectory);
+
+            // If we were passed a single sol file rather than a source directory
+            if (_solSourceDirectory.EndsWith(".sol", StringComparison.OrdinalIgnoreCase) && File.Exists(_solSourceDirectory))
+            {
+                _solSourceSingleFile = _solSourceDirectory;
+                _solSourceDirectory = Path.GetDirectoryName(_solSourceDirectory);
+            }
 
             // Match the solc file path output format which replaces Windows path separator characters with unix style.
             if (Path.DirectorySeparatorChar == '\\')
@@ -98,6 +114,11 @@ namespace Meadow.SolCodeGen
             else
             {
                 _generatedAssemblyDirectory = Path.GetFullPath(appArgs.AssemblyOutputDirectory);
+            }
+
+            if (_solSourceSingleFile != null)
+            {
+                _solSourceDirectory = string.Empty;
             }
 
             if (!string.IsNullOrEmpty(appArgs.LegacySolcPath))
@@ -156,16 +177,17 @@ namespace Meadow.SolCodeGen
             }
 
             SolcLib solcLib;
+            string sourceDir = string.IsNullOrEmpty(_solSourceSingleFile) ? _solSourceDirectory : null;
             if (solcNativeLibProvider != null)
             {
-                solcLib = new SolcLib(solcNativeLibProvider, _solSourceDirectory);
+                solcLib = new SolcLib(solcNativeLibProvider, sourceDir);
             }
             else
             {
-                solcLib = SolcLib.Create(_solSourceDirectory);
+                solcLib = SolcLib.Create(sourceDir);
             }
 
-            Console.WriteLine($"Using native libsolc version {solcLib.VersionDescription} at {solcLib.NativeLibFilePath}");
+            _logger($"Using native libsolc version {solcLib.VersionDescription} at {solcLib.NativeLibFilePath}");
             return solcLib;
         }
 
@@ -174,11 +196,41 @@ namespace Meadow.SolCodeGen
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            var compilation = new Compilation(_genResults, _namespace, _generatedAssemblyDirectory);
-            compilation.Compile();
+            bool assemblyAlreadyUpToDate = false;
+            var solCodeHashFile = Path.Combine(_generatedAssemblyDirectory, _namespace + ".solcodehash");
+
+            if (File.Exists(solCodeHashFile))
+            {
+                try
+                {
+                    var solCodeHashFileContents = File.ReadAllText(solCodeHashFile, new UTF8Encoding(false, false));
+                    if (solCodeHashFileContents.Trim().Equals(_genResults.SolcCodeBaseHash.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        assemblyAlreadyUpToDate = true;
+                        _genResults.CompilationResults = new SolCodeGenCompilationResults
+                        {
+                            AssemblyFilePath = Path.Combine(_generatedAssemblyDirectory, _namespace + ".dll"),
+                            PdbFilePath = Path.Combine(_generatedAssemblyDirectory, _namespace + ".pdb"),
+                            XmlDocFilePath = Path.Combine(_generatedAssemblyDirectory, _namespace + ".xml")
+                        };
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger("Exception loading existing assembly for cache checking:");
+                    _logger(ex.ToString());
+                }
+            }
+
+            if (!assemblyAlreadyUpToDate)
+            {
+                var compilation = new Compilation(_genResults, _namespace, _generatedAssemblyDirectory);
+                compilation.Compile();
+                File.WriteAllText(solCodeHashFile, _genResults.SolcCodeBaseHash, new UTF8Encoding(false, false));
+            }
 
             sw.Stop();
-            Console.WriteLine($"Compilation of generated C# code and resx completed in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
+            _logger($"Compilation of generated C# code and resx completed in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
         }
 
         void GenerateSources()
@@ -186,7 +238,15 @@ namespace Meadow.SolCodeGen
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
-            var solFiles = GetSolContractFiles(_solSourceDirectory);
+            string[] solFiles;
+            if (!string.IsNullOrEmpty(_solSourceSingleFile))
+            {
+                solFiles = new[] { _solSourceSingleFile };
+            }
+            else
+            {
+                solFiles = GetSolContractFiles(_solSourceDirectory);
+            }
 
             var outputFlags = new[]
             {
@@ -210,26 +270,73 @@ namespace Meadow.SolCodeGen
                 solcOptimizerSettings.Runs = _solcOptimzer;
             }
 
-            Console.WriteLine("Compiling solidity files in " + _solSourceDirectory);
+            _logger("Compiling solidity files in " + _solSourceDirectory);
             var soliditySourceContent = new Dictionary<string, string>();
             var solcOutput = _solcLib.Compile(solFiles, outputFlags, solcOptimizerSettings, soliditySourceFileContent: soliditySourceContent);
 
             sw.Stop();
-            Console.WriteLine($"Compiling solidity completed in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
+            _logger($"Compiling solidity completed in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
 
 
-            Console.WriteLine("Writing generated output to directory: " + _generatedContractsDirectory);
+            _logger("Writing generated output to directory: " + _generatedContractsDirectory);
+
+
+            #region Generated hashes for solidity sources
+            sw.Restart();
+
+            var flattenedContracts = solcOutput.ContractsFlattened.OrderBy(c => c.SolFile).ToArray();
+            ContractInfo[] contractInfos = new ContractInfo[solcOutput.ContractsFlattened.Length];
+
+            for (var i = 0; i < contractInfos.Length; i++)
+            {
+                var c = flattenedContracts[i];
+
+                // Check if any previous contracts have the same name as this one.
+                int dupNames = 0;
+                for (var f = 0; f < i; f++)
+                {
+                    if (flattenedContracts[f].ContractName == c.ContractName)
+                    {
+                        dupNames++;
+                    }
+                }
+
+                string generatedContractName = c.ContractName;
+
+                // If there are duplicate contract names, prepend a unique amount of underscore suffixes.
+                if (dupNames > 0)
+                {
+                    generatedContractName += new string(Enumerable.Repeat('_', dupNames).ToArray());
+                }
+
+                contractInfos[i] = new ContractInfo(
+                    Util.GetRelativeFilePath(_solSourceDirectory, c.SolFile),
+                    generatedContractName,
+                    c.Contract,
+                    GetSourceHashesXor(c.Contract),
+                    c.Contract.Evm.Bytecode.Object);
+            }
+
+
+            var contractPathsHash = KeccakHashString(string.Join("\n", contractInfos.SelectMany(c => new[] { c.SolFile, c.ContractName })));
+            var codeBaseHash = XorAllHashes(contractInfos.Select(c => c.Hash).Concat(new[] { contractPathsHash }).ToArray());
+            _genResults.SolcCodeBaseHash = HexUtil.GetHexFromBytes(codeBaseHash);
+
+            _logger($"Generated sol source file hashes in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
+            sw.Stop();
+            #endregion
+
 
             #region Output directory cleanup
             if (!Directory.Exists(_generatedContractsDirectory))
             {
-                Console.WriteLine("Creating directory: " + _generatedContractsDirectory);
+                _logger("Creating directory: " + _generatedContractsDirectory);
                 Directory.CreateDirectory(_generatedContractsDirectory);
             }
             else
             {
-                var expectedFiles = solcOutput.Contracts.Values
-                    .SelectMany(c => c.Keys)
+                var expectedFiles = contractInfos
+                    .Select(c => c.ContractName)
                     .Concat(new[] { EventHelperFile, SolcOutputDataHelperFile })
                     .Select(c => NormalizePath($"{_generatedContractsDirectory}/{c}{G_CS_FILE_EXT}"))
                     .ToArray();
@@ -254,7 +361,7 @@ namespace Meadow.SolCodeGen
 
                     if (!found)
                     {
-                        Console.WriteLine("Deleting outdated file: " + existingFile);
+                        _logger("Deleting outdated file: " + existingFile);
                         File.Delete(existingFile);
                     }
                 }
@@ -262,50 +369,11 @@ namespace Meadow.SolCodeGen
             #endregion
 
 
-            #region Generated hashes for solidity sources
-            sw.Restart();
-
-            ContractInfo[] contractInfos = solcOutput.ContractsFlattened
-                .Select(c => new ContractInfo(
-                    Util.GetRelativeFilePath(_solSourceDirectory, c.SolFile),
-                    c.ContractName,
-                    c.Contract,
-                    GetSourceHashesXor(c.Contract),
-                    c.Contract.Evm.Bytecode.Object))
-                .OrderBy(c => c.SolFile)
-                .ToArray();
-
-
-            for (var i = 0; i < contractInfos.Length; i++)
-            {
-                var cur = contractInfos[i];
-                for (var j = 0; j < contractInfos.Length; j++)
-                {
-                    if (i == j)
-                    {
-                        continue;
-                    }
-
-                    var other = contractInfos[j];
-                    if (cur.ContractName.Equals(other.ContractName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        throw new Exception($"Duplicate contract names: '{cur.ContractName}' in {cur.SolFile} and '{other.ContractName}' in {other.SolFile}");
-                    }
-                }
-            }
-
-            var contractPathsHash = KeccakHashString(string.Join("\n", contractInfos.SelectMany(c => new[] { c.SolFile, c.ContractName })));
-            var codeBaseHash = XorAllHashes(contractInfos.Select(c => c.Hash).Concat(new[] { contractPathsHash }).ToArray());
-            Console.WriteLine($"Generated sol source file hashes in {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
-            sw.Stop();
-            #endregion
-
-
             #region AST output generation
             sw.Restart();
             GenerateSolcOutputDataFiles(solcOutput, soliditySourceContent, codeBaseHash);
             sw.Stop();
-            Console.WriteLine($"Resx file for solc output generation took: {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
+            _logger($"Resx file for solc output generation took: {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
             #endregion
 
 
@@ -315,7 +383,7 @@ namespace Meadow.SolCodeGen
             GeneratedContractSourceFiles(contractInfos, generatedEvents);
             GenerateEventHelper(generatedEvents);
             sw.Stop();
-            Console.WriteLine($"Contract and event source code generation took: {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
+            _logger($"Contract and event source code generation took: {Math.Round(sw.Elapsed.TotalSeconds, 2)} seconds");
             #endregion
 
         }
@@ -334,8 +402,8 @@ namespace Meadow.SolCodeGen
 
             if (!_returnFullSources && FileStartsWithHash(outputHelperFilePath, codeBaseHashHexBytes) && File.Exists(outputResxFilePath))
             {
-                Console.WriteLine("Skipping writing already up-to-date source file: " + SolcOutputDataHelperFile);
-                Console.WriteLine("Skipping writing already up-to-date source file: " + SolcOutputDataResxFile);
+                _logger("Skipping writing already up-to-date source file: " + SolcOutputDataHelperFile);
+                _logger("Skipping writing already up-to-date source file: " + SolcOutputDataResxFile);
                 return;
             }
 
@@ -345,6 +413,20 @@ namespace Meadow.SolCodeGen
             {
                 solcOutputDataResxWriter.Save(fs);
                 _genResults.GeneratedResxFilePath = outputResxFilePath;
+            }
+
+            var generator = new SolcOutputHelperGenerator(codeBaseHash, _namespace);
+            var (generatedCode, syntaxTree) = generator.GenerateSourceCode();
+            using (var fs = new StreamWriter(outputHelperFilePath, append: false, encoding: StringUtil.UTF8))
+            {
+                _logger("Writing source file: " + outputHelperFilePath);
+                var hashHex = HexUtil.GetHexFromBytes(codeBaseHash);
+                fs.WriteLine("//" + hashHex);
+                fs.WriteLine(generatedCode);
+
+                var generatedCSharpEntry = new SolCodeGenCSharpResult(outputHelperFilePath, generatedCode, syntaxTree);
+                _genResults.GeneratedCSharpEntries.Add(generatedCSharpEntry);
+
             }
 
             if (_returnFullSources)
@@ -378,7 +460,7 @@ namespace Meadow.SolCodeGen
                 var (generatedContractCode, syntaxTree) = generator.GenerateSourceCode();
                 using (var fs = new StreamWriter(outputFilePath, append: false, encoding: StringUtil.UTF8))
                 {
-                    Console.WriteLine("Writing source file: " + outputFilePath);
+                    _logger("Writing source file: " + outputFilePath);
                     fs.WriteLine("//" + hashHex);
                     fs.WriteLine(generatedContractCode);
 
@@ -391,7 +473,7 @@ namespace Meadow.SolCodeGen
 
             if (skippedAlreadyUpdated > 0)
             {
-                Console.WriteLine($"Detected already up-to-date generated files: {skippedAlreadyUpdated} contracts");
+                _logger($"Detected already up-to-date generated files: {skippedAlreadyUpdated} contracts");
             }
 
         }
@@ -406,7 +488,7 @@ namespace Meadow.SolCodeGen
             var outputFilePath = Path.Combine(_generatedContractsDirectory, EventHelperFile + G_CS_FILE_EXT);
             if (!_returnFullSources && FileStartsWithHash(outputFilePath, eventMetadataHashHexBytes))
             {
-                Console.WriteLine("Skipping writing already up-to-date source file: " + EventHelperFile);
+                _logger("Skipping writing already up-to-date source file: " + EventHelperFile);
                 return;
             }
 
@@ -414,7 +496,7 @@ namespace Meadow.SolCodeGen
             var (generatedCode, syntaxTree) = generator.GenerateSourceCode();
             using (var fs = new StreamWriter(outputFilePath, append: false, encoding: StringUtil.UTF8))
             {
-                Console.WriteLine("Writing source file: " + outputFilePath);
+                _logger("Writing source file: " + outputFilePath);
                 fs.WriteLine("//" + eventMetadataHashHex);
                 fs.WriteLine(generatedCode);
 

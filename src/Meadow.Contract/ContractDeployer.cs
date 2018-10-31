@@ -11,7 +11,6 @@ namespace Meadow.Contract
 {
     public class ContractDeployer<TContract> where TContract : IContractInstanceSetup, new()
     {
-        readonly SolidityContractAttribute _contractAttribute;
         readonly IJsonRpcClient _rpcClient;
         readonly byte[] _bytecode;
         readonly TransactionParams _transactionParams;
@@ -25,7 +24,6 @@ namespace Meadow.Contract
             Address? defaultFromAccount,
             ReadOnlyMemory<byte> abiEncodedConstructorArgs = default)
         {
-            _contractAttribute = TypeAttributeCache<TContract, SolidityContractAttribute>.Attribute;
             _rpcClient = rpcClient;
             _bytecode = bytecode;
             _transactionParams = transactionParams;
@@ -49,7 +47,7 @@ namespace Meadow.Contract
         public async Task<TContract> Deploy()
         {
             var txParams = await GetTransactionParams();
-            var contractAddr = await ContractFactory.Deploy(_contractAttribute, _rpcClient, _bytecode, txParams, _abiEncodedConstructorArgs);
+            var contractAddr = await ContractFactory.Deploy(_rpcClient, _bytecode, txParams, _abiEncodedConstructorArgs);
             var contractInstance = new TContract();
             contractInstance.Setup(_rpcClient, contractAddr, _defaultFromAccount ?? txParams.From.Value);
             return contractInstance;
@@ -62,7 +60,7 @@ namespace Meadow.Contract
         public async Task ExpectRevert()
         {
             var txParams = await GetTransactionParams();
-            (JsonRpcError error, Hash transactionHash) = await ContractFactory.TryDeploy(expectException: true, _contractAttribute, _rpcClient, _bytecode, txParams, _abiEncodedConstructorArgs);
+            (JsonRpcError error, Hash transactionHash) = await ContractFactory.TryDeploy(expectException: true, _rpcClient, _bytecode, txParams, _abiEncodedConstructorArgs);
 
             if (error == null)
             {
