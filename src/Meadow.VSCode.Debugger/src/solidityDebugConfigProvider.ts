@@ -13,19 +13,28 @@ import { debug } from 'util';
 
 export class SolidityDebugConfigProvider implements vscode.DebugConfigurationProvider {
 
-	private _server?: Net.Server;
-
 	private _context: vscode.ExtensionContext;
 
 	constructor(context: vscode.ExtensionContext) {
 		this._context = context;
+
+		context.subscriptions.push(vscode.debug.onDidReceiveDebugSessionCustomEvent(e => {
+			if (e.session.type === 'solidity' && e.event === 'problemEvent' && e.body) {
+				let msg : string = e.body.message;
+				let err : string = e.body.exception;
+				Logger.log(err);
+				Logger.show();
+				vscode.window.showErrorMessage(msg);
+			}
+		}));
+	
 	}
 
 	// Notice: this is working in latest stable vscode but is preview.
 	provideDebugAdapter?(session: vscode.DebugSession, folder: vscode.WorkspaceFolder | undefined, executable: IDebugAdapterExecutable | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
-		
+	
 		return (async () => {
-
+			
 			let debugConfig = <ISolidityMeadowDebugConfig>config;
 
 			let args : string[] = [ ];
@@ -145,8 +154,6 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 	}
 
 	dispose() {
-		if (this._server) {
-			this._server.close();
-		}
+
 	}
 }
