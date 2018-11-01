@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Meadow.Core.Cryptography
 {
-    public class KeccakHash : HashAlgorithm
+    public class KeccakHash
     {
         #region Constants
         public const int HASH_SIZE = 32;
@@ -38,6 +38,7 @@ namespace Meadow.Core.Cryptography
         private Memory<byte> _remainderBuffer;
         private int _remainderLength;
         private Memory<ulong> _state;
+        private byte[] _hash;
         #endregion
 
         #region Properties
@@ -52,12 +53,22 @@ namespace Meadow.Core.Cryptography
         /// <summary>
         /// Indicates the hash size in bytes.
         /// </summary>
-        public override int HashSize { get; }
+        public int HashSize { get; }
 
-        public override bool CanTransformMultipleBlocks => true;
-        public override bool CanReuseTransform => true;
-        public override int InputBlockSize => _roundSize;
-        public override int OutputBlockSize => _roundSize;
+        /// <summary>
+        /// The current hash buffer at this point. Recomputed after hash updates.
+        /// </summary>
+        public byte[] Hash
+        {
+            get
+            {
+                // If the hash is null, recalculate.
+                _hash = _hash ?? UpdateFinal();
+
+                // Return it.
+                return _hash;
+            }
+        }
         #endregion
 
         #region Constructor
@@ -484,13 +495,27 @@ namespace Meadow.Core.Cryptography
             ComputeHash(input, md, STATE_SIZE);
         }
 
-        protected override void HashCore(byte[] array, int ibStart, int cbSize)
+        public void Update(byte[] array, int index, int size)
         {
-            // TODO: Bounds checking.
+            // Bounds checking.
+            if (size < 0)
+            {
+                throw new ArgumentException("Cannot updated Keccak hash because the provided size of data to hash is negative.");
+            }
+            else if (index + size > array.Length || index < 0)
+            {
+                throw new ArgumentOutOfRangeException("Cannot updated Keccak hash because the provided index and size extend outside the bounds of the array.");
+            }
+
+            // If the size is zero, quit
+            if (size == 0)
+            {
+                return;
+            }
 
             // Create the input buffer
             Span<byte> input = array;
-            input = input.Slice(ibStart, cbSize);
+            input = input.Slice(index, size);
 
             // If our provided state is empty, initialize a new one
             if (_state.Length == 0)
@@ -564,18 +589,24 @@ namespace Meadow.Core.Cryptography
                 input.CopyTo(_remainderBuffer.Span);
                 _remainderLength = input.Length;
             }
+
+            // Set the hash as null
+            _hash = null;
         }
 
-        protected override byte[] HashFinal()
+        public byte[] UpdateFinal()
         {
+            // Copy the remainder buffer
+            Memory<byte> remainderClone = _remainderBuffer.ToArray();
+
             // Set a 1 byte after the remainder.
-            _remainderBuffer.Span[_remainderLength++] = 1;
+            remainderClone.Span[_remainderLength++] = 1;
 
             // Set the highest bit on the last byte.
-            _remainderBuffer.Span[_roundSize - 1] |= 0x80;
+            remainderClone.Span[_roundSize - 1] |= 0x80;
 
             // Cast the remainder buffer to ulongs.
-            var temp64 = MemoryMarshal.Cast<byte, ulong>(_remainderBuffer.Span);
+            var temp64 = MemoryMarshal.Cast<byte, ulong>(remainderClone.Span);
 
             // Loop for each ulong in this round, and xor the state with the input.
             for (int i = 0; i < _roundSizeU64; i++)
@@ -586,20 +617,19 @@ namespace Meadow.Core.Cryptography
             KeccakF(_state.Span, ROUNDS);
 
             // Obtain the state data in the desired (hash) size we want.
-            byte[] result = MemoryMarshal.AsBytes(_state.Span).Slice(0, HashSize).ToArray();
+            _hash = MemoryMarshal.AsBytes(_state.Span).Slice(0, HashSize).ToArray();
 
+            // Return the result.
+            return Hash;
+        }
+
+        public void Reset()
+        {
             // Clear our hash state information.
             _state.Span.Clear();
             _remainderBuffer.Span.Clear();
             _remainderLength = 0;
-
-            // Return the result.
-            return result;
-        }
-
-        public override void Initialize()
-        {
-
+            _hash = null;
         }
         #endregion
     }

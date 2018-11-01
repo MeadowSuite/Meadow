@@ -2,6 +2,7 @@
 using Meadow.Core.Cryptography.Ecdsa;
 using Meadow.Core.Utils;
 using Meadow.Networking.Cryptography;
+using Meadow.Networking.Cryptography.Aes;
 using Meadow.Networking.Protocol.RLPx.Messages;
 using System;
 using System.Collections.Generic;
@@ -37,20 +38,42 @@ namespace Meadow.Networking.Protocol.RLPx
 
         #region Properties
         /// <summary>
+        /// Indicates the state of the session/handshake establishment.
+        /// </summary>
+        public RLPxSessionState SessionState { get; private set; }
+        /// <summary>
         /// Indicates the role of this current RLPx session object/user.
         /// </summary>
         public RLPxSessionRole Role { get; }
         /// <summary>
-        /// The private key of this user, used to sign 
+        /// The private key of this user, used to sign authentication packets and decrypt ECIES encrypted packets received.
         /// </summary>
         public EthereumEcdsa LocalPrivateKey { get; }
-        public EthereumEcdsa EphemeralPrivateKey { get; }
+        /// <summary>
+        /// The ephemeral private key of this user, used to establish final encryption parameters in this session.
+        /// </summary>
+        public EthereumEcdsa LocalEphemeralPrivateKey { get; }
 
+        /// <summary>
+        /// The public key of the remote user which we are sending ECIES encrypted packets to.
+        /// </summary>
         public EthereumEcdsa RemotePublicKey { get; private set; }
+        /// <summary>
+        /// The ephemeral private key of the remote user, used to establish final encryption parameters in this session.
+        /// </summary>
         public EthereumEcdsa RemoteEphermalPublicKey { get; private set; }
+        /// <summary>
+        /// The maximum version of the RLPx protocol supported by the remote user.
+        /// </summary>
         public BigInteger RemoteVersion { get; private set; }
 
+        /// <summary>
+        /// The ECIES encrypted authentication data used in this handshake. Used to calculate resulting keys.
+        /// </summary>
         public byte[] AuthData { get; private set; }
+        /// <summary>
+        /// The ECIES encrypted authentication data used in this handshake. Used to calculate resulting keys.
+        /// </summary>
         public byte[] AuthAckData { get; private set; }
 
         /// <summary>
@@ -63,16 +86,30 @@ namespace Meadow.Networking.Protocol.RLPx
         public byte[] ResponderNonce { get; private set; }
 
         public byte[] Token { get; private set; }
+        /// <summary>
+        /// The derived AES key to use for encrypting framed data.
+        /// </summary>
         public byte[] AesSecret { get; private set; }
+        /// <summary>
+        /// The derived AES key to use for updating the message authentication codes for incoming/outgoing traffic/framed data.
+        /// </summary>
         public byte[] MacSecret { get; private set; }
+        /// <summary>
+        /// AES provider for incoming traffic/frames to be encrypted.
+        /// </summary>
+        public AesCtr IngressAes { get; private set; }
+        /// <summary>
+        /// AES provider for outgoing traffic/frames to be encrypted.
+        /// </summary>
+        public AesCtr EgressAes { get; private set; }
         /// <summary>
         /// Message authentication code that is updated as encrypted data is sent.
         /// </summary>
-        public byte[] EgressMac { get; private set; }
+        public KeccakHash EgressMac { get; private set; }
         /// <summary>
         /// Message authentication code that is updated as encrypted data is received.
         /// </summary>
-        public byte[] IngressMac { get; private set; }
+        public KeccakHash IngressMac { get; private set; }
 
         /// <summary>
         /// Indicates whether or not this session is using EIP8. (For the initiator, this means creating EIP8 auth, for receiver, this means we received an EIP8 auth).
@@ -109,10 +146,11 @@ namespace Meadow.Networking.Protocol.RLPx
             }
 
             // Set the ephemeral private key.
-            EphemeralPrivateKey = ephemeralPrivateKey ?? EthereumEcdsa.Generate();
+            LocalEphemeralPrivateKey = ephemeralPrivateKey ?? EthereumEcdsa.Generate();
 
-            // Set the role
+            // Set the role and session state
             Role = role;
+            SessionState = RLPxSessionState.Initial;
 
             // Set the auth type if we are initiator.
             if (Role == RLPxSessionRole.Initiator)
@@ -135,6 +173,12 @@ namespace Meadow.Networking.Protocol.RLPx
             if (Role != RLPxSessionRole.Initiator)
             {
                 throw new Exception("RLPx auth data should only be created by the initiator.");
+            }
+
+            // Verify the session state is correct.
+            if (SessionState != RLPxSessionState.Initial)
+            {
+                throw new Exception("RLPx auth creation should only be performed on a new session.");
             }
 
             // If the nonce is null, generate a new one.
@@ -167,7 +211,7 @@ namespace Meadow.Networking.Protocol.RLPx
             }
 
             // Sign the authentication message
-            authMessage.Sign(LocalPrivateKey, EphemeralPrivateKey, RemotePublicKey, ChainId);
+            authMessage.Sign(LocalPrivateKey, LocalEphemeralPrivateKey, RemotePublicKey, ChainId);
 
             // Serialize the authentication data
             byte[] serializedData = authMessage.Serialize();
@@ -189,6 +233,9 @@ namespace Meadow.Networking.Protocol.RLPx
                 AuthData = Ecies.Encrypt(RemotePublicKey, serializedData, null);
             }
 
+            // Set the session state
+            SessionState = RLPxSessionState.AuthenticationCompleted;
+
             // Return the auth data
             return AuthData;
         }
@@ -205,6 +252,12 @@ namespace Meadow.Networking.Protocol.RLPx
             if (Role != RLPxSessionRole.Responder)
             {
                 throw new Exception("RLPx auth data should only be verified by the responder.");
+            }
+
+            // Verify the session state is correct.
+            if (SessionState != RLPxSessionState.Initial)
+            {
+                throw new Exception("RLPx auth verification should only be performed on a new session.");
             }
 
             // Try to deserialize the data as a standard authentication packet.
@@ -272,6 +325,9 @@ namespace Meadow.Networking.Protocol.RLPx
             RemoteEphermalPublicKey = remoteEphermalPublicKey;
 
             // TODO: Verify the chain id.
+
+            // Set the session state
+            SessionState = RLPxSessionState.AuthenticationCompleted;
         }
 
         /// <summary>
@@ -287,6 +343,12 @@ namespace Meadow.Networking.Protocol.RLPx
             if (Role != RLPxSessionRole.Responder)
             {
                 throw new Exception("RLPx auth-ack data should only be created by the responder.");
+            }
+
+            // Verify the session state is correct.
+            if (SessionState != RLPxSessionState.AuthenticationCompleted)
+            {
+                throw new Exception("RLPx auth-ack creation should only be performed on a session after auth was received/verified.");
             }
 
             // If the nonce is null, generate a new one.
@@ -306,7 +368,7 @@ namespace Meadow.Networking.Protocol.RLPx
                 // We use EIP8 authentication acknowledgement
                 authAckMessage = new RLPxAuthAckEIP8()
                 {
-                    EphemeralPublicKey = EphemeralPrivateKey.ToPublicKeyArray(false, true),
+                    EphemeralPublicKey = LocalEphemeralPrivateKey.ToPublicKeyArray(false, true),
                     Nonce = ResponderNonce,
                     Version = MAX_SUPPORTED_VERSION,
                 };
@@ -316,7 +378,7 @@ namespace Meadow.Networking.Protocol.RLPx
                 // We use standard authentication acknowledgement
                 authAckMessage = new RLPxAuthAckStandard()
                 {
-                    EphemeralPublicKey = EphemeralPrivateKey.ToPublicKeyArray(false, true),
+                    EphemeralPublicKey = LocalEphemeralPrivateKey.ToPublicKeyArray(false, true),
                     Nonce = ResponderNonce,
                     TokenFound = false, // TODO: Check for a saved session key from before, and set this accordingly.
                 };
@@ -342,6 +404,9 @@ namespace Meadow.Networking.Protocol.RLPx
                 AuthAckData = Ecies.Encrypt(RemotePublicKey, serializedData, null);
             }
 
+            // Set the session state
+            SessionState = RLPxSessionState.AcknowledgementCompleted;
+
             // Return the auth-ack data
             return AuthAckData;
         }
@@ -358,6 +423,12 @@ namespace Meadow.Networking.Protocol.RLPx
             if (Role != RLPxSessionRole.Initiator)
             {
                 throw new Exception("RLPx auth-ack data should only be verified by the initiator.");
+            }
+
+            // Verify the session state is correct.
+            if (SessionState != RLPxSessionState.AuthenticationCompleted)
+            {
+                throw new Exception("RLPx auth-ack verification should only be performed after auth was created/sent.");
             }
 
             // Try to deserialize the data as a standard authentication packet.
@@ -418,18 +489,27 @@ namespace Meadow.Networking.Protocol.RLPx
 
             // Set the remote public key.
             RemoteEphermalPublicKey = EthereumEcdsa.Create(authAckMessage.EphemeralPublicKey, EthereumEcdsaKeyType.Public);
+
+            // Set the session state
+            SessionState = RLPxSessionState.AcknowledgementCompleted;
         }
 
         public void DeriveEncryptionParameters()
         {
+            // Verify the session state is correct.
+            if (SessionState != RLPxSessionState.AcknowledgementCompleted)
+            {
+                throw new Exception("RLPx encryption parameter deriviation should only occur after authentication and acknowledgement was processed.");
+            }
+
             // Verify we have all required information
             if (AuthData == null || AuthAckData == null || RemoteEphermalPublicKey == null || InitiatorNonce == null || ResponderNonce == null)
             {
-                throw new Exception("RLPx deriving encryption information failed: Handshaking has not successfully completed yet.");
+                throw new Exception("RLPx deriving encryption information failed: Insufficient data collected from handshake.");
             }
 
             // Generate the ecdh key with both ephemeral keys
-            byte[] ecdhEphemeralKey = EphemeralPrivateKey.ComputeECDHKey(RemoteEphermalPublicKey);
+            byte[] ecdhEphemeralKey = LocalEphemeralPrivateKey.ComputeECDHKey(RemoteEphermalPublicKey);
 
             // Generate a shared secret: Keccak256(ecdhEphemeralKey || Keccak256(ResponderNonce || InitiatorNonce))
             byte[] combinedNonceHash = KeccakHash.ComputeHashBytes(ResponderNonce.Concat(InitiatorNonce));
@@ -444,7 +524,43 @@ namespace Meadow.Networking.Protocol.RLPx
             // Derive Mac secret: Keccak256(ecdhEphemeralKey || AesSecret)
             MacSecret = KeccakHash.ComputeHashBytes(ecdhEphemeralKey.Concat(AesSecret));
 
-            // TODO: Derive ingress + egress mac. (Requires Keccak implementation that can update)
+            // Create our AES providers for incoming and outgoing traffic/frames.
+            // Counter is 0, so it doesn't need to be provided, default value will handle this.
+            IngressAes = new AesCtr(AesSecret);
+            EgressAes = new AesCtr(AesSecret);
+
+            // Next we'll want to derive our incoming (ingress) and outgoing (egress) traffic message authentication code ("MAC")
+            // The initial state is based off of keccak((MacSecret ^ nonce) || auth/auth-ack). Later states update data from packet frames.
+
+            // We begin by calculating the xor'd nonces
+            byte[] initiatorTranformedNonce = (byte[])InitiatorNonce.Clone();
+            byte[] responderTransformedNonce = (byte[])ResponderNonce.Clone();
+            int loopSize = Math.Min(initiatorTranformedNonce.Length, MacSecret.Length);
+            for (int i = 0; i < loopSize; i++)
+            {
+                initiatorTranformedNonce[i] ^= MacSecret[i];
+                responderTransformedNonce[i] ^= MacSecret[i];
+            }
+
+            // Next we'll want to hash the data with our hash providers.
+            KeccakHash initiatorOutgoing = KeccakHash.Create();
+            initiatorOutgoing.Update(responderTransformedNonce, 0, responderTransformedNonce.Length);
+            initiatorOutgoing.Update(AuthData, 0, AuthData.Length);
+            KeccakHash responderOutgoing = KeccakHash.Create();
+            responderOutgoing.Update(initiatorTranformedNonce, 0, initiatorTranformedNonce.Length);
+            responderOutgoing.Update(AuthAckData, 0, AuthAckData.Length);
+
+            // Assign the correct hash providers based off of role
+            if (Role == RLPxSessionRole.Initiator)
+            {
+                EgressMac = initiatorOutgoing;
+                IngressMac = responderOutgoing;
+            }
+            else
+            {
+                EgressMac = responderOutgoing;
+                IngressMac = initiatorOutgoing;
+            }
         }
 
         public static byte[] GenerateNonce()
