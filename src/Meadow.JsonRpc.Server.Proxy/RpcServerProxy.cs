@@ -295,5 +295,10 @@ namespace Meadow.JsonRpc.Server.Proxy
             _proxyClient.Dispose();
             _httpServer.Dispose();
         }
+
+        public Task<ulong> NewBlockFilter()
+        {
+            return _proxyClient.NewBlockFilter();
+        }
     }
 }

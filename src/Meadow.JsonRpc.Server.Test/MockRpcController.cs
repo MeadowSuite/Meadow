@@ -258,6 +258,11 @@ namespace Meadow.JsonRpc.Server.Test
         {
             throw new System.NotImplementedException();
         }
+
+        public Task<ulong> NewBlockFilter()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
 }

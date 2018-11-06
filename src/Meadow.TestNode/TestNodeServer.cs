@@ -27,6 +27,8 @@ using Meadow.Core.Cryptography;
 using Meadow.Core.RlpEncoding;
 using System.Net;
 using Meadow.Core.AccountDerivation;
+using System.Threading;
+using System.Collections.Concurrent;
 
 namespace Meadow.TestNode
 {
@@ -35,8 +37,8 @@ namespace Meadow.TestNode
     public class TestNodeServer : IRpcController, IDisposable
     {
         #region Fields
-        private ulong _currentSnapshotId;
-        private ulong _currentLogFilterId;
+        private long _currentSnapshotId;
+        private long _currentLogFilterId;
         #endregion
 
         #region Properties
@@ -46,6 +48,8 @@ namespace Meadow.TestNode
         public Dictionary<Address, EthereumEcdsa> AccountDictionary { get; private set; }
         public Dictionary<ulong, (StateSnapshot snapshot, TimeSpan timeStampOffset)> Snapshots { get; private set; }
         public Dictionary<ulong, FilterOptions> LogFilters { get; private set; }
+
+        public ConcurrentDictionary<ulong, (BigInteger Original, BigInteger Last)> NewBlockFilters { get; private set; } = new ConcurrentDictionary<ulong, (BigInteger Original, BigInteger Last)>();
         #endregion
 
         static TestNodeServer()
@@ -502,26 +506,110 @@ namespace Meadow.TestNode
             return Task.FromResult(jsonReceipt);
         }
 
+        public Task<ulong> NewBlockFilter()
+        {
+            var filterID = (ulong)Interlocked.Increment(ref _currentLogFilterId);
+            var curBlock = TestChain.Chain.State.CurrentBlock.Header.BlockNumber; // TestChain.Chain.GetHeadBlock().Header.BlockNumber; 
+            NewBlockFilters[filterID] = (curBlock, curBlock);
+            return Task.FromResult(filterID);
+        }
+
         // Filters/Logs
         public Task<LogObjectResult> GetFilterChanges(ulong filterID)
         {
+            if (NewBlockFilters.TryGetValue(filterID, out var entry))
+            {
+                var result = new LogObjectResult
+                {
+                    ResultType = LogObjectResultType.Hashes
+                };
+
+                var curBlock = TestChain.Chain.State.CurrentBlock.Header.BlockNumber;
+                var lastRequestBlock = entry.Last;
+
+                // Since we instant-mine blocks on transaction, and truffle & web3 
+                // setup the filter *after* the transaction, we artificially set 
+                // the block number back by one. This is a dirty hack but Ganache
+                // also does this..
+                if (lastRequestBlock > 0)
+                {
+                    lastRequestBlock--;
+                }
+
+                if (curBlock > lastRequestBlock)
+                {
+                    var newBlockCount = curBlock - lastRequestBlock;
+                    result.Hashes = new Hash[(int)newBlockCount];
+                    
+                    for (var i = 0; i < newBlockCount; i++)
+                    {
+                        var blockHashBytes = TestChain.Chain.GetBlockHashFromBlockNumber(lastRequestBlock + i + 1);
+                        result.Hashes[i] = new Hash(blockHashBytes);
+                    }
+
+                    NewBlockFilters[filterID] = (entry.Original, curBlock);
+                }
+                else
+                {
+                    result.Hashes = Array.Empty<Hash>();
+                }
+
+                return Task.FromResult(result);
+            }
+
+            // Obtain our filter
+            if (LogFilters.TryGetValue(filterID, out var filterOptions))
+            {
+                // TODO: this always returns all changes...
+                // Need to store a delta (block number?) after each requset to provide deltas since last request.
+                // Obtain our logs.
+                return GetLogs(filterOptions);
+            }
+
+            return Task.FromResult(new LogObjectResult());
+
+
             // TODO: Implement
             throw new NotImplementedException();
         }
 
         public Task<LogObjectResult> GetFilterLogs(ulong filterID)
-        {
-            // If the filter id doesn't exist
-            if (LogFilters.ContainsKey(filterID))
+        {           
+            // Obtain our filter
+            if (LogFilters.TryGetValue(filterID, out var filterOptions))
             {
-                return Task.FromResult<LogObjectResult>(null);
+                // Obtain our logs.
+                return GetLogs(filterOptions);
             }
 
-            // Obtain our filter
-            FilterOptions filterOptions = LogFilters[filterID];
+            if (NewBlockFilters.TryGetValue(filterID, out var entry))
+            {
+                var result = new LogObjectResult
+                {
+                    ResultType = LogObjectResultType.Hashes
+                };
 
-            // Obtain our logs.
-            return GetLogs(filterOptions);
+                var curBlock = TestChain.Chain.State.CurrentBlock.Header.BlockNumber;
+                if (curBlock > entry.Original)
+                {
+                    var newBlockCount = curBlock - entry.Original;
+                    result.Hashes = new Hash[(int)newBlockCount];
+                    for (var i = 0; i < newBlockCount; i++)
+                    {
+                        var blockHashBytes = TestChain.Chain.GetBlockHashFromBlockNumber(entry.Original + i + 1);
+                        result.Hashes[i] = new Hash(blockHashBytes);
+                    }
+                }
+                else
+                {
+                    result.Hashes = Array.Empty<Hash>();
+                }
+
+                return Task.FromResult(result);
+            }
+
+            // The filter id doesn't exist
+            return Task.FromResult<LogObjectResult>(null);       
         }
 
         public Task<LogObjectResult> GetLogs(FilterOptions filterOptions)
@@ -644,7 +732,7 @@ namespace Meadow.TestNode
         public Task<ulong> NewFilter(FilterOptions filterOptions)
         {
             // Set our filter in our dictionary
-            ulong filterId = _currentLogFilterId++;
+            ulong filterId = (ulong)Interlocked.Increment(ref _currentLogFilterId);
             LogFilters[filterId] = filterOptions;
 
             // Return filter id
@@ -653,16 +741,23 @@ namespace Meadow.TestNode
 
         public Task<bool> UninstallFilter(ulong filterId)
         {
-            // Remove our filter id from our database
-            bool removed = LogFilters.Remove(filterId);
-            return Task.FromResult(removed);
+            if (LogFilters.Remove(filterId))
+            {
+                return Task.FromResult(true);
+            }
+            else if (NewBlockFilters.TryRemove(filterId, out _))
+            {
+                return Task.FromResult(true);
+            }
+
+            return Task.FromResult(false);
         }
 
         // Snapshot/Revert
         public Task<ulong> Snapshot()
         {
             // Obtain our snapshot id and increment it.
-            ulong snapshotId = _currentSnapshotId++;
+            ulong snapshotId = (ulong)Interlocked.Increment(ref _currentSnapshotId);
 
             // Set our snapshot in our snapshot lookup.
             var snapshot = TestChain.Chain.State.Snapshot();

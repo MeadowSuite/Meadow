@@ -23,6 +23,7 @@ using System.Net.WebSockets;
 using System.Buffers;
 using System.Threading;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace Meadow.JsonRpc.Server
 {
@@ -54,6 +55,7 @@ namespace Meadow.JsonRpc.Server
             }
         }
 
+        public Action<string> DebugLogger { get; set; }
 
         /// <param name="port">If null or unspecified the http server binds to a random port.</param>
         public JsonRpcHttpServer(IRpcController serverHandler, Func<IWebHostBuilder, IWebHostBuilder> configure = null, int? port = null, IPAddress address = null)
@@ -200,28 +202,60 @@ namespace Meadow.JsonRpc.Server
 
         async Task HandlePostRequest(HttpContext context, Func<Task> next)
         {
-            JObject data;
+            JToken request;
 
             // Read http request post data as string then parse as json
             using (var streamReader = new StreamReader(context.Request.Body, Encoding.UTF8))
             {
                 var postData = await streamReader.ReadToEndAsync();
-                data = JObject.Parse(postData);
+                request = JToken.Parse(postData);
             }
 
-            var requestItem = new RpcRequestItem(data);
+            // If json is an array then handle batch request.
+            if (request.Type == JTokenType.Array)
+            {
+                var requestArray = (JArray)request;
+                var responseArray = new JArray();
+                foreach (var item in requestArray)
+                {
+                    var requestItem = new RpcRequestItem((JObject)item);
 
-            // We want RPC method handling to be serialized (synchronous)
-            // but we don't want to block the http server so post
-            // the request to an ordered async message queue.
-            _messageQueue.Post(requestItem);
+                    // We want RPC method handling to be serialized (synchronous)
+                    // but we don't want to block the http server so post
+                    // the request to an ordered async message queue.
+                    _messageQueue.Post(requestItem);
 
-            // Wait for the queue handler to mark the response as ready.
-            var response = await requestItem.ResponseTask.Task;
+                    // Wait for the queue handler to mark the response as ready.
+                    var response = await requestItem.ResponseTask.Task;
+                    responseArray.Add(response);
+                }     
 
-            // Format response as json data and reply to http request.
-            var responseJson = response.ToString();
-            await context.Response.WriteAsync(responseJson);
+                // Format response as json data and reply to http request.
+                var responseJson = responseArray.ToString();
+                await context.Response.WriteAsync(responseJson);
+            }
+            else if (request.Type == JTokenType.Object)
+            {
+                var requestItem = new RpcRequestItem((JObject)request);
+
+                // We want RPC method handling to be serialized (synchronous)
+                // but we don't want to block the http server so post
+                // the request to an ordered async message queue.
+                _messageQueue.Post(requestItem);
+
+                // Wait for the queue handler to mark the response as ready.
+                var response = await requestItem.ResponseTask.Task;
+
+                // Format response as json data and reply to http request.
+                var responseJson = response.ToString();
+                await context.Response.WriteAsync(responseJson);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+
+
         }
 
         async Task RpcRequestItemHandler(RpcRequestItem item)
@@ -337,8 +371,19 @@ namespace Meadow.JsonRpc.Server
             try
             {
                 string rpcMethodString = item.RequestMessage.Value<string>("method");
-                JToken[] methodJsonParams = item.RequestMessage["params"].ToArray();
+                JToken[] methodJsonParams;
+                if (item.RequestMessage.TryGetValue("params", StringComparison.Ordinal, out var methodParams))
+                {
+                    methodJsonParams = methodParams.ToArray();
+                }
+                else
+                {
+                    methodJsonParams = Array.Empty<JToken>();
+                }
+
                 JToken result = null;
+
+                DebugLogger?.Invoke(rpcMethodString + Environment.NewLine + string.Join(Environment.NewLine, methodJsonParams.Select(p => p.ToString(Formatting.Indented))));
 
                 RpcApiMethod rpcMethod = RpcApiMethods.Create(rpcMethodString);
 
@@ -372,6 +417,7 @@ namespace Meadow.JsonRpc.Server
                 if (methodTask.IsFaulted)
                 {
                     response["error"] = GetJsonRpcErrorFromException(methodTask.Exception);
+                    DebugLogger?.Invoke(response["error"].ToString(Formatting.Indented));
                 }
                 else
                 {
@@ -400,16 +446,19 @@ namespace Meadow.JsonRpc.Server
                         }
                     }
 
+                    DebugLogger?.Invoke(result.ToString(Formatting.Indented));
                     response["result"] = result;
                 }
             }
             catch (JsonRpcErrorException rpcEx)
             {
                 response["error"] = JObject.FromObject(rpcEx.Error);
+                DebugLogger?.Invoke(response["error"].ToString(Formatting.Indented));
             }
             catch (Exception ex)
             {
                 response["error"] = GetJsonRpcErrorFromException(ex);
+                DebugLogger?.Invoke(response["error"].ToString(Formatting.Indented));
             }
 
             item.ResponseTask.SetResult(response);

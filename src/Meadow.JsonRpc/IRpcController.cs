@@ -171,6 +171,14 @@ namespace Meadow.JsonRpc
         Task<Address> Coinbase();
 
         /// <summary>
+        /// eth_newBlockFilter - Creates a filter in the node, to notify when a new block arrives. To check if the state has changed, call eth_getFilterChanges.
+        /// <see href="https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_newblockfilter"/>
+        /// </summary>
+        /// <returns>A filter id.</returns>
+        [RpcApiMethod(RpcApiMethod.eth_newBlockFilter)]
+        Task<ulong> NewBlockFilter();
+
+        /// <summary>
         /// eth_getFilterChanges - Polling method for a filter, which returns an array of logs which occurred since last poll.
         /// <see href="https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_getfilterchanges"/>
         /// </summary>

@@ -135,18 +135,23 @@ namespace Meadow.Core.Utils
             // Strips a leading 0 hex char from a hex sequence.
             // Example: 0x0fff -> 0xfff
             // This is a stupid work-around for geth which throws exceptions trying to parse an integer from (valid) hex string
-            // that begins has a single 0 after the 0x prefix.
+            // that begins has a single 0 after the 0x prefix (example: 0x05).
+            // Except for the case of 0x0 which is valid.
             var hex = GetHexFromBytes(bytes, hexPrefix: hexPrefix);
             if (hexPrefix)
             {
-                if (hex.Length > 2 && hex[2] == '0')
+                if (hex.Length > 3 && hex[2] == '0')
                 {
                     hex = "0x" + hex.Substring(3);
+                }
+                else if (hex.Length == 2)
+                {
+                    hex = "0x0";
                 }
             }
             else
             {
-                if (hex.Length > 0 && hex[0] == '0')
+                if (hex.Length > 1 && hex[0] == '0')
                 {
                     hex = hex.Substring(1);
                 }

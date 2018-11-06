@@ -55,18 +55,20 @@ namespace Meadow.TestNode.Host
 
             var accountConfig = new AccountConfiguration
             {
-                AccountGenerationCount = (int)(opts.AccountCount ?? 100),
-                DefaultAccountEtherBalance = opts.AccountBalance ?? 1000,
+                AccountGenerationCount = (int)opts.AccountCount,
+                DefaultAccountEtherBalance = opts.AccountBalance,
                 AccountDerivationMethod = accountDerivation
             };
 
             // Create our local test node.
             using (var testNodeServer = new TestNodeServer(
-                port: (int)opts.Port.GetValueOrDefault(),
+                port: (int)opts.Port,
                 address: host,
                 accountConfig: accountConfig))
             {
                 Console.WriteLine("Starting server...");
+
+                testNodeServer.RpcServer.DebugLogger = Console.WriteLine;
 
                 // Start our local test node.
                 await testNodeServer.RpcServer.StartAsync();
