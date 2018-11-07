@@ -11,8 +11,13 @@ namespace Meadow.Contract
 
     public class EthFuncBase
     {
-        protected IContractInstanceSetup _contract;
-        protected byte[] _callData;
+        protected readonly IContractInstanceSetup _contract;
+        protected readonly byte[] _callData;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public byte[] RawCallData => _callData;
 
         public EthFuncBase(IContractInstanceSetup contract, byte[] callData)
         {

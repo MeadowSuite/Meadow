@@ -114,7 +114,7 @@ namespace Meadow.JsonRpc
         /// </param>
         /// <param name="blockParameter">Integer block number, or the string "latest", "earliest" or "pending".</param>
         [RpcApiMethod(RpcApiMethod.eth_getBlockByNumber)]
-        Task<Block> GetBlockByNumber(bool getFullTransactionObjects, DefaultBlockParameter blockParameter);
+        Task<Block> GetBlockByNumber(DefaultBlockParameter blockParameter, bool getFullTransactionObjects);
 
         /// <summary>
         /// eth_sendRawTransaction - Creates new message call transaction or a contract creation for signed transactions.
@@ -169,6 +169,14 @@ namespace Meadow.JsonRpc
         /// <returns>20 bytes - the current coinbase address.</returns>
         [RpcApiMethod(RpcApiMethod.eth_coinbase)]
         Task<Address> Coinbase();
+
+        /// <summary>
+        /// eth_newBlockFilter - Creates a filter in the node, to notify when a new block arrives. To check if the state has changed, call eth_getFilterChanges.
+        /// <see href="https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_newblockfilter"/>
+        /// </summary>
+        /// <returns>A filter id.</returns>
+        [RpcApiMethod(RpcApiMethod.eth_newBlockFilter)]
+        Task<ulong> NewBlockFilter();
 
         /// <summary>
         /// eth_getFilterChanges - Polling method for a filter, which returns an array of logs which occurred since last poll.

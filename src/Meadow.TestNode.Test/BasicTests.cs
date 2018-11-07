@@ -62,10 +62,10 @@ namespace Meadow.TestNode.Test
         {
             ulong seconds = 1500;
             await _fixture.Client.Mine();
-            var time1 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Timestamp;
+            var time1 = (await Client.GetBlockByNumber(DefaultBlockParameter.Default, false)).Timestamp;
             await _fixture.Client.IncreaseTime(seconds);
             await _fixture.Client.Mine();
-            var time2 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Timestamp;
+            var time2 = (await Client.GetBlockByNumber(DefaultBlockParameter.Default, false)).Timestamp;
             var diff = time2 - time1;
             Assert.Equal(seconds, diff);
         }
@@ -94,9 +94,9 @@ namespace Meadow.TestNode.Test
         [Fact]
         public async Task MineTest()
         {
-            var blockNum1 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Number.Value;
+            var blockNum1 = (await Client.GetBlockByNumber(DefaultBlockParameter.Default, false)).Number.Value;
             await _fixture.Client.Mine();
-            var blockNum2 = (await Client.GetBlockByNumber(false, DefaultBlockParameter.Default)).Number.Value;
+            var blockNum2 = (await Client.GetBlockByNumber(DefaultBlockParameter.Default, false)).Number.Value;
             Assert.Equal(1UL, blockNum2 - blockNum1);
         }
 
@@ -104,7 +104,7 @@ namespace Meadow.TestNode.Test
         public async Task GetBlockTest()
         {
             var blockNum = await Client.BlockNumber();
-            var block1 = await Client.GetBlockByNumber(false, blockNum);
+            var block1 = await Client.GetBlockByNumber(blockNum, false);
             var block2 = await Client.GetBlockByHash(block1.Hash.Value, false);
             Assert.Equal(block1.Hash.Value, block2.Hash.Value);
         }
@@ -125,7 +125,7 @@ namespace Meadow.TestNode.Test
             var accounts = await Client.Accounts();
             var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
             var txHash = await contract.getValCounter().SendTransaction();
-            var curBlock = await Client.GetBlockByNumber(true, DefaultBlockParameter.Default);
+            var curBlock = await Client.GetBlockByNumber(DefaultBlockParameter.Default, true);
             var tx = await Client.GetTransactionByBlockHashAndIndex(curBlock.Hash.Value, 0);
             Assert.Equal(txHash, tx.Hash);
         }
@@ -138,7 +138,7 @@ namespace Meadow.TestNode.Test
             var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
             var txHash = await contract.getValCounter().SendTransaction();
 
-            var curBlock = await Client.GetBlockByNumber(true, DefaultBlockParameter.Default);
+            var curBlock = await Client.GetBlockByNumber(DefaultBlockParameter.Default, true);
 
             var count1 = await Client.GetBlockTransactionCountByHash(curBlock.Hash.Value);
             Assert.Equal(1UL, count1);
@@ -154,7 +154,7 @@ namespace Meadow.TestNode.Test
             var contract = await BasicContract.New($"TestName", true, 34, Client, new TransactionParams { From = accounts[0], Gas = 4712388 }, accounts[0]);
             var txHash = await contract.getValCounter().SendTransaction(new TransactionParams(from: accounts[2]));
 
-            var curBlock = await Client.GetBlockByNumber(true, DefaultBlockParameter.Default);
+            var curBlock = await Client.GetBlockByNumber(DefaultBlockParameter.Default, true);
 
             var count = await Client.GetTransactionCount(accounts[2], DefaultBlockParameter.Default);
             Assert.Equal(1UL, count);

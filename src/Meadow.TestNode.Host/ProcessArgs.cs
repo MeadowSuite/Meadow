@@ -6,16 +6,16 @@ namespace Meadow.TestNode.Host
     class ProcessArgs
     {
         [Option("-p|--port", "TODO.", CommandOptionType.SingleValue)]
-        public uint? Port { get; }
+        public uint Port { get; } = 8747;
 
         [Option("-h|--host", "TODO", CommandOptionType.SingleValue)]
-        public string Host { get; }
+        public string Host { get; } = "127.0.0.1";
 
         [Option("-a|--account_count", "TODO", CommandOptionType.SingleValue)]
-        public uint? AccountCount { get; }
+        public uint AccountCount { get; } = 100;
 
         [Option("-b|--account_balance", "TODO", CommandOptionType.SingleValue)]
-        public uint? AccountBalance { get; }
+        public uint AccountBalance { get; } = 1000;
 
         [Option("-m|--mnemonic", "TODO", CommandOptionType.SingleValue)]
         public string Mnemonic { get; }

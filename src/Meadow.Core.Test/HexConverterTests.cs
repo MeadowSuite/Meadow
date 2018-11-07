@@ -68,7 +68,7 @@ namespace Meadow.Core.Test
         public void Int32_4()
         {
             int num = 0;
-            var hex = "0x";
+            var hex = "0x0";
             var toHex = HexConverter.GetHexFromInteger(num, hexPrefix: true);
             Assert.Equal(hex, toHex);
             int numReturn = HexConverter.HexToInteger<int>(toHex);
