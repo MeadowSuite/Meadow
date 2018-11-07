@@ -218,7 +218,7 @@ namespace Meadow.TestNode
             return Task.FromResult(JsonTypeConverter.CoreBlockToJsonBlock(TestChain, block));
         }
 
-        public Task<Block> GetBlockByNumber(bool getFullTransactionObjects, DefaultBlockParameter blockParameter)
+        public Task<Block> GetBlockByNumber(DefaultBlockParameter blockParameter, bool getFullTransactionObjects)
         {
             // Obtain the block by hash
             ulong blockNumber = (ulong)BlockNumberFromBlockParameters(blockParameter);

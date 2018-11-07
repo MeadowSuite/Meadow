@@ -114,7 +114,7 @@ namespace Meadow.JsonRpc
         /// </param>
         /// <param name="blockParameter">Integer block number, or the string "latest", "earliest" or "pending".</param>
         [RpcApiMethod(RpcApiMethod.eth_getBlockByNumber)]
-        Task<Block> GetBlockByNumber(bool getFullTransactionObjects, DefaultBlockParameter blockParameter);
+        Task<Block> GetBlockByNumber(DefaultBlockParameter blockParameter, bool getFullTransactionObjects);
 
         /// <summary>
         /// eth_sendRawTransaction - Creates new message call transaction or a contract creation for signed transactions.

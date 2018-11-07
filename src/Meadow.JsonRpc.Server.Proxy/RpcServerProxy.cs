@@ -92,9 +92,9 @@ namespace Meadow.JsonRpc.Server.Proxy
             return _proxyClient.GetBlockByHash(hash, getFullTransactionObjects);
         }
 
-        public virtual Task<Block> GetBlockByNumber(bool getFullTransactionObjects, DefaultBlockParameter blockParameter)
+        public virtual Task<Block> GetBlockByNumber(DefaultBlockParameter blockParameter, bool getFullTransactionObjects)
         {
-            return _proxyClient.GetBlockByNumber(getFullTransactionObjects, blockParameter);
+            return _proxyClient.GetBlockByNumber(blockParameter, getFullTransactionObjects);
         }
 
         public virtual Task<ulong> GetBlockTransactionCountByHash(Hash blockHash)

@@ -112,7 +112,7 @@ namespace Meadow.JsonRpc.Server.Test
             throw new NotImplementedException();
         }
 
-        public Task<Block> GetBlockByNumber(bool getFullTransactionObjects, DefaultBlockParameter blockParameter)
+        public Task<Block> GetBlockByNumber(DefaultBlockParameter blockParameter, bool getFullTransactionObjects)
         {
             throw new NotImplementedException();
         }
