@@ -757,12 +757,7 @@ namespace Meadow.CoverageReport.Debugging
             if (!currentScope.FunctionDefinitionIndex.HasValue || !currentScope.FunctionEnteredIndex.HasValue)
             {
                 // Find any nodes exactly at this location (which are not the function definition node itself).
-                var currentLocationNodes = AstParser.AllAstNodes.Where(a =>
-                {
-                    return a.SourceRange.SourceIndex == currentEntry.Index &&
-                        a.SourceRange.Offset == currentEntry.Offset &&
-                        a.SourceRange.Offset + a.SourceRange.Length == currentEntry.Offset + currentEntry.Length;
-                });
+                var currentLocationNodes = AstParser.GetNodes(currentEntry, true);
 
                 // Try to find a function definition parent for any ast node that represents our current position.
                 // We do this instead of matching function definition directly to ensure we have entered the function scope.
@@ -825,11 +820,15 @@ namespace Meadow.CoverageReport.Debugging
                             // Determine our stack index
                             int stackIndex = (tracepoint.Stack.Length - inputParameterCount) + parameterIndex;
 
-                            // Create a local variable
-                            LocalVariable localVariable = new LocalVariable(parameter, true, false, stackIndex, currentEntry);
+                            // If this variable declaration doesn't have a runtime variable object yet, we create/add one.
+                            if (!currentScope.CheckLocalVariableExists(parameter.Id))
+                            {
+                                // Create a local variable
+                                LocalVariable localVariable = new LocalVariable(parameter, true, false, stackIndex, currentEntry);
 
-                            // Add our local variable to our scope
-                            currentScope.AddLocalVariable(localVariable);
+                                // Add our local variable to our scope
+                                currentScope.AddLocalVariable(localVariable);
+                            }
                         }
 
                         // Create locals for our input parameters.
@@ -842,17 +841,21 @@ namespace Meadow.CoverageReport.Debugging
                             // Determine our stack index
                             int stackIndex = (tracepoint.Stack.Length + parameterIndex);
 
-                            // Create a local variable
-                            LocalVariable localVariable = new LocalVariable(parameter, false, true, stackIndex, currentEntry);
-
-                            // If the name is blank, override it
-                            if (string.IsNullOrEmpty(localVariable.Name))
+                            // If this variable declaration doesn't have a runtime variable object yet, we create/add one.
+                            if (!currentScope.CheckLocalVariableExists(parameter.Id))
                             {
-                                localVariable.Name = $"<ReturnVariable{parameterIndex + 1}>";
-                            }
+                                // Create a local variable
+                                LocalVariable localVariable = new LocalVariable(parameter, false, true, stackIndex, currentEntry);
 
-                            // Add our local variable to our scope
-                            currentScope.AddLocalVariable(localVariable);
+                                // If the name is blank, override it
+                                if (string.IsNullOrEmpty(localVariable.Name))
+                                {
+                                    localVariable.Name = $"<ReturnVariable{parameterIndex + 1}>";
+                                }
+
+                                // Add our local variable to our scope
+                                currentScope.AddLocalVariable(localVariable);
+                            }
                         }
                     }
                 }
@@ -869,14 +872,7 @@ namespace Meadow.CoverageReport.Debugging
                     (int previousInstructionNumber, SourceMapEntry previousEntry) = GetInstructionAndSourceMap(previousTraceIndex);
 
                     // Obtain all ast nodes for our source map entry.
-                    var callNodeCandidates = AstParser.AllAstNodes.Where(a =>
-                    {
-                        return
-                            a.NodeType == AstNodeType.FunctionCall &&
-                            a.SourceRange.SourceIndex == previousEntry.Index &&
-                            a.SourceRange.Offset >= previousEntry.Offset &&
-                            a.SourceRange.Offset + a.SourceRange.Length <= previousEntry.Offset + previousEntry.Length;
-                    }).ToArray();
+                    var callNodeCandidates = AstParser.GetNodes(previousEntry, false, AstNodeType.FunctionCall).ToArray();
 
                     // Verify we have obtained an item
                     // UPDATE NOTES: This used to check that the function call had "referencedDeclaration" property referencing 
@@ -892,27 +888,18 @@ namespace Meadow.CoverageReport.Debugging
             }
 
             // Obtain all variable declarations (should be an EXACT match).
-            var variableDeclarations = AstParser.GetNodes<AstVariableDeclaration>().Where(a =>
-            {
-                return a.SourceRange.SourceIndex == currentEntry.Index &&
-                    a.SourceRange.Offset == currentEntry.Offset &&
-                    a.SourceRange.Offset + a.SourceRange.Length == currentEntry.Offset + currentEntry.Length;
-            }).ToArray();
+            var variableDeclarations = AstParser.GetNodes<AstVariableDeclaration>(currentEntry, true);
 
-            // If we have a variable declaration.
-            if (variableDeclarations.Length > 0)
+            // If we have a variable declaration. (Should only be one or none per line).
+            var variableDeclaration = variableDeclarations.SingleOrDefault();
+            if (variableDeclaration != null && !currentScope.CheckLocalVariableExists(variableDeclaration.Id))
             {
-                // If we have more than one here, throw an error
-                if (variableDeclarations.Length > 1)
-                {
-                    throw new Exception("Multiple variable declarations were returned for one source map entry.");
-                }
-
                 // Create a local variable
-                LocalVariable localVariable = new LocalVariable(variableDeclarations[0], false, false, tracepoint.Stack.Length, currentEntry);
+                LocalVariable localVariable = new LocalVariable(variableDeclaration, false, false, tracepoint.Stack.Length, currentEntry);
 
                 // Add our local variable to our scope
                 currentScope.AddLocalVariable(localVariable);
+
             }
         }
 
@@ -1090,25 +1077,37 @@ namespace Meadow.CoverageReport.Debugging
             foreach (LocalVariable variable in currentScope.Locals.Values)
             {
                 // If our stack index hasn't been reached yet, or we haven't gotten past the function declaration in our source, we skip this variable as it is not applicable yet.
-                if (variable.StackIndex >= tracePoint.Stack.Length || (!variable.IsFunctionParameter && (variable.SourceMapEntry.Offset > currentExecutionInfo.SourceMapEntry.Offset)))
+                if (variable.StackIndex >= tracePoint.Stack.Length ||
+                    (!variable.IsFunctionParameter &&
+                     (variable.SourceMapEntry.Offset > currentExecutionInfo.SourceMapEntry.Offset)))
                 {
                     continue;
                 }
 
                 // Determine the if our variable is in call data or not, then parse it accordingly.
                 object value = null;
+
+                // If our variable is not a strictly defined one, we skip to the next.
+                // TODO: Implement generic "var" support.
+                if (!variable.IsStrictlyDefinedType)
+                {
+                    break;
+                }
+
                 if (variable.IsFunctionInputParameter && currentScope.FunctionDefinition.Visibility == AstTypes.Enums.AstDeclarationVisibility.External)
                 {
                     // If this is an external call, data leading to the value is parsed from call data.
                     // value = variable.ValueParser.ParseFromCallData(ref callData);
 
                     // TODO: Implement the call which is commented out above, and remove this code.
-                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
+                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory,
+                        StorageManager, rpcClient);
                 }
                 else
                 {
                     // If this is not an external call, data leading to the value is parsed beginning from stack, and moving onto memory/storage.
-                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
+                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory,
+                        StorageManager, rpcClient);
                 }
 
                 // Add our local variable to our results

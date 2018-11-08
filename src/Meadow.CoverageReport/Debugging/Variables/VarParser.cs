@@ -239,7 +239,7 @@ namespace Meadow.CoverageReport.Debugging.Variables
         /// <param name="astTypeName">The ast node containing the type/location from which we derive our solidity variable type objects from.</param>
         /// <param name="location">The default location that some variable types should be assumed to be at, in this context.</param>
         /// <returns>Returns a solidity variable type object of the type provided by <paramref name="astTypeName"/></returns>
-        public static VarBase GetVariableObject(AstElementaryTypeName astTypeName, VarLocation location)
+        public static VarBase GetValueParser(AstElementaryTypeName astTypeName, VarLocation location)
         {
             // Obtain our base type.
             string baseType = ParseTypeComponents(astTypeName.TypeDescriptions.TypeString).baseType;
