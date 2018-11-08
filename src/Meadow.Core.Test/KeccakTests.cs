@@ -34,5 +34,87 @@ namespace Meadow.Core.Test
                 Assert.NotEqual(expected, result);
             }
         }
+
+        [Fact]
+        public void TestKeccakUpdate()
+        {
+            // Create our random provider.
+            Random random = new Random();
+
+            // Loop for a few test rounds.
+            for (int i = 0; i < 5; i++)
+            {
+                // Generate random data
+                byte[] bufferArray = new byte[random.Next(3, 1024 * 20)];
+                Span<byte> buffer = bufferArray;
+                random.NextBytes(buffer);
+
+                // Split threshold
+                int splitThreshold = random.Next(33, 1024);
+
+                // Compute the overall hash on the data
+                byte[] singleStepHash = KeccakHash.ComputeHashBytes(buffer);
+
+                // Create our keccak hash provider for multi step hash calculation.
+                KeccakHash keccak = KeccakHash.Create();
+                keccak.Update(bufferArray, 0, buffer.Length);
+
+                // Assert the hashes are equal
+                Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
+
+                // Recompute on the same keccak instance to check if it's reusable.
+                keccak.Reset();
+                keccak.Update(bufferArray, 0, buffer.Length);
+                Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
+
+                // Recompute the hash but add empty array hashing.
+                keccak.Reset();
+                keccak.Update(bufferArray, 0, bufferArray.Length);
+                keccak.Update(Array.Empty<byte>(), 0, 0);
+                keccak.Update(Array.Empty<byte>(), 0, 0);
+
+                // Assert the hashes are equal
+                Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
+
+                // Assert blank hashes
+                keccak.Reset();
+                keccak.Update(Array.Empty<byte>(), 0, 0);
+                keccak.Update(Array.Empty<byte>(), 0, 0);
+                byte[] blankHash = KeccakHash.ComputeHashBytes(Array.Empty<byte>());
+                Assert.Equal(blankHash.ToHexString(), keccak.Hash.ToHexString());
+
+                // Refresh our new keccak instance
+                keccak.Reset();
+
+                while (buffer.Length > 0)
+                {
+                    // Check if this is the last round
+                    bool lastRound = buffer.Length <= splitThreshold;
+
+                    // Obtain the data for this round.
+                    byte[] roundData = buffer.Slice(0, lastRound ? buffer.Length : splitThreshold).ToArray();
+
+                    if (lastRound)
+                    {
+                        // Obtain the final multistep hash.
+                        keccak.Update(roundData, 0, roundData.Length);
+
+                        // Assert the hashes are equal
+                        Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
+
+                        // Reset
+                        keccak.Reset();
+                        break;
+                    }
+                    else
+                    {
+                        keccak.Update(roundData, 0, roundData.Length);
+                    }
+
+                    // Advance our pointer.
+                    buffer = buffer.Slice(roundData.Length);
+                }
+            }
+        }
     }
 }

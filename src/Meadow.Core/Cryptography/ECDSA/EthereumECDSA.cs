@@ -25,6 +25,8 @@ namespace Meadow.Core.Cryptography.Ecdsa
         public const int PRIVATE_KEY_SIZE = 32;
         public const int PUBLIC_KEY_SIZE = 64;
         public const int SIGNATURE_RS_SIZE = 64;
+        public const int SIGNATURE_RSV_SIZE = SIGNATURE_RS_SIZE + 1;
+        public const int ECDH_SHARED_SECRET_SIZE = 32;
 
         /// <summary>
         /// The type of key that is available in this ECDSA instance.
@@ -61,6 +63,13 @@ namespace Meadow.Core.Cryptography.Ecdsa
         public abstract (byte RecoveryID, BigInteger r, BigInteger s) SignData(Span<byte> hash);
 
         /// <summary>
+        /// Computes a shared key from the keys of two individuals by using Elliptic Curve Diffie-Hellman ("ECDH"). Assumes this instance is of the private key, and requires a public key as input.
+        /// </summary>
+        /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
+        /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
+        public abstract byte[] ComputeECDHKey(EthereumEcdsa publicKey);
+
+        /// <summary>
         /// Initializes an ECDSA instance given a key and the type of key which it is.
         /// </summary>
         /// <param name="key">The key data for either a public or private key.</param>
@@ -81,8 +90,15 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// Creates an ECDSA instance with a freshly generated keypair.
         /// </summary>
         /// <returns>Returns the ECDSA instance which has the generated keypair.</returns>
-        public static EthereumEcdsa Generate(IAccountDerivation accountFactory)
+        public static EthereumEcdsa Generate(IAccountDerivation accountFactory = null)
         {
+            // If the account factory is null, we use a random factory
+            if (accountFactory == null)
+            {
+                accountFactory = new SystemRandomAccountDerivation();
+            }
+
+            // Determine which library to use
             if (UseNativeLib)
             {
                 return EthereumEcdsaNative.Generate(accountFactory);
@@ -168,7 +184,7 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// </summary>
         /// <param name="v">The v which has the recovery ID embedded in it which we wish to extract.</param>
         /// <returns>Returns the recovery ID embedded in v.</returns>
-        public static byte GetRecoveryIDFromV(byte v)
+        public static (byte recoveryId, uint? chainId) GetRecoveryAndChainIDFromV(byte v)
         {
             // Recovery ID is in V, which could also have ChainID and other things embedded, so we need special cases to extract it.
             // Geth also used 0, 1 before fixing, while Ethereum typically uses 27 or 28 if not past spurious dragon. If it is, it embeds it past 35.
@@ -176,17 +192,19 @@ namespace Meadow.Core.Cryptography.Ecdsa
             if (v >= 35)
             {
                 // If it's above 35, we assume it has a chain ID embedded. Chain ID is multiplied by 2, so if it's odd, we know the recover ID should be 1, otherwise 0.
-                return (byte)(1 - (v % 2));
+                byte recoveryId = (byte)(1 - (v % 2));
+                uint? chainId = (uint)((v - 35 - recoveryId) / 2);
+                return (recoveryId, chainId);
             }
             else if (v >= 27)
             {
                 // If it's above 27, we assume it's 27/28 so we just assume odd numbers are recovery ID 0 and even are 1 (since the first index 0 (even) started at 27 (odd))
-                return (byte)((v - 27) % 2);
+                return ((byte)((v - 27) % 2), null);
             }
             else
             {
                 // Otherwise we'll just modulus divide by 2 to get a 0, 1 and hope it's right (this will also handle the Geth case of it using 0, 1).
-                return (byte)(v % 2);
+                return ((byte)(v % 2), null);
             }
         }
 

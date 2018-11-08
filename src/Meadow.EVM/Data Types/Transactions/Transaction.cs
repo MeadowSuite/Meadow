@@ -59,22 +59,23 @@ namespace Meadow.EVM.Data_Types.Transactions
             {
                 // Chain ID is embedded in v.
 
-                // If it's a 27 or 28, it's the old protocol, it has no embedded chain ID.
-                if (ECDSA_v == 27 || ECDSA_v == 28)
-                {
-                    return null;
-                }
-
                 // If r = 0 and s = 0, this is the null address and we treat v as the chain outright.
-                else if (ECDSA_r == 0 & ECDSA_s == 0)
+                if (ECDSA_r == 0 & ECDSA_s == 0)
                 {
                     return (EthereumChainID)ECDSA_v;
                 }
-
-                // Otherwise we have v = (ChainID * 2) + RecoveryID + 35. (We can presume recovery ID is 0, 1)
                 else
                 {
-                    return (EthereumChainID)((ECDSA_v - 35 - EthereumEcdsa.GetRecoveryIDFromV(ECDSA_v)) / 2);
+                    // Otherwise we attempt to extract it from v.
+                    uint? chainId = EthereumEcdsa.GetRecoveryAndChainIDFromV(ECDSA_v).chainId;
+                    if (chainId.HasValue)
+                    {
+                        return (EthereumChainID)chainId.Value;
+                    }
+                    else
+                    {
+                        return null;
+                    }
                 }
             }
         }
@@ -170,7 +171,7 @@ namespace Meadow.EVM.Data_Types.Transactions
             try
             {
                 // Using our hash, v, r, and s, we can now recover our public key.
-                byte recoveryID = EthereumEcdsa.GetRecoveryIDFromV(ECDSA_v);
+                byte recoveryID = EthereumEcdsa.GetRecoveryAndChainIDFromV(ECDSA_v).recoveryId;
                 byte[] publicKeyHash = EthereumEcdsa.Recover(transactionHash, recoveryID, ECDSA_r, ECDSA_s).GetPublicKeyHash();
 
                 // If our hash is null, throw na exception.
