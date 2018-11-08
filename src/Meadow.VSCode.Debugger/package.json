@@ -1,7 +1,7 @@
 {
   "name": "solidity-debugger",
   "displayName": "Solidity Debugger",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
   "categories": [
     "Debuggers"
@@ -26,7 +26,7 @@
   "license": "GPL-3.0",
   "main": "./out/extension",
   "extensionDependencies": [
-    "ms-vscode.csharp"
+    
   ],
   "icon": "meadow-icon-256x256.png",
   "preview": false,
@@ -62,9 +62,7 @@
   },
   "activationEvents": [
     "onDebug",
-    "onDebugInitialConfigurations",
-    "onCommand:extension.meadow.vscode.debugger.getDebuggerPath",
-    "workspaceContains:**/*.sol"
+    "onLanguage:solidity"
   ],
   "contributes": {
     "languages": [

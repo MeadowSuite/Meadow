@@ -27,12 +27,15 @@ function isFileLocked() { return lockFile.checkSync(getLockFilePath(), { stale: 
 
 /** Ensures the tool package is installed and updated. */
 export async function update(){
-	
+    
+    common.validateDotnetVersion();
+
     // Check if another process is already performing this update check.
     let isLocked = isFileLocked();
     if (isLocked) {
-        Logger.log("The debugger tool lock file is already locked. Allowing other process to complete.");
-        return;
+        Logger.log("The debugger tool lock file is already locked. Waiting other process to complete.");
+        await waitForReady();
+        Logger.log("Done waiting for other process debugger tool lock file.");
     }
 
     try {
@@ -119,13 +122,15 @@ async function httpGet(url: string) : Promise<string> {
 async function installTool() {
     let toolPath = getToolDir();
 
-    let installResult = await util.promisify(child_process.execFile)('dotnet', [
-        'tool', 'install', TOOL_PACKAGE_NAME, '--tool-path', toolPath
-    ]);
-
-    if (installResult.stderr) {
-        showError(`Error installing ${TOOL_PACKAGE_NAME}: ${installResult.stderr}`);
-        throw new Error(installResult.stderr);
+    try {
+        await util.promisify(child_process.execFile)(
+            'dotnet', 
+            ['tool', 'install', TOOL_PACKAGE_NAME, '--tool-path', toolPath]);
+    }
+    catch (err) {
+        let errMsg : string = (err instanceof Error) ? err.message : err.toString();
+        showError(`Error installing ${TOOL_PACKAGE_NAME}: ${errMsg}`);
+        throw err;
     }
 }
 
@@ -133,13 +138,23 @@ async function installTool() {
 async function updateTool() {
     let toolPath = getToolDir();
 
-    let installResult = await util.promisify(child_process.execFile)('dotnet', [
-        'tool', 'update', TOOL_PACKAGE_NAME, '--tool-path', toolPath
-    ]);
+    try {
+        await util.promisify(child_process.execFile)(
+            'dotnet', 
+            ['tool', 'update', TOOL_PACKAGE_NAME, '--tool-path', toolPath]);
+    }
+    catch (err) {
+        let errMsg : string = (err instanceof Error) ? err.message : err.toString();
+        showError(`Error updating ${TOOL_PACKAGE_NAME}: ${errMsg}`);
+        throw err;
+    }
 
-    if (installResult.stderr) {
-        showError(`Error updating ${TOOL_PACKAGE_NAME}: ${installResult.stderr}`);
-        throw new Error(installResult.stderr);
+    let toolExecutablePath = getToolFilePath();
+
+    if (!fs.existsSync(toolExecutablePath)) {
+        let errMsg = `Cannot find tool file at ${toolExecutablePath} after install.`;
+        showError(errMsg);
+        throw new Error(errMsg);
     }
 }
 
@@ -152,17 +167,22 @@ async function getInstalledToolVersion() : Promise<string | null> {
         fs.mkdirSync(toolPath);
     }
 
-    let toolVerResult = await util.promisify(child_process.execFile)('dotnet', ['tool', 'list', '--tool-path', toolPath]);
-    if (toolVerResult.stderr) {
-        showError(`Error checking ${TOOL_PACKAGE_NAME} version: ${toolVerResult.stderr}`);
-        throw new Error(toolVerResult.stderr);
-    }
+    try {
+        let toolVerResult = await util.promisify(child_process.execFile)(
+            'dotnet', 
+            ['tool', 'list', '--tool-path', toolPath]);
 
-    let toolVerLine = toolVerResult.stdout.split(/\r?\n/).find(line => line.startsWith(TOOL_PACKAGE_NAME));
-    if (toolVerLine) {
-        let lineParts = toolVerLine.match(/\S+/g) || [];
-        let verString = lineParts[1];
-        return verString;
+        let toolVerLine = toolVerResult.stdout.split(/\r?\n/).find(line => line.startsWith(TOOL_PACKAGE_NAME));
+        if (toolVerLine) {
+            let lineParts = toolVerLine.match(/\S+/g) || [];
+            let verString = lineParts[1];
+            return verString;
+        }
+    }
+    catch (err) {
+        let errMsg : string = (err instanceof Error) ? err.message : err.toString();
+        showError(`Error checking ${TOOL_PACKAGE_NAME} version: ${errMsg}`);
+        throw err;
     }
 
     return null;
@@ -202,7 +222,7 @@ export async function getDebugToolPath() : Promise<string> {
         let optOK = 'Install';
         let optCancel = 'Cancel';
         let choice = await vscode.window.showInformationMessage<vscode.MessageItem>(
-            'The Solidity debugger tool is not installed. Retry installation?', 
+            'The Solidity debugger tool is not installed. Install now?', 
             { modal: false }, 
             { title: optOK, isCloseAffordance: false },
             { title: optCancel, isCloseAffordance: true });

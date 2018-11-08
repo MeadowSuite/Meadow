@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as semver from 'semver';
 import * as path from 'path';
 import * as child_process from "child_process";
+import { Logger } from './Logger';
 
 let extensionPath: string;
 
@@ -27,25 +28,39 @@ export function getWorkspaceFolder(): vscode.WorkspaceFolder {
 export function validateDotnetVersion() {
 
     // ensure "dotnet" sdk of min version is installed, if not prompt to download link
-    let minVersion = "2.1.0";
+    const minVersion = "2.1";
+    const sdkDownloadLink = 'https://www.microsoft.com/net/download';
 
-    let dotnetVersionResult = child_process.spawnSync("dotnet", ["--version"]);
-    if (dotnetVersionResult.error) {
-        dotnetVersionResult.error.message += ". Error identifying dotnet SDK version. Is it installed?"
-        throw dotnetVersionResult.error;
+    let errorMessage : string | undefined;
+
+    try {
+        let dotnetVersionResult = child_process.execFileSync("dotnet", ["--version"], { encoding: 'utf8' });
+        let dotnetVersionString = semver.coerce(dotnetVersionResult.trim());
+        let dotnetVersionSatisfied = semver.gte(dotnetVersionString, semver.coerce(minVersion));
+        if (!dotnetVersionSatisfied) {
+            errorMessage = `Invalid dotnet version '${dotnetVersionString}' - must be ${minVersion} or greater.`;
+        }
+    }
+    catch (err) {
+        if (err.code === 'ENOENT') {
+            errorMessage = `dotnet is not installed or could not be found in PATH.`
+        }
+        else {
+            errorMessage = (err instanceof Error) ? err.message : err.toString();
+        }
     }
 
-    if (dotnetVersionResult.status !== 0) {
-        let dotnetError = dotnetVersionResult.stdout.toString() + dotnetVersionResult.stderr.toString();
-        throw new Error(`dotnet returned exit code ${dotnetVersionResult.status} - ` + dotnetError);
+    if (errorMessage) {
+        const downloadChoice = 'Download';
+        vscode.window.showInformationMessage(`.NET Core SDK v${minVersion} or newer is required.`, downloadChoice).then(choice => {
+            if (choice === downloadChoice) {
+                vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(sdkDownloadLink))
+            }
+        });
+        Logger.log(errorMessage);
+        Logger.log(`Download .NET Core SDK from ${sdkDownloadLink}`);
+        throw new Error(errorMessage);
     }
-
-    let dotnetVersionString = dotnetVersionResult.stdout.toString().trim();
-    let dotnetVersionSatisfied = semver.gte(dotnetVersionString, minVersion);
-    if (!dotnetVersionSatisfied) {
-        throw new Error(`Invalid dotnet version "${dotnetVersionString}" - must be ${minVersion} or greater. Download SDK from https://www.microsoft.com/net/download`);
-    }
-
 }
 
 export function expandConfigPath(workspaceDir: string, config: {}, pathItems: string[]) {
