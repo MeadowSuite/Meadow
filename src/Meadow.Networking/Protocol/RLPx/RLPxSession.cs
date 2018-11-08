@@ -544,11 +544,11 @@ namespace Meadow.Networking.Protocol.RLPx
 
             // Next we'll want to hash the data with our hash providers.
             KeccakHash initiatorOutgoing = KeccakHash.Create();
-            initiatorOutgoing.Update(responderTransformedNonce, 0, responderTransformedNonce.Length);
-            initiatorOutgoing.Update(AuthData, 0, AuthData.Length);
+            initiatorOutgoing.TransformBlock(responderTransformedNonce, 0, responderTransformedNonce.Length, null, 0);
+            initiatorOutgoing.TransformFinalBlock(AuthData, 0, AuthData.Length);
             KeccakHash responderOutgoing = KeccakHash.Create();
-            responderOutgoing.Update(initiatorTranformedNonce, 0, initiatorTranformedNonce.Length);
-            responderOutgoing.Update(AuthAckData, 0, AuthAckData.Length);
+            responderOutgoing.TransformBlock(initiatorTranformedNonce, 0, initiatorTranformedNonce.Length, null, 0);
+            responderOutgoing.TransformFinalBlock(AuthAckData, 0, AuthAckData.Length);
 
             // Assign the correct hash providers based off of role
             if (Role == RLPxSessionRole.Initiator)

@@ -227,7 +227,7 @@ namespace Meadow.Networking.Cryptography
                 else if (hashType == KDFHashAlgorithm.Keccak256)
                 {
                     // Calculate the Keccak256 hash for this round.
-                    KeccakHash.ComputeHash(dataToHash, aggregateHashMemory.Slice(aggregateHashOffset, hashSize), KeccakHash.HASH_SIZE);
+                    KeccakHash.ComputeHash(dataToHash, aggregateHashMemory.Slice(aggregateHashOffset, hashSize));
                 }
                 else
                 {

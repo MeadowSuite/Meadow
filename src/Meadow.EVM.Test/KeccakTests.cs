@@ -36,7 +36,7 @@ namespace Meadow.EVM.Test
         {
   
             byte[] hash = new byte[64];
-            KeccakHash.ComputeHash(data, hash, 64);
+            KeccakHash.ComputeHash(data, hash);
             string hashString = hash.ToHexString();
 
             if (matches)

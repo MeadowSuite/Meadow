@@ -57,34 +57,28 @@ namespace Meadow.Core.Test
 
                 // Create our keccak hash provider for multi step hash calculation.
                 KeccakHash keccak = KeccakHash.Create();
-                keccak.Update(bufferArray, 0, buffer.Length);
+                keccak.TransformFinalBlock(bufferArray, 0, buffer.Length);
 
                 // Assert the hashes are equal
                 Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
 
                 // Recompute on the same keccak instance to check if it's reusable.
-                keccak.Reset();
-                keccak.Update(bufferArray, 0, buffer.Length);
+                keccak.TransformFinalBlock(bufferArray, 0, buffer.Length);
                 Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
 
                 // Recompute the hash but add empty array hashing.
-                keccak.Reset();
-                keccak.Update(bufferArray, 0, bufferArray.Length);
-                keccak.Update(Array.Empty<byte>(), 0, 0);
-                keccak.Update(Array.Empty<byte>(), 0, 0);
+                keccak.TransformBlock(bufferArray, 0, bufferArray.Length, null, 0);
+                keccak.TransformBlock(Array.Empty<byte>(), 0, 0, null, 0);
+                keccak.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
 
                 // Assert the hashes are equal
                 Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
 
                 // Assert blank hashes
-                keccak.Reset();
-                keccak.Update(Array.Empty<byte>(), 0, 0);
-                keccak.Update(Array.Empty<byte>(), 0, 0);
+                keccak.TransformBlock(Array.Empty<byte>(), 0, 0, null, 0);
+                keccak.TransformFinalBlock(Array.Empty<byte>(), 0, 0);
                 byte[] blankHash = KeccakHash.ComputeHashBytes(Array.Empty<byte>());
                 Assert.Equal(blankHash.ToHexString(), keccak.Hash.ToHexString());
-
-                // Refresh our new keccak instance
-                keccak.Reset();
 
                 while (buffer.Length > 0)
                 {
@@ -97,18 +91,16 @@ namespace Meadow.Core.Test
                     if (lastRound)
                     {
                         // Obtain the final multistep hash.
-                        keccak.Update(roundData, 0, roundData.Length);
+                        keccak.TransformFinalBlock(roundData, 0, roundData.Length);
 
                         // Assert the hashes are equal
                         Assert.Equal(singleStepHash.ToHexString(), keccak.Hash.ToHexString());
 
-                        // Reset
-                        keccak.Reset();
                         break;
                     }
                     else
                     {
-                        keccak.Update(roundData, 0, roundData.Length);
+                        keccak.TransformBlock(roundData, 0, roundData.Length, null, 0);
                     }
 
                     // Advance our pointer.
