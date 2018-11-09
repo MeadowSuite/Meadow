@@ -616,22 +616,6 @@ namespace Meadow.SolCodeGen
             KeccakHash.ComputeHash(strBytes, output);
         }
 
-        static string GetContractsDir(string projDir)
-        {
-            var contractsDir = $"{projDir}{Path.DirectorySeparatorChar}Contracts";
-            if (!Directory.Exists(contractsDir))
-            {
-                contractsDir = $"{projDir}{Path.DirectorySeparatorChar}contracts";
-            }
-
-            if (!Directory.Exists(contractsDir))
-            {
-                throw new Exception("Project must contain a Contracts directory: " + contractsDir);
-            }
-
-            return NormalizePath(contractsDir);
-        }
-
         static string NormalizePath(string path)
         {
             return path.Replace('\\', '/');

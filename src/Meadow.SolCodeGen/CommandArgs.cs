@@ -55,7 +55,23 @@ namespace Meadow.SolCodeGen
                     {
                         var opt = (ctc.ObjectInstance as CommandOption).Value();
                         opt = Path.GetFullPath(opt);
-                        if (!Directory.Exists(opt))
+                        bool isDirExists = Directory.Exists(opt);
+                        if (!isDirExists)
+                        {
+                            // Perform a case-insensitve search for the contracts directory.
+                            if (Path.GetFileName(opt).Equals("contracts", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var parentDirs = Directory.GetDirectories(Path.GetDirectoryName(opt), "*", SearchOption.TopDirectoryOnly);
+                                var contractDir = parentDirs.FirstOrDefault(d => Path.GetFileName(d).Equals("contracts", StringComparison.OrdinalIgnoreCase));
+                                if (contractDir != null)
+                                {
+                                    opt = contractDir;
+                                    isDirExists = true;
+                                }
+                            }
+                        }
+
+                        if (!isDirExists)
                         {
                             return new ValidationResult("Solidity source file directory does not exist: " + opt);
                         }
