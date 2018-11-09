@@ -616,16 +616,16 @@ namespace Meadow.TestNode
         {
             // Obtain our filter address
             Meadow.EVM.Data_Types.Addressing.Address address = null;
-            if (filterOptions.Address.HasValue)
-            {
-                address = new Meadow.EVM.Data_Types.Addressing.Address(filterOptions.Address.Value.GetBytes());
-            }
 
             // We create our bloom filter for these filter options
             BigInteger filterBloom = 0;
-            if (address != null)
+            if (filterOptions.Address != null)
             {
-                filterBloom |= BloomFilter.Generate(address, Meadow.EVM.Data_Types.Addressing.Address.ADDRESS_SIZE);
+                foreach (var addr in filterOptions.Address)
+                {
+                    var evmAddr = new Meadow.EVM.Data_Types.Addressing.Address(addr.GetBytes());
+                    filterBloom |= BloomFilter.Generate(evmAddr, Meadow.EVM.Data_Types.Addressing.Address.ADDRESS_SIZE);
+                }
             }
 
             if (filterOptions.Topics != null)

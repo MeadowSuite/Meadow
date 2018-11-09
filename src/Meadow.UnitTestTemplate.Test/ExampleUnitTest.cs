@@ -151,6 +151,14 @@ namespace Meadow.UnitTestTemplate.Test
 
             var events = await _contract.emitTheEvents().EventLogs<BasicContract.TestEvent1, BasicContract.TestEvent2>();
 
+            var blockNum = await RpcClient.BlockNumber();
+            var test = await RpcClient.GetLogs(new FilterOptions {
+                Address = new[] { _contract.ContractAddress, Accounts[0] },
+                Topics = System.Array.Empty<Data?>(),
+                FromBlock = 0,
+                ToBlock = blockNum
+            });
+
             //check how many events 
             var numberOfEvents = events.GetType().GetGenericArguments().Length;
             Assert.AreEqual(2, numberOfEvents);

@@ -20,14 +20,14 @@ namespace Meadow.JsonRpc.Types
         /// (optional, default: "latest") Integer block number, or "latest" for the 
         /// last mined block or "pending", "earliest" for not yet mined transactions.
         /// </summary>
-        [JsonProperty("fromBlock"), JsonConverter(typeof(DefaultBlockParameterConverter))]
+        [JsonProperty("toBlock"), JsonConverter(typeof(DefaultBlockParameterConverter))]
         public DefaultBlockParameter ToBlock { get; set; }
 
         /// <summary>
         /// (optional) Contract address or a list of addresses from which logs should originate.
         /// </summary>
-        [JsonProperty("address"), JsonConverter(typeof(JsonRpcHexConverter))]
-        public Address? Address { get; set; }
+        [JsonProperty("address"), JsonConverter(typeof(AddressHexArrayJsonConverter))]
+        public Address[] Address { get; set; }
 
         /// <summary>
         /// (optional) Array of 32 Bytes DATA topics. Topics are order-dependent. 
