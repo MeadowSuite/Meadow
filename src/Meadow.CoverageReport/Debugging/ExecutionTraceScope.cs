@@ -88,6 +88,7 @@ namespace Meadow.CoverageReport.Debugging
         #endregion
 
         #region Functions
+
         /// <summary>
         /// Adds a local variable to this execution scopes lookup, if one with this ID was not already resolved.
         /// </summary>
@@ -95,10 +96,17 @@ namespace Meadow.CoverageReport.Debugging
         public void AddLocalVariable(LocalVariable localVariable)
         {
             // Set our local variable in our dictionary.
-            if (!Locals.ContainsKey(localVariable.Declaration.Id))
-            {
-                Locals[localVariable.Declaration.Id] = localVariable;
-            }
+            Locals[localVariable.Declaration.Id] = localVariable;
+        }
+
+        /// <summary>
+        /// Indicates whether the local variable with the given ID was already added to this scope.
+        /// </summary>
+        /// <param name="id">The local variable ID to check inclusion for.</param>
+        /// <returns>Returns true if the given variable declaration ID already has been added in this scope.</returns>
+        public bool CheckLocalVariableExists(long id)
+        {
+            return Locals.ContainsKey(id);
         }
 
         /// <summary>

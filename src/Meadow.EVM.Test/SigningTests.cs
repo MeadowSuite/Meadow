@@ -115,6 +115,33 @@ namespace Meadow.EVM.Test
         }
 
         [Theory]
+        [InlineData(true, "103aaccf80ad53c11ce2d1654e733a70835b852bfa4528a6214f11a9b9c6e55c", "7d2386471f6caf4327e08fe8767d5b3e3ae014a32ec2f1bd4f7ca3dcac7c00448f613f0ae0c2b340a06a2183586d4b36c0b33a19dba3cad5e9dd81278e1e5a9b", "d0ab6bbdc1e1bc5c189d843a0ed4ae18bb76b1afbe4c2b6ffed66992402f8f90")]
+        [InlineData(false, "103aaccf80ad53c11ce2d1654e733a70835b852bfa4528a6214f11a9b9c6e55c", "7d2386471f6caf4327e08fe8767d5b3e3ae014a32ec2f1bd4f7ca3dcac7c00448f613f0ae0c2b340a06a2183586d4b36c0b33a19dba3cad5e9dd81278e1e5a9b", "d0ab6bbdc1e1bc5c189d843a0ed4ae18bb76b1afbe4c2b6ffed66992402f8f90")]
+        [InlineData(true, "00e9088ce6d8df1357233e1cde9ad58a910a26605bd1921570977d6708b96e37b5", "2d85837598dbdb4cb0d803157d0219880098ffe9735802107d89aeecda4518e44b07e3a41e37daa79cd44d8cdbb8bb10deca2481264aee3472ab044cc61e17a0", "542c718db53e6b8af98f8903e2f6afa39da3b892d9bc9f152f87f8f3d9c046fb")]
+        [InlineData(false, "00e9088ce6d8df1357233e1cde9ad58a910a26605bd1921570977d6708b96e37b5", "2d85837598dbdb4cb0d803157d0219880098ffe9735802107d89aeecda4518e44b07e3a41e37daa79cd44d8cdbb8bb10deca2481264aee3472ab044cc61e17a0", "542c718db53e6b8af98f8903e2f6afa39da3b892d9bc9f152f87f8f3d9c046fb")]
+        public void ComputeECDHKeyTest(bool useBouncyCastle, string privateKeyStr, string publicKeyStr, string expectedSecretStr)
+        {
+            // Generate ECDSA keypair
+            EthereumEcdsa privateKey = null;
+            EthereumEcdsa publicKey = null;
+            if (useBouncyCastle)
+            {
+                privateKey = new EthereumEcdsaBouncyCastle(privateKeyStr.HexToBytes(), EthereumEcdsaKeyType.Private);
+                publicKey = new EthereumEcdsaBouncyCastle(publicKeyStr.HexToBytes(), EthereumEcdsaKeyType.Public);
+            }
+            else
+            {
+                privateKey = new EthereumEcdsaNative(privateKeyStr.HexToBytes(), EthereumEcdsaKeyType.Private);
+                publicKey = new EthereumEcdsaNative(publicKeyStr.HexToBytes(), EthereumEcdsaKeyType.Public);
+            }
+
+            // Compute a shared key.
+            byte[] data = privateKey.ComputeECDHKey(publicKey);
+
+            Assert.Equal(expectedSecretStr, data.ToHexString(false));
+        }
+
+        [Theory]
         [InlineData(true)]
         [InlineData(false)]
         public void ProvidedKeySigning(bool useBouncyCastle)

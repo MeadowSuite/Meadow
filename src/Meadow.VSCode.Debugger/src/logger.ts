@@ -3,7 +3,7 @@ import * as util from 'util';
 
 export class Logger {
 
-    private static outputChannel = vscode.window.createOutputChannel("Meadow Solidity Debugger");
+    private static outputChannel : vscode.OutputChannel = vscode.window.createOutputChannel("Meadow Solidity Debugger");
 
     private static _didShow: boolean = false;
 

@@ -144,7 +144,7 @@ namespace Meadow.Core.Utils
             }
 
             // Obtain our recovery id from v.
-            byte recoveryID = EthereumEcdsa.GetRecoveryIDFromV(v);
+            byte recoveryID = EthereumEcdsa.GetRecoveryAndChainIDFromV(v).recoveryId;
 
             // Try to get an address from this. If it fails, it will throw an exception.
             var key = EthereumEcdsa.Recover(messageHash, recoveryID, rInt, sInt);

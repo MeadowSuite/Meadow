@@ -110,7 +110,7 @@ namespace Meadow.EVM.EVM.Precompiles
             }
 
             // Obtain our recovery id from v.
-            byte recoveryID = EthereumEcdsa.GetRecoveryIDFromV((byte)v);
+            byte recoveryID = EthereumEcdsa.GetRecoveryAndChainIDFromV((byte)v).recoveryId;
 
             // Try to get an address from this. If it fails, it will throw an exception.
             byte[] senderAddress = null;

@@ -1,7 +1,7 @@
 {
   "name": "solidity-debugger",
   "displayName": "Solidity Debugger",
-  "version": "0.1.1",
+  "version": "0.2.1",
   "description": "Debugger for Solidity smart contracts - powered by the Meadow testing and development tool suite",
   "categories": [
     "Debuggers"
@@ -14,7 +14,7 @@
     "solidity-coverage"
   ],
   "publisher": "hosho",
-  "author": "Hosho",
+  "author": "Meadow",
   "homepage": "https://github.com/MeadowSuite/Meadow/blob/master/src/Meadow.VSCode.Debugger/README.md",
   "repository": {
     "type": "git",
@@ -23,11 +23,9 @@
   "bugs": {
     "url": "https://github.com/MeadowSuite/Meadow/issues"
   },
-  "license": "GPL-3.0",
+  "license": "MIT",
   "main": "./out/extension",
-  "extensionDependencies": [
-    "ms-vscode.csharp"
-  ],
+  "extensionDependencies": [],
   "icon": "meadow-icon-256x256.png",
   "preview": false,
   "private": true,
@@ -54,17 +52,15 @@
   "devDependencies": {
     "@types/node": "8.9.3",
     "tslint": "^5.11.0",
-    "typescript": "^3.1.4",
-    "vsce": "^1.52.0",
+    "typescript": "^3.1.6",
+    "vsce": "^1.53.0",
     "vscode": "^1.1.21",
     "vscode-debugadapter-testsupport": "^1.32.0",
     "trash": "^4.3.0"
   },
   "activationEvents": [
     "onDebug",
-    "onDebugInitialConfigurations",
-    "onCommand:extension.meadow.vscode.debugger.getDebuggerPath",
-    "workspaceContains:**/*.sol"
+    "onLanguage:solidity"
   ],
   "contributes": {
     "languages": [

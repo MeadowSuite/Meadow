@@ -115,19 +115,19 @@ namespace Meadow.EVM.Data_Types.Chain.PoW
 
         private static void Keccak256(Span<byte> message, Span<byte> output)
         {
-            KeccakHash.ComputeHash(message, output, 0x20);
+            KeccakHash.ComputeHash(message, output);
         }
 
         private static Span<byte> Keccak512(Span<byte> message)
         {
             byte[] output = new byte[0x40];
-            KeccakHash.ComputeHash(message, output, output.Length);
+            KeccakHash.ComputeHash(message, output);
             return output;
         }
 
         private static void Keccak512(Span<byte> message, Span<byte> output)
         {
-            KeccakHash.ComputeHash(message, output, 0x40);
+            KeccakHash.ComputeHash(message, output);
         }
 
         private static BigInteger Sqrt(BigInteger n)

@@ -30,7 +30,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
             ArrayTypeName = type;
 
             // Set our element parser with the given array element/base type.
-            ElementObject = VarParser.GetVariableObject(ArrayTypeName.BaseType, location);
+            ElementObject = VarParser.GetValueParser(ArrayTypeName.BaseType, location);
 
             // Define our bounds variables
             int storageSlotCount = 1;

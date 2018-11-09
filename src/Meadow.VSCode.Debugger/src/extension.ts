@@ -45,13 +45,6 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register config provider for coreclr / omnisharp to hook in our solidity debugger.
 	const coreClrProvider = new ClrDebugConfigProvider(context);
 	context.subscriptions.push(vscode.debug.registerDebugConfigurationProvider("coreclr", coreClrProvider));
-
-	// Check for updates to debugSolSources tool.
-	debugSolSourcesTool.update().catch(err => {
-		Logger.log("Error running update on DebugSolSources tool:");
-		Logger.log(err);
-	});
-
 }
 
 

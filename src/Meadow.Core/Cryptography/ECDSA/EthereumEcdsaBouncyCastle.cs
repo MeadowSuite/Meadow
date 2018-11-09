@@ -2,6 +2,7 @@
 using Meadow.Core.Utils;
 using Org.BouncyCastle.Asn1.X9;
 using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Crypto.Agreement;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
@@ -280,6 +281,40 @@ namespace Meadow.Core.Cryptography.Ecdsa
             throw new Exception("Could not obtain a valid Recovery ID for the signature.");
         }
 
+        /// <summary>
+        /// Computes a shared secret among two keys using ECDH. Assumes this instance is of the private key, and requires a public key as input.
+        /// </summary>
+        /// <param name="publicKey">The public key to compute a shared secret for, using this current private key.</param>
+        /// <returns>Returns a computed shared secret using this private key with the provided public key. Throws an exception if this instance is not a private key and the provided argument is not a public key.</returns>
+        public override byte[] ComputeECDHKey(EthereumEcdsa publicKey)
+        {
+            // Verify the types of keys
+            if (KeyType != EthereumEcdsaKeyType.Private)
+            {
+                throw new ArgumentException("Could not calculate ECDH shared secret because called upon key was not a private key.");
+            }
 
+            // If this public key isn't already this same managed type object, create one.
+            if (!(publicKey is EthereumEcdsaBouncyCastle))
+            {
+                publicKey = new EthereumEcdsaBouncyCastle(publicKey.ToPublicKeyArray(), EthereumEcdsaKeyType.Public);
+            }
+
+            // Obtain the public key parameters from the managed public key
+            ECPublicKeyParameters pubKeyParams = ((EthereumEcdsaBouncyCastle)publicKey).PublicKey;
+
+            // Create an ECDH provider
+            ECDHBasicAgreement ecdhAgreement = new ECDHBasicAgreement();
+            ecdhAgreement.Init(PrivateKey);
+
+            // Calculate the agreement
+            BigInteger agreementInt = ecdhAgreement.CalculateAgreement(pubKeyParams).ToNumericsBigInteger();
+
+            // Obtain a data representation of the agreement.
+            byte[] sharedSecret = BigIntegerConverter.GetBytes(agreementInt, ECDH_SHARED_SECRET_SIZE);
+
+            // Return the computed shared secret.
+            return sharedSecret;
+        }
     }
 }

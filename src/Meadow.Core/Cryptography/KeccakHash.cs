@@ -1,31 +1,28 @@
 ﻿using Meadow.Core.Utils;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Meadow.Core.Cryptography
 {
-    public static class KeccakHash
+    public class KeccakHash
     {
-        public static byte[] BLANK_HASH
-        {
-            get
-            {
-                return ComputeHashBytes(Array.Empty<byte>());
-            }
-        }
-
+        #region Constants
         public const int HASH_SIZE = 32;
-        const int STATE_SIZE = 200;
-        const int HASH_DATA_AREA = 136;
-        const int ROUNDS = 24;
-        const int LANE_BITS = 8 * 8;
-        const int TEMP_BUFF_SIZE = 144;
+        private const int STATE_SIZE = 200;
+        private const int HASH_DATA_AREA = 136;
+        private const int ROUNDS = 24;
+        private const int LANE_BITS = 8 * 8;
+        private const int TEMP_BUFF_SIZE = 144;
+        #endregion
 
-        static readonly ulong[] RoundConstants =
+        #region Fields
+        private static readonly ulong[] RoundConstants =
         {
             0x0000000000000001UL, 0x0000000000008082UL, 0x800000000000808aUL,
             0x8000000080008000UL, 0x000000000000808bUL, 0x0000000080000001UL,
@@ -37,8 +34,77 @@ namespace Meadow.Core.Cryptography
             0x8000000000008080UL, 0x0000000080000001UL, 0x8000000080008008UL
         };
 
+        private int _roundSize;
+        private int _roundSizeU64;
+        private Memory<byte> _remainderBuffer;
+        private int _remainderLength;
+        private Memory<ulong> _state;
+        private byte[] _hash;
+        #endregion
+
+        #region Properties
+        public static byte[] BLANK_HASH
+        {
+            get
+            {
+                return ComputeHashBytes(Array.Empty<byte>());
+            }
+        }
+
+        /// <summary>
+        /// Indicates the hash size in bytes.
+        /// </summary>
+        public int HashSize { get; }
+
+        /// <summary>
+        /// The current hash buffer at this point. Recomputed after hash updates.
+        /// </summary>
+        public byte[] Hash
+        {
+            get
+            {
+                // If the hash is null, recalculate.
+                _hash = _hash ?? UpdateFinal();
+
+                // Return it.
+                return _hash;
+            }
+        }
+        #endregion
+
+        #region Constructor
+        private KeccakHash(int size)
+        {
+            // Set the hash size
+            HashSize = size;
+
+            // Verify the size
+            if (HashSize <= 0 || HashSize > STATE_SIZE)
+            {
+                throw new ArgumentException($"Invalid Keccak hash size. Must be between 0 and {STATE_SIZE}.");
+            }
+
+            // The round size.
+            _roundSize = STATE_SIZE == HashSize ? HASH_DATA_AREA : STATE_SIZE - (2 * HashSize);
+
+            // The size of a round in terms of ulong.
+            _roundSizeU64 = _roundSize / 8;
+
+            // Allocate our remainder buffer
+            _remainderBuffer = new byte[_roundSize];
+            _remainderLength = 0;
+        }
+        #endregion
+
+        #region Functions
+
+        public static KeccakHash Create(int size = HASH_SIZE)
+        {
+            return new KeccakHash(size);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static ulong ROL(ulong a, int offset)
+        private static ulong ROL(ulong a, int offset)
         {
             return (a << (offset % LANE_BITS)) ^ (a >> (LANE_BITS - (offset % LANE_BITS)));
         }
@@ -318,7 +384,7 @@ namespace Meadow.Core.Cryptography
         {
             var input = StringUtil.UTF8.GetBytes(utf8String);
             var output = new byte[32];
-            ComputeHash(input, output, output.Length);
+            ComputeHash(input, output);
             return output;
         }
 
@@ -333,7 +399,7 @@ namespace Meadow.Core.Cryptography
         {
             var input = stringEncoding.GetBytes(inputString);
             var output = new byte[32];
-            ComputeHash(input, output, output.Length);
+            ComputeHash(input, output);
             return output;
         }
 
@@ -346,90 +412,236 @@ namespace Meadow.Core.Cryptography
         {
             var input = HexUtil.HexToBytes(hexString);
             var output = new byte[32];
-            ComputeHash(input, output, output.Length);
+            ComputeHash(input, output);
             return output;
         }
 
-        public static Span<byte> ComputeHash(Span<byte> input)
+        public static Span<byte> ComputeHash(Span<byte> input, int size = HASH_SIZE)
         {
-            Span<byte> output = new byte[32];
-            ComputeHash(input, output, output.Length);
+            Span<byte> output = new byte[size];
+            ComputeHash(input, output);
             return output;
         }
 
-        public static byte[] ComputeHashBytes(Span<byte> input)
+        public static byte[] ComputeHashBytes(Span<byte> input, int size = HASH_SIZE)
         {
-            var output = new byte[32];
-            ComputeHash(input, output, output.Length);
+            var output = new byte[HASH_SIZE];
+            ComputeHash(input, output);
             return output;
         }
 
-        public static void ComputeHash(Span<byte> input, Span<byte> md)
-        {
-            ComputeHash(input, md, md.Length);
-        }
+        static readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
+
 
         // compute a keccak hash (md) of given byte length from "in"
-        public static void ComputeHash(Span<byte> input, Span<byte> md, int mdlen)
+        public static void ComputeHash(Span<byte> input, Span<byte> output)
         {
-            var inlen = input.Length;
-            Span<ulong> st = new ulong[25];
-            Span<byte> temp = new byte[TEMP_BUFF_SIZE];
-
-            if (mdlen <= 0 || mdlen > 200)
+            if (output.Length <= 0 || output.Length > STATE_SIZE)
             {
                 throw new ArgumentException("Bad keccak use");
             }
 
-            if (mdlen < md.Length)
+            byte[] stateArray = _arrayPool.Rent(STATE_SIZE);
+            byte[] tempArray = _arrayPool.Rent(TEMP_BUFF_SIZE);
+
+            try
             {
-                throw new ArgumentException("mdlen is smaller than md");
-            }
+                Span<ulong> state = MemoryMarshal.Cast<byte, ulong>(stateArray.AsSpan(0, STATE_SIZE));
+                Span<byte> temp = tempArray.AsSpan(0, TEMP_BUFF_SIZE);
 
-            int rsiz = STATE_SIZE == mdlen ? HASH_DATA_AREA : 200 - (2 * mdlen);
-            int rsizw = rsiz / 8;
+                state.Clear();
+                temp.Clear();
 
-            MemoryMarshal.AsBytes(st).Slice(0, STATE_SIZE).Clear();
+                int roundSize = STATE_SIZE == output.Length ? HASH_DATA_AREA : STATE_SIZE - (2 * output.Length);
+                int roundSizeU64 = roundSize / 8;
 
-            int i;
-            for (; inlen >= rsiz; inlen -= rsiz, input = input.Slice(rsiz))
-            {
-                var input64 = MemoryMarshal.Cast<byte, ulong>(input);
-
-                for (i = 0; i < rsizw; i++)
+                var inputLength = input.Length;
+                int i;
+                for (; inputLength >= roundSize; inputLength -= roundSize, input = input.Slice(roundSize))
                 {
-                    st[i] ^= input64[i];
+                    var input64 = MemoryMarshal.Cast<byte, ulong>(input);
+
+                    for (i = 0; i < roundSizeU64; i++)
+                    {
+                        state[i] ^= input64[i];
+                    }
+
+                    KeccakF(state, ROUNDS);
                 }
 
-                KeccakF(st, ROUNDS);
+                // last block and padding
+                if (inputLength >= TEMP_BUFF_SIZE || inputLength > roundSize || roundSize - inputLength + inputLength + 1 >= TEMP_BUFF_SIZE || roundSize == 0 || roundSize - 1 >= TEMP_BUFF_SIZE || roundSizeU64 * 8 > TEMP_BUFF_SIZE)
+                {
+                    throw new ArgumentException("Bad keccak use");
+                }
+
+                input.Slice(0, inputLength).CopyTo(temp);
+                temp[inputLength++] = 1;
+                temp[roundSize - 1] |= 0x80;
+
+                var tempU64 = MemoryMarshal.Cast<byte, ulong>(temp);
+
+                for (i = 0; i < roundSizeU64; i++)
+                {
+                    state[i] ^= tempU64[i];
+                }
+
+                KeccakF(state, ROUNDS);
+                MemoryMarshal.AsBytes(state).Slice(0, output.Length).CopyTo(output);
+            }
+            finally
+            {
+                _arrayPool.Return(stateArray);
+                _arrayPool.Return(tempArray);
+            }
+        }
+
+        public static void Keccak1600(Span<byte> input, Span<byte> output)
+        {
+            if (output.Length != STATE_SIZE)
+            {
+                throw new ArgumentException($"Output length must be {STATE_SIZE} bytes");
+            }
+
+            ComputeHash(input, output);
+        }
+
+        public void Update(byte[] array, int index, int size)
+        {
+            // Bounds checking.
+            if (size < 0)
+            {
+                throw new ArgumentException("Cannot updated Keccak hash because the provided size of data to hash is negative.");
+            }
+            else if (index + size > array.Length || index < 0)
+            {
+                throw new ArgumentOutOfRangeException("Cannot updated Keccak hash because the provided index and size extend outside the bounds of the array.");
+            }
+
+            // If the size is zero, quit
+            if (size == 0)
+            {
+                return;
+            }
+
+            // Create the input buffer
+            Span<byte> input = array;
+            input = input.Slice(index, size);
+
+            // If our provided state is empty, initialize a new one
+            if (_state.Length == 0)
+            {
+                _state = new ulong[STATE_SIZE / 8];
+            }
+
+            // If our remainder is non zero.
+            int i;
+            if (_remainderLength != 0)
+            {
+                // Copy data to our remainder
+                var remainderAdditive = input.Slice(0, Math.Min(input.Length, _roundSize - _remainderLength));
+                remainderAdditive.CopyTo(_remainderBuffer.Slice(_remainderLength).Span);
+
+                // Increment the length
+                _remainderLength += remainderAdditive.Length;
+
+                // Increment the input
+                input = input.Slice(remainderAdditive.Length);
+
+                // If our remainder length equals a full round
+                if (_remainderLength == _roundSize)
+                {
+                    // Cast our input to ulongs.
+                    var remainderBufferU64 = MemoryMarshal.Cast<byte, ulong>(_remainderBuffer.Span);
+
+                    // Loop for each ulong in this remainder, and xor the state with the input.
+                    for (i = 0; i < _roundSizeU64; i++)
+                    {
+                        _state.Span[i] ^= remainderBufferU64[i];
+                    }
+
+                    // Perform our keccakF on our state.
+                    KeccakF(_state.Span, ROUNDS);
+
+                    // Clear remainder fields
+                    _remainderLength = 0;
+                    _remainderBuffer.Span.Clear();
+                }
+            }
+
+            // Loop for every round in our size.
+            while (input.Length >= _roundSize)
+            {
+                // Cast our input to ulongs.
+                var input64 = MemoryMarshal.Cast<byte, ulong>(input);
+
+                // Loop for each ulong in this round, and xor the state with the input.
+                for (i = 0; i < _roundSizeU64; i++)
+                {
+                    _state.Span[i] ^= input64[i];
+                }
+
+                // Perform our keccakF on our state.
+                KeccakF(_state.Span, ROUNDS);
+
+                // Remove the input data processed this round.
+                input = input.Slice(_roundSize);
             }
 
             // last block and padding
-            if (inlen >= TEMP_BUFF_SIZE || inlen > rsiz || rsiz - inlen + inlen + 1 >= TEMP_BUFF_SIZE || rsiz == 0 || rsiz - 1 >= TEMP_BUFF_SIZE || rsizw * 8 > TEMP_BUFF_SIZE)
+            if (input.Length >= TEMP_BUFF_SIZE || input.Length > _roundSize || _roundSize + 1 >= TEMP_BUFF_SIZE || _roundSize == 0 || _roundSize - 1 >= TEMP_BUFF_SIZE || _roundSizeU64 * 8 > TEMP_BUFF_SIZE)
             {
                 throw new ArgumentException("Bad keccak use");
             }
 
-            input.Slice(0, inlen).CopyTo(temp);
-            temp[inlen++] = 1;
-            temp[rsiz - 1] |= 0x80;
-
-            var temp64 = MemoryMarshal.Cast<byte, ulong>(temp);
-
-            for (i = 0; i < rsizw; i++)
+            // If we have any remainder here, it means any remainder was processed before, we can copy our data over and set our length
+            if (input.Length > 0)
             {
-                st[i] ^= temp64[i];
+                input.CopyTo(_remainderBuffer.Span);
+                _remainderLength = input.Length;
             }
 
-            KeccakF(st, ROUNDS);
-
-            MemoryMarshal.AsBytes(st).Slice(0, mdlen).CopyTo(md);
+            // Set the hash as null
+            _hash = null;
         }
 
-        public static void Keccak1600(Span<byte> input, Span<byte> md)
+        private byte[] UpdateFinal()
         {
-            ComputeHash(input, md, STATE_SIZE);
+            // Copy the remainder buffer
+            Memory<byte> remainderClone = _remainderBuffer.ToArray();
+
+            // Set a 1 byte after the remainder.
+            remainderClone.Span[_remainderLength++] = 1;
+
+            // Set the highest bit on the last byte.
+            remainderClone.Span[_roundSize - 1] |= 0x80;
+
+            // Cast the remainder buffer to ulongs.
+            var temp64 = MemoryMarshal.Cast<byte, ulong>(remainderClone.Span);
+
+            // Loop for each ulong in this round, and xor the state with the input.
+            for (int i = 0; i < _roundSizeU64; i++)
+            {
+                _state.Span[i] ^= temp64[i];
+            }
+
+            KeccakF(_state.Span, ROUNDS);
+
+            // Obtain the state data in the desired (hash) size we want.
+            _hash = MemoryMarshal.AsBytes(_state.Span).Slice(0, HashSize).ToArray();
+
+            // Return the result.
+            return Hash;
         }
 
+        public void Reset()
+        {
+            // Clear our hash state information.
+            _state.Span.Clear();
+            _remainderBuffer.Span.Clear();
+            _remainderLength = 0;
+            _hash = null;
+        }
+        #endregion
     }
 }
