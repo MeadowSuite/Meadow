@@ -60,14 +60,37 @@ namespace Meadow.TestNode.Test
         [Fact]
         public async Task IncreaseTimeTest()
         {
-            ulong seconds = 1500;
+            // We allow 5 seconds of deviation in this test for the times between blocks we create after advancing time.
+            // This is because processing the block itself may take a second or two. For slow machines we take the safe route
+            // and use a deviation of 5.
+            const ulong allowedDeviation = 5;
+
+            // Define the amount of time to advance.
+            const ulong timeToAdvanceSeconds = 1500;
+
+            // Mine a block.
             await _fixture.Client.Mine();
+
+            // Obtain the time stamp on it.
             var time1 = (await Client.GetBlockByNumber(DefaultBlockParameter.Default, false)).Timestamp;
-            await _fixture.Client.IncreaseTime(seconds);
+
+            // Increase the time by our desired time to advance.
+            await _fixture.Client.IncreaseTime(timeToAdvanceSeconds);
+
+            // Mine another block after our time was advanced.
             await _fixture.Client.Mine();
+
+            // Obtain the time stamp on the second block.
             var time2 = (await Client.GetBlockByNumber(DefaultBlockParameter.Default, false)).Timestamp;
-            var diff = time2 - time1;
-            Assert.Equal(seconds, diff);
+
+            // Determine the time delta between blocks.
+            var timeDelta = time2 - time1;
+
+            // Verify the time delta is greater or equal to the time we advanced.
+            Assert.True(timeDelta >= timeToAdvanceSeconds);
+
+            // Verify the time delta is less than the time we advanced plus some deviation time (for processing).
+            Assert.True(timeDelta <= timeToAdvanceSeconds + allowedDeviation);
         }
 
         [Fact]

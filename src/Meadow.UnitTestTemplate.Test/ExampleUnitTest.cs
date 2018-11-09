@@ -5,6 +5,7 @@ using Meadow.Core.Utils;
 using Meadow.EVM.Data_Types;
 using Meadow.JsonRpc.Types;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Globalization;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -148,7 +149,6 @@ namespace Meadow.UnitTestTemplate.Test
         [TestMethod]
         public async Task Emit2Events()
         {
-
             var events = await _contract.emitTheEvents().EventLogs<BasicContract.TestEvent1, BasicContract.TestEvent2>();
 
             //check how many events 
@@ -160,7 +160,68 @@ namespace Meadow.UnitTestTemplate.Test
 
             Assert.AreEqual((ulong)2, events.Event2._id);
             Assert.AreEqual((ulong)4, events.Event2._val);
-           
+        }
+
+        [TestMethod]
+        public async Task TestEventFilters()
+        {
+            // Emit 8 different events, and grab 2 kinds.
+            var events = await _contract.emitTheEvents().EventLogs<BasicContract.TestEvent1, BasicContract.TestEvent2>();
+
+            // Obtain the current block number.
+            var blockNum = await RpcClient.BlockNumber();
+
+            // Obtain the logs with two addresses.
+            var eventLogResult = await RpcClient.GetLogs(new FilterOptions
+            {
+                Address = new[] { _contract.ContractAddress, Accounts[0] },
+                Topics = System.Array.Empty<Data?>(),
+                FromBlock = 0,
+                ToBlock = blockNum
+            });
+            Assert.AreEqual(8, eventLogResult.LogObjects.Length);
+
+            // Obtain the logs with a single address.
+            eventLogResult = await RpcClient.GetLogs(new FilterOptions
+            {
+                Address = new[] { _contract.ContractAddress },
+                Topics = System.Array.Empty<Data?>(),
+                FromBlock = 0,
+                ToBlock = blockNum
+            });
+            Assert.AreEqual(8, eventLogResult.LogObjects.Length);
+
+            // Obtain the logs with no address option provided.
+            eventLogResult = await RpcClient.GetLogs(new FilterOptions
+            {
+                Address = null,
+                Topics = System.Array.Empty<Data?>(),
+                FromBlock = 0,
+                ToBlock = blockNum
+            });
+            Assert.AreEqual(8, eventLogResult.LogObjects.Length);
+
+            // Obtain the logs with an empty list for address filter provided.
+            eventLogResult = await RpcClient.GetLogs(new FilterOptions
+            {
+                Address = Array.Empty<Address>(),
+                Topics = System.Array.Empty<Data?>(),
+                FromBlock = 0,
+                ToBlock = blockNum
+            });
+            Assert.AreEqual(null, eventLogResult);
+
+            // Obtain the logs with no address option provided, but blocks only going up to the one before our event was emitted.
+            eventLogResult = await RpcClient.GetLogs(new FilterOptions
+            {
+                Address = null,
+                Topics = System.Array.Empty<Data?>(),
+                FromBlock = 0,
+                ToBlock = blockNum - 1
+            });
+            Assert.AreEqual(null, eventLogResult);
+
+            // TODO: Test topic filtering.
         }
 
 

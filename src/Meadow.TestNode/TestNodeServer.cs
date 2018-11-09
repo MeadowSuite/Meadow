@@ -612,22 +612,43 @@ namespace Meadow.TestNode
             return Task.FromResult<LogObjectResult>(null);       
         }
 
+        private bool CheckAddressFilter(BigInteger bloom, FilterOptions filterOptions)
+        {
+            // If we have no filter options, we include everything.
+            // If we have address filters, we verify them now.
+            if (filterOptions.Address != null)
+            {
+                // For each address to filter.
+                bool foundInclusion = false;
+                foreach (var addr in filterOptions.Address)
+                {
+                    // Obtain the address as an EVM address type.
+                    var filterAddress = new Meadow.EVM.Data_Types.Addressing.Address(addr.GetBytes());
+
+                    // Generate a bloom filter from the given filter address.
+                    BigInteger addressBloomFilter = BloomFilter.Generate(filterAddress, Meadow.EVM.Data_Types.Addressing.Address.ADDRESS_SIZE);
+
+                    // Check if we found inclusion in this set
+                    if (BloomFilter.Check(bloom, addressBloomFilter))
+                    {
+                        // Set our inclusion and exit
+                        foundInclusion = true;
+                        break;
+                    }
+                }
+
+                // If we couldn't satisfy the address filter on this bloom filter, we return false.
+                return foundInclusion;
+            }
+
+            // If we have no address filters, we 
+            return true;
+        }
+
         public Task<LogObjectResult> GetLogs(FilterOptions filterOptions)
         {
-            // Obtain our filter address
-            Meadow.EVM.Data_Types.Addressing.Address address = null;
-            if (filterOptions.Address.HasValue)
-            {
-                address = new Meadow.EVM.Data_Types.Addressing.Address(filterOptions.Address.Value.GetBytes());
-            }
-
             // We create our bloom filter for these filter options
-            BigInteger filterBloom = 0;
-            if (address != null)
-            {
-                filterBloom |= BloomFilter.Generate(address, Meadow.EVM.Data_Types.Addressing.Address.ADDRESS_SIZE);
-            }
-
+            BigInteger baseBloomFilter = 0;
             if (filterOptions.Topics != null)
             {
                 for (int i = 0; i < filterOptions.Topics.Length; i++)
@@ -638,7 +659,7 @@ namespace Meadow.TestNode
                         BigInteger topicValue = BigIntegerConverter.GetBigInteger(filterOptions.Topics[i].Value.GetBytes());
 
                         // Add it to our bloom filter
-                        filterBloom |= BloomFilter.Generate(topicValue);
+                        baseBloomFilter |= BloomFilter.Generate(topicValue);
                     }
                 }
             }
@@ -660,7 +681,7 @@ namespace Meadow.TestNode
                 var block = TestChain.Chain.GetBlock(blockHash);
 
                 // Verify the block's bloom filter with address and topics
-                if (!BloomFilter.Check(block.Header.Bloom, filterBloom))
+                if (!BloomFilter.Check(block.Header.Bloom, baseBloomFilter) || !CheckAddressFilter(block.Header.Bloom, filterOptions))
                 {
                     continue;
                 }
@@ -676,7 +697,7 @@ namespace Meadow.TestNode
                     var receipt = receipts[j];
 
                     // Verify the receipt's bloom filter with address and topics
-                    if (!BloomFilter.Check(receipt.Bloom, filterBloom))
+                    if (!BloomFilter.Check(receipt.Bloom, baseBloomFilter) || !CheckAddressFilter(receipt.Bloom, filterOptions))
                     {
                         break;
                     }
@@ -688,7 +709,7 @@ namespace Meadow.TestNode
                     for (int x = 0; x < receipt.Logs.Count; x++)
                     {
                         // If the filter address exists, and our receipt address doesn't match, we skip.
-                        if (address != null && address != receipt.Logs[x].Address)
+                        if (filterOptions.Address != null && !filterOptions.Address.Contains(new Address(receipt.Logs[x].Address.ToByteArray())))
                         {
                             continue;
                         }

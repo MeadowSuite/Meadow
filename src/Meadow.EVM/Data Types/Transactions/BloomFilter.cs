@@ -78,11 +78,8 @@ namespace Meadow.EVM.Data_Types.Transactions
         /// <returns>Returns true if there is a possibility the item is in the set which the bloom filter was made from.</returns>
         public static bool Check(BigInteger bloomFilter, BigInteger item)
         {
-            // Generate a bloom filter just for this item
-            BigInteger itemFilter = Generate(item);
-
             // Mask out only the item bits, and make sure they're all set (if all bits are set, it could possibly exist in set).
-            return (bloomFilter & itemFilter) == itemFilter;
+            return (bloomFilter & item) == item;
         }
         #endregion
     }
