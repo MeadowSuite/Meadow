@@ -10,7 +10,7 @@ using System.Text;
 
 namespace Meadow.Core.Cryptography
 {
-    public class KeccakHash : HashAlgorithm
+    public class KeccakHash
     {
         #region Constants
         public const int HASH_SIZE = 32;
@@ -21,6 +21,7 @@ namespace Meadow.Core.Cryptography
         private const int TEMP_BUFF_SIZE = 144;
         #endregion
 
+        #region Fields
         private static readonly ulong[] RoundConstants =
         {
             0x0000000000000001UL, 0x0000000000008082UL, 0x800000000000808aUL,
@@ -33,6 +34,15 @@ namespace Meadow.Core.Cryptography
             0x8000000000008080UL, 0x0000000080000001UL, 0x8000000080008008UL
         };
 
+        private int _roundSize;
+        private int _roundSizeU64;
+        private Memory<byte> _remainderBuffer;
+        private int _remainderLength;
+        private Memory<ulong> _state;
+        private byte[] _hash;
+        #endregion
+
+        #region Properties
         public static byte[] BLANK_HASH
         {
             get
@@ -40,6 +50,53 @@ namespace Meadow.Core.Cryptography
                 return ComputeHashBytes(Array.Empty<byte>());
             }
         }
+
+        /// <summary>
+        /// Indicates the hash size in bytes.
+        /// </summary>
+        public int HashSize { get; }
+
+        /// <summary>
+        /// The current hash buffer at this point. Recomputed after hash updates.
+        /// </summary>
+        public byte[] Hash
+        {
+            get
+            {
+                // If the hash is null, recalculate.
+                _hash = _hash ?? UpdateFinal();
+
+                // Return it.
+                return _hash;
+            }
+        }
+        #endregion
+
+        #region Constructor
+        private KeccakHash(int size)
+        {
+            // Set the hash size
+            HashSize = size;
+
+            // Verify the size
+            if (HashSize <= 0 || HashSize > STATE_SIZE)
+            {
+                throw new ArgumentException($"Invalid Keccak hash size. Must be between 0 and {STATE_SIZE}.");
+            }
+
+            // The round size.
+            _roundSize = STATE_SIZE == HashSize ? HASH_DATA_AREA : STATE_SIZE - (2 * HashSize);
+
+            // The size of a round in terms of ulong.
+            _roundSizeU64 = _roundSize / 8;
+
+            // Allocate our remainder buffer
+            _remainderBuffer = new byte[_roundSize];
+            _remainderLength = 0;
+        }
+        #endregion
+
+        #region Functions
 
         public static KeccakHash Create(int size = HASH_SIZE)
         {
@@ -375,6 +432,7 @@ namespace Meadow.Core.Cryptography
 
         static readonly ArrayPool<byte> _arrayPool = ArrayPool<byte>.Shared;
 
+
         // compute a keccak hash (md) of given byte length from "in"
         public static void ComputeHash(Span<byte> input, Span<byte> output)
         {
@@ -448,54 +506,7 @@ namespace Meadow.Core.Cryptography
             ComputeHash(input, output);
         }
 
-
-
-        // --- System.Security.Cryptography Implementation
-
-        private readonly int _roundSize;
-        private readonly int _roundSizeU64;
-        private readonly int _hashSize;
-
-        private readonly Memory<ulong> _state;
-        private readonly Memory<byte> _remainderBuffer;
-
-        private int _remainderLength;
-
-        public override int HashSize => _hashSize;
-
-        public KeccakHash(int size)
-        {
-            // Set the hash size
-            _hashSize = size;
-
-            // Verify the size
-            if (HashSize <= 0 || HashSize > STATE_SIZE)
-            {
-                throw new ArgumentException($"Invalid Keccak hash size. Must be between 0 and {STATE_SIZE}.");
-            }
-
-            // The round size.
-            _roundSize = STATE_SIZE == HashSize ? HASH_DATA_AREA : STATE_SIZE - (2 * HashSize);
-
-            // The size of a round in terms of ulong.
-            _roundSizeU64 = _roundSize / 8;
-
-            // Allocate our remainder buffer
-            _remainderBuffer = new byte[_roundSize];
-            _remainderLength = 0;
-
-            _state = new ulong[STATE_SIZE / 8];
-        }
-
-        public override void Initialize()
-        {
-            // Clear our hash state information.
-            _state.Span.Clear();
-            _remainderBuffer.Span.Clear();
-            _remainderLength = 0;
-        }
-
-        protected override void HashCore(byte[] array, int index, int size)
+        public void Update(byte[] array, int index, int size)
         {
             // Bounds checking.
             if (size < 0)
@@ -517,6 +528,12 @@ namespace Meadow.Core.Cryptography
             Span<byte> input = array;
             input = input.Slice(index, size);
 
+            // If our provided state is empty, initialize a new one
+            if (_state.Length == 0)
+            {
+                _state = new ulong[STATE_SIZE / 8];
+            }
+
             // If our remainder is non zero.
             int i;
             if (_remainderLength != 0)
@@ -528,7 +545,7 @@ namespace Meadow.Core.Cryptography
                 // Increment the length
                 _remainderLength += remainderAdditive.Length;
 
-                // Incremeent the input
+                // Increment the input
                 input = input.Slice(remainderAdditive.Length);
 
                 // If our remainder length equals a full round
@@ -583,19 +600,24 @@ namespace Meadow.Core.Cryptography
                 input.CopyTo(_remainderBuffer.Span);
                 _remainderLength = input.Length;
             }
-        }
-      
 
-        protected override byte[] HashFinal()
+            // Set the hash as null
+            _hash = null;
+        }
+
+        private byte[] UpdateFinal()
         {
+            // Copy the remainder buffer
+            Memory<byte> remainderClone = _remainderBuffer.ToArray();
+
             // Set a 1 byte after the remainder.
-            _remainderBuffer.Span[_remainderLength++] = 1;
+            remainderClone.Span[_remainderLength++] = 1;
 
             // Set the highest bit on the last byte.
-            _remainderBuffer.Span[_roundSize - 1] |= 0x80;
+            remainderClone.Span[_roundSize - 1] |= 0x80;
 
             // Cast the remainder buffer to ulongs.
-            var temp64 = MemoryMarshal.Cast<byte, ulong>(_remainderBuffer.Span);
+            var temp64 = MemoryMarshal.Cast<byte, ulong>(remainderClone.Span);
 
             // Loop for each ulong in this round, and xor the state with the input.
             for (int i = 0; i < _roundSizeU64; i++)
@@ -606,12 +628,20 @@ namespace Meadow.Core.Cryptography
             KeccakF(_state.Span, ROUNDS);
 
             // Obtain the state data in the desired (hash) size we want.
-            // Copy since the state will be reset.
-            var hash = MemoryMarshal.AsBytes(_state.Span).Slice(0, _hashSize).ToArray();
+            _hash = MemoryMarshal.AsBytes(_state.Span).Slice(0, HashSize).ToArray();
 
             // Return the result.
-            return hash;
+            return Hash;
         }
 
+        public void Reset()
+        {
+            // Clear our hash state information.
+            _state.Span.Clear();
+            _remainderBuffer.Span.Clear();
+            _remainderLength = 0;
+            _hash = null;
+        }
+        #endregion
     }
 }
