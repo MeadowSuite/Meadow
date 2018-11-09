@@ -16,10 +16,17 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #endregion
 
         #region Constructors
-        public VarEnum(AstUserDefinedTypeName type) : base(type)
+        public VarEnum(string typeString) : base(typeString)
         {
             // Set our enum definition
-            EnumDefinition = AstParser.GetNode<AstEnumDefinition>(type.ReferencedDeclaration);
+            string canonicalName = VarParser.GetEnumOrStructCanonicalName(typeString);
+            if (!AstParser._enumsByCanonicalName.TryGetValue(canonicalName, out var enumDefinition))
+            {
+                throw new ArgumentException("Could not find enum definition for parsed canonical name.");
+            }
+
+            // Set our obtained struct definition.
+            EnumDefinition = enumDefinition;
 
             // Determine how many bytes is needed to address the enum. The enum size is 
             // dependent on the amount of bytes needed to index all enum options.

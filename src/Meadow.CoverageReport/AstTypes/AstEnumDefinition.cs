@@ -29,6 +29,9 @@ namespace Meadow.CoverageReport.AstTypes
             Name = node.SelectToken("name")?.Value<string>();
             CanonicalName = node.SelectToken("canonicalName")?.Value<string>();
             Members = node.SelectTokens("members[*]").Select(x => Create<AstEnumMember>((JObject)x)).ToArray();
+
+            // Set our enums in our lookup
+            AstParser._enumsByCanonicalName[CanonicalName] = this;
         }
 
         public AstEnumDefinition(AstNode node) : this(node.Node) { }

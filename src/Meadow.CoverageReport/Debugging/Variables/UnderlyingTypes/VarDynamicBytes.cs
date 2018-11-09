@@ -15,7 +15,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarDynamicBytes : VarRefBase
     {
         #region Constructors
-        public VarDynamicBytes(AstElementaryTypeName type, VarLocation location) : base(type)
+        public VarDynamicBytes(string typeString, VarLocation location) : base(typeString)
         {
             // Initialize our bounds.
             InitializeBounds(1, UInt256.SIZE, location);

@@ -10,7 +10,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarInt : VarBase
     {
         #region Constructors
-        public VarInt(AstElementaryTypeName type) : base(type)
+        public VarInt(string typeString) : base(typeString)
         {
             // Obtain our size in bytes
             int sizeBytes = VarParser.GetIntegerSizeInBytes(BaseType, GenericType);

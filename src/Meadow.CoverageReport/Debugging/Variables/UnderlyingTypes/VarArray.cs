@@ -15,22 +15,19 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarArray : VarRefBase
     {
         #region Properties
-        public AstArrayTypeName ArrayTypeName { get; }
         public VarBase ElementObject { get; }
         public int? ArraySize { get; }
         #endregion
 
         #region Constructors
-        public VarArray(AstArrayTypeName type, VarLocation location) : base(type)
+        public VarArray(string typeString, VarLocation location) : base(typeString)
         {
             // Obtain our array size
-            ArraySize = VarParser.ParseArrayTypeComponents(BaseType).arraySize;
-
-            // Set our type name
-            ArrayTypeName = type;
+            var result = VarParser.ParseArrayTypeComponents(BaseType);
+            ArraySize = result.arraySize;
 
             // Set our element parser with the given array element/base type.
-            ElementObject = VarParser.GetValueParser(ArrayTypeName.BaseType, location);
+            ElementObject = VarParser.GetValueParser(result.elementType, location);
 
             // Define our bounds variables
             int storageSlotCount = 1;

@@ -133,6 +133,29 @@ namespace Meadow.DebugExampleTests
         }
 
         [TestMethod]
+        public async Task TestGenericVars()
+        {
+            // Add all of our accounts to a mapping with the given index as the value.
+            for (int i = 0; i < Accounts.Length; i++)
+            {
+                // We set a value for each account that is non-zero (zero values aren't stored, the storage entry is deleted).
+                await _contract.updateSimpleMapping(Accounts[i], i + 700);
+            }
+
+            // Add some other values to a nested mapping (every enum will alternate between SECOND and THIRD)
+            for (int i = 1; i <= 10; i++)
+            {
+                await _contract.updateNestedMapping(i, i * 2, (byte)((i % 2) + 1));
+            }
+
+            // Throw an exception in a function call.
+            await _contract.throwWithGenericVars(778899, 100).ExpectRevertTransaction();
+
+            // TODO: Verify variables.
+            Assert.Inconclusive();
+        }
+
+        [TestMethod]
         public async Task TestExternalCallDataArgs()
         {
             Address[] addresses1 = new Address[] { new Address("0x7777777777777777777777777777777777777777"), new Address("0x8888888888888888888888888888888888888888"), new Address("0x9999999999999999999999999999999999999999") };

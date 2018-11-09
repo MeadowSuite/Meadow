@@ -12,7 +12,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarBase
     {
         #region Properties
-        public AstElementaryTypeName Type { get; }
+        public string TypeString { get; }
         public string BaseType { get;  }
         public VarGenericType GenericType { get; }
         public int StorageEntryCount { get; private set; }
@@ -20,13 +20,13 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #endregion
 
         #region Constructor
-        public VarBase(AstElementaryTypeName type)
+        public VarBase(string typeString)
         {
             // Set our type
-            Type = type;
+            TypeString = typeString;
 
             // Obtain the components of our type and set them.
-            BaseType = VarParser.ParseTypeComponents(type.TypeDescriptions.TypeString).baseType;
+            BaseType = VarParser.ParseTypeComponents(TypeString).baseType;
 
             // Obtain our generic type.
             GenericType = VarParser.GetGenericType(BaseType);

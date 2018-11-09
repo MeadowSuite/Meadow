@@ -15,6 +15,8 @@ namespace Meadow.CoverageReport
         private static object _parseLock = new object();
         private static ConcurrentDictionary<long, AstNode> _nodesById;
         private static ConcurrentDictionary<Type, List<AstNode>> _nodesByType;
+        internal static ConcurrentDictionary<string, AstEnumDefinition> _enumsByCanonicalName;
+        internal static ConcurrentDictionary<string, AstStructDefinition> _structsByCanonicalName;
         private static ConcurrentDictionary<(int index, long start, long length), List<AstNode>> _nodesBySourceMapEntryExact;
         private static ConcurrentDictionary<(int index, long start, long length), IEnumerable<AstNode>> _nodesBySourceMapEntryContained;
         #endregion
@@ -26,6 +28,11 @@ namespace Meadow.CoverageReport
         #endregion
 
         #region Functions
+        static AstParser()
+        {
+            Parse();
+        }
+
         public static void Parse()
         {
             lock (_parseLock)
@@ -41,6 +48,8 @@ namespace Meadow.CoverageReport
                 _nodesByType = new ConcurrentDictionary<Type, List<AstNode>>();
                 _nodesBySourceMapEntryExact = new ConcurrentDictionary<(int index, long start, long length), List<AstNode>>();
                 _nodesBySourceMapEntryContained = new ConcurrentDictionary<(int index, long start, long length), IEnumerable<AstNode>>();
+                _enumsByCanonicalName = new ConcurrentDictionary<string, AstEnumDefinition>(StringComparer.InvariantCultureIgnoreCase);
+                _structsByCanonicalName = new ConcurrentDictionary<string, AstStructDefinition>(StringComparer.InvariantCultureIgnoreCase);
 
                 // Get our generated solc data
                 var solcData = GeneratedSolcData.Default.GetSolcData();

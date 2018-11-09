@@ -25,13 +25,9 @@ namespace Meadow.CoverageReport.Debugging.Variables
         /// </summary>
         public string Name { get; set; }
         /// <summary>
-        /// Indicates the variable is strictly defined (has a type name), otherwise it is inferred, such as in the case with the "var" keyword.
+        /// The type string derived from AST nodes.
         /// </summary>
-        public bool IsStrictlyDefinedType => AstTypeName != null;
-        /// <summary>
-        /// The AST node which describes the type for this variable.
-        /// </summary>
-        public AstElementaryTypeName AstTypeName { get; private set; }
+        public string TypeString { get; private set; }
         /// <summary>
         /// The base type string of this variable, which is likened to the full <see cref="Type"/> but with location information stripped.
         /// </summary>
@@ -62,26 +58,25 @@ namespace Meadow.CoverageReport.Debugging.Variables
 
         protected void Initialize(string name, AstElementaryTypeName astTypeName, AstTypeDescriptions astTypeDescriptions = null)
         {
-            // Set our name and type name.
-            Name = name;
-            AstTypeName = astTypeName;
+            // Override our optionally provided type descriptions with one from the ast type name, if available.
+            astTypeDescriptions = (astTypeName?.TypeDescriptions ?? astTypeDescriptions);
 
-            // Override our optionally provided type descriptions with one from the ast type name if applicable.
-            astTypeDescriptions = (AstTypeName?.TypeDescriptions ?? astTypeDescriptions);
+            // Initialize using whatever type provider is available
+            Initialize(name, astTypeDescriptions.TypeString);
+        }
+
+        protected void Initialize(string name, string typeString)
+        {
+            // Set our name and type string.
+            Name = name;
+            TypeString = typeString;
 
             // Parse the types from our type description.
-            BaseType = VarParser.ParseTypeComponents(astTypeDescriptions.TypeString).baseType;
+            BaseType = VarParser.ParseTypeComponents(typeString).baseType;
             GenericType = VarParser.GetGenericType(BaseType);
 
-            // If we have a valid ast type name, obtain our value parser.
-            if (IsStrictlyDefinedType)
-            {
-                ValueParser = VarParser.GetValueParser(AstTypeName, VariableLocation);
-            }
-            else
-            {
-                // TODO: Implement value parser for generic type.
-            }
+            // Obtain our value parser
+            ValueParser = VarParser.GetValueParser(typeString, VariableLocation);
         }
         #endregion
     }
