@@ -105,6 +105,19 @@ contract VarAnalysisContract
         x = 7;
 	}
 
+    function storagePointerGenericVar1(uint[2] storageArray) internal
+    {
+        var testArray = storageArray;
+        testArray[0]++;
+        testArray[0]++;
+    }
+    function storagePointerGenericVar2(uint[2] storage storageArray) internal
+    {
+        var testArray = storageArray;
+        testArray[0]++;
+        testArray[0]++;
+    }
+
     function throwWithGenericVars(uint param1, uint param2) public returns (address addr1, address addr2)
 	{
         assert(param1 == 778899);
@@ -124,10 +137,14 @@ contract VarAnalysisContract
         var gTestEnum = TestEnum.FIRST; // generic enum
         gTestEnum = TestEnum.SECOND;
 
+        storagePointerGenericVar1(globalArray2);
+        storagePointerGenericVar2(globalArray2);
+
         TestEnum[] memory arr3 = new TestEnum[](3);
         arr3[0] = TestEnum.FIRST;
         arr3[1] = TestEnum.SECOND;
         arr3[2] = TestEnum.THIRD;
+        TestEnum[] memory arr3_copy = arr3;
         var gTestEnumArray = arr3; // generic enum array
         gTestEnumArray[0] = TestEnum.THIRD;
         gTestEnumArray[1] = TestEnum.THIRD;

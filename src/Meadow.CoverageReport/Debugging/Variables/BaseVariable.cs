@@ -15,11 +15,20 @@ namespace Meadow.CoverageReport.Debugging.Variables
     /// </summary>
     public abstract class BaseVariable
     {
+        #region Fields
+        protected bool _isUndefinedType;
+        #endregion
+
         #region Properties
         /// <summary>
         /// The variable declaration ast node which defines this variable.
         /// </summary>
         public AstVariableDeclaration Declaration { get; set; }
+        /// <summary>
+        /// The type descriptions ast node for this variable, derived from <see cref="Declaration"/>'s TypeName descriptions
+        /// (if available), otherwise the direct type descriptions.
+        /// </summary>
+        public AstTypeDescriptions TypeDescriptions { get; set; }
         /// <summary>
         /// The name of this variable.
         /// </summary>
@@ -58,11 +67,14 @@ namespace Meadow.CoverageReport.Debugging.Variables
 
         protected void Initialize(string name, AstElementaryTypeName astTypeName, AstTypeDescriptions astTypeDescriptions = null)
         {
+            // Set our generic var status.
+            _isUndefinedType = astTypeName?.TypeDescriptions == null;
+
             // Override our optionally provided type descriptions with one from the ast type name, if available.
-            astTypeDescriptions = (astTypeName?.TypeDescriptions ?? astTypeDescriptions);
+            TypeDescriptions = _isUndefinedType ? astTypeDescriptions : astTypeName.TypeDescriptions;
 
             // Initialize using whatever type provider is available
-            Initialize(name, astTypeDescriptions.TypeString);
+            Initialize(name, TypeDescriptions.TypeString);
         }
 
         protected void Initialize(string name, string typeString)
