@@ -13,7 +13,7 @@ namespace Meadow.CoverageReport
 
         public static string GetFileUrl(string filePath)
         {
-            filePath = Path.GetFullPath(filePath);
+            filePath = Path.GetFullPath(filePath).Replace(" ", "%20", StringComparison.InvariantCulture);
             var uri = "file:///" + filePath;
             return uri;
         }
