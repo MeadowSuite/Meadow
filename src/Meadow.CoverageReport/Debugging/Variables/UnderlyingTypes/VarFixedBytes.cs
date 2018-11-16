@@ -8,7 +8,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarFixedBytes : VarBase
     {
         #region Constructors
-        public VarFixedBytes(AstElementaryTypeName type) : base(type)
+        public VarFixedBytes(string typeString) : base(typeString)
         {
             // Determine the size of our fixed array.
             int sizeBytes = VarParser.GetFixedArraySizeInBytes(BaseType);

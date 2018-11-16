@@ -81,6 +81,51 @@ namespace Meadow.CoverageReport.Debugging.Variables
             throw new ArgumentException("Could not obtain fixed array byte size from type.");
         }
 
+        /// <summary>
+        /// Obtains the canonical name of an enum from the given type string.
+        /// </summary>
+        /// <param name="typeString">The variable type string for which we wish to obtain the cannonical name of.</param>
+        /// <returns>Returns the canonical name of the enum type string.</returns>
+        public static string GetEnumOrStructCanonicalName(string typeString)
+        {
+            // Check if this is a bytes1-bytes32
+            Match match = Regex.Match(typeString, @"^(enum|struct)\s+(.*)$");
+            if (match.Success)
+            {
+                // Parse the canonical name and return it.
+                return match.Groups[2].Value.ToString(CultureInfo.InvariantCulture);
+            }
+
+            // Throw an exception if we couldn't match.
+            throw new ArgumentException("Could not obtain canonical name from enum.");
+        }
+
+        /// <summary>
+        /// Obtains the key/value type strings from a mapping type string.
+        /// </summary>
+        /// <param name="typeString">The mapping type string for which we wish to obtain the key/value type strings for.</param>
+        /// <returns>Returns the key/value type strings for the given mapping type string.</returns>
+        public static (string keyTypeString, string valueTypeString) GetMappingKeyValueTypeStrings(string typeString)
+        {
+            // Check if this is a bytes1-bytes32
+            Match match = Regex.Match(typeString, @"^mapping\(([^=]*)\s+\=\>\s+(.*)\)$");
+            if (match.Success)
+            {
+                // Obtain the matched key/value type strings and return them.
+                string keyTypeString = match.Groups[1].Value.ToString(CultureInfo.InvariantCulture);
+                string valueTypeString = match.Groups[2].Value.ToString(CultureInfo.InvariantCulture);
+                return (keyTypeString, valueTypeString);
+            }
+
+            // Throw an exception if we couldn't match.
+            throw new ArgumentException("Could not obtain key/value type strings from mapping type string.");
+        }
+
+        /// <summary>
+        /// Obtains the element type string and optional array size, if fixed in size, for a provided array.
+        /// </summary>
+        /// <param name="baseType">The array base type string to parse the element type and optional fixed array size from.</param>
+        /// <returns>Returns the element type string and optional fixed array size for the given array.</returns>
         public static (string elementType, int? arraySize) ParseArrayTypeComponents(string baseType)
         {
             // Parse our array base type.
@@ -236,13 +281,13 @@ namespace Meadow.CoverageReport.Debugging.Variables
         /// <summary>
         /// Obtains a solidity variable type object of the type provided.
         /// </summary>
-        /// <param name="astTypeName">The ast node containing the type/location from which we derive our solidity variable type objects from.</param>
+        /// <param name="typeString">The type/location from which we derive our solidity variable type objects from.</param>
         /// <param name="location">The default location that some variable types should be assumed to be at, in this context.</param>
-        /// <returns>Returns a solidity variable type object of the type provided by <paramref name="astTypeName"/></returns>
-        public static VarBase GetValueParser(AstElementaryTypeName astTypeName, VarLocation location)
+        /// <returns>Returns a solidity variable type object of the type provided by <paramref name="typeString"/></returns>
+        public static VarBase GetValueParser(string typeString, VarLocation location)
         {
             // Obtain our base type.
-            string baseType = ParseTypeComponents(astTypeName.TypeDescriptions.TypeString).baseType;
+            string baseType = ParseTypeComponents(typeString).baseType;
 
             // Obtain our generic type
             VarGenericType genericType = GetGenericType(baseType);
@@ -251,27 +296,27 @@ namespace Meadow.CoverageReport.Debugging.Variables
             switch (genericType)
             {
                 case VarGenericType.Array:
-                    return new VarArray((AstArrayTypeName)astTypeName, location);
+                    return new VarArray(typeString, location);
                 case VarGenericType.Address:
-                    return new VarAddress(astTypeName);
+                    return new VarAddress(typeString);
                 case VarGenericType.Boolean:
-                    return new VarBoolean(astTypeName);
+                    return new VarBoolean(typeString);
                 case VarGenericType.ByteArrayDynamic:
-                    return new VarDynamicBytes(astTypeName, location);
+                    return new VarDynamicBytes(typeString, location);
                 case VarGenericType.ByteArrayFixed:
-                    return new VarFixedBytes(astTypeName);
+                    return new VarFixedBytes(typeString);
                 case VarGenericType.Enum:
-                    return new VarEnum((AstUserDefinedTypeName)astTypeName);
+                    return new VarEnum(typeString);
                 case VarGenericType.String:
-                    return new VarString(astTypeName, location);
+                    return new VarString(typeString, location);
                 case VarGenericType.Struct:
-                    return new VarStruct((AstUserDefinedTypeName)astTypeName, location);
+                    return new VarStruct(typeString, location);
                 case VarGenericType.Int:
-                    return new VarInt(astTypeName);
+                    return new VarInt(typeString);
                 case VarGenericType.UInt:
-                    return new VarUInt(astTypeName);
+                    return new VarUInt(typeString);
                 case VarGenericType.Mapping:
-                    return new VarMapping((AstMappingTypeName)astTypeName);
+                    return new VarMapping(typeString);
                 default:
                     // We were unable to obtain our variable object, throw an exception.
                     throw new ArgumentException("Unexpected underlying type when performing solidity variable analysis.");

@@ -105,6 +105,61 @@ contract VarAnalysisContract
         x = 7;
 	}
 
+    function storagePointerGenericVar1(uint[2] storageArray) internal
+    {
+        var testArray = storageArray;
+        testArray[0]++;
+        testArray[0]++;
+    }
+    function storagePointerGenericVar2(uint[2] storage storageArray) internal
+    {
+        var testArray = storageArray;
+        testArray[0]++;
+        testArray[0]++;
+    }
+
+    function throwWithGenericVars(uint param1, uint param2) public returns (address addr1, address addr2)
+	{
+        assert(param1 == 778899);
+        addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
+        addr2 = 0x8080808080808080808080808080808080808080;
+
+        var gAddr = addr1; // generic address
+        gAddr = 0x8080808080808080808080808080808080808080;
+        var gUint16 = 0x111; // generic uint16
+        var gUint160 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10; // generic uint160
+        var gBytes = new bytes(4); // generic dynamic bytes
+        gBytes[0] = 0x77;
+        gBytes[1] = 0x88;
+        gBytes[2] = 0x99;
+        gBytes[3] = 0xAA;
+
+        var gTestEnum = TestEnum.FIRST; // generic enum
+        gTestEnum = TestEnum.SECOND;
+
+        storagePointerGenericVar1(globalArray2);
+        storagePointerGenericVar2(globalArray2);
+
+        TestEnum[] memory arr3 = new TestEnum[](3);
+        arr3[0] = TestEnum.FIRST;
+        arr3[1] = TestEnum.SECOND;
+        arr3[2] = TestEnum.THIRD;
+        TestEnum[] memory arr3_copy = arr3;
+        var gTestEnumArray = arr3; // generic enum array
+        gTestEnumArray[0] = TestEnum.THIRD;
+        gTestEnumArray[1] = TestEnum.THIRD;
+
+        var gBool = true;
+        gBool = false;
+        gBool = true;
+
+        var gBool2 = gBool;
+
+        var gBytes20 = bytes20(gAddr);
+
+        assert(false);
+	}
+
     function throwBytes(bytes memory param1) public returns (bytes memory result)
 	{
         result = new bytes(param1.length + 10);

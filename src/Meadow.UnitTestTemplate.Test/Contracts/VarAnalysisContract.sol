@@ -6,7 +6,7 @@ pragma solidity ^0.4.21;
 /// @dev 
 contract VarAnalysisContract 
 {
-    uint globalVal;
+    uint public globalVal;
     uint sameVal;
     uint32 un32;
     uint32 un322;
@@ -85,8 +85,12 @@ contract VarAnalysisContract
         addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
         addr2 = 0x8080808080808080808080808080808080808080;
         int x = -1;
+        x *= 2;
         uint y = 0x1080;
+        y += 700;
         bool b1 = true;
+        b1 = false;
+        b1 = true;
         bool b2 = false;
         TestEnum enum1 = TestEnum.FIRST;
         TestEnum enum2 = TestEnum.SECOND;
@@ -99,6 +103,44 @@ contract VarAnalysisContract
         TestEnum enum4 = TestEnum.FIRST;
         bool b3 = true;
         x = 7;
+	}
+
+    function throwWithGenericVars(uint param1, uint param2) public returns (address addr1, address addr2)
+	{
+        assert(param1 == 778899);
+        addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
+        addr2 = 0x8080808080808080808080808080808080808080;
+
+        var gAddr = addr1; // generic address
+        gAddr = 0x8080808080808080808080808080808080808080;
+        var gUint16 = 0x111; // generic uint16
+        var gUint160 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10; // generic uint160
+        var gBytes = new bytes(4); // generic dynamic bytes
+        gBytes[0] = 0x77;
+        gBytes[1] = 0x88;
+        gBytes[2] = 0x99;
+        gBytes[3] = 0xAA;
+
+        var gTestEnum = TestEnum.FIRST; // generic enum
+        gTestEnum = TestEnum.SECOND;
+
+        TestEnum[] memory arr3 = new TestEnum[](3);
+        arr3[0] = TestEnum.FIRST;
+        arr3[1] = TestEnum.SECOND;
+        arr3[2] = TestEnum.THIRD;
+        var gTestEnumArray = arr3; // generic enum array
+        gTestEnumArray[0] = TestEnum.THIRD;
+        gTestEnumArray[1] = TestEnum.THIRD;
+
+        var gBool = true;
+        gBool = false;
+        gBool = true;
+
+        var gBool2 = gBool;
+
+        var gBytes20 = bytes20(gAddr);
+
+        assert(false);
 	}
 
     function throwBytes(bytes memory param1) public returns (bytes memory result)
@@ -165,6 +207,20 @@ contract VarAnalysisContract
     function throwExternalCallDataArgs(address[] testArr, uint256 u1, uint256 u2) external {
         // Arguments in this context (external) should be resolved from calldata, not memory)
         for(uint i=0; i< testArr.length; i+=1) {
+            assert(false);
+        }
+    }
+
+    function throwExternalCallDataArgs2(address[] testArr1, address[] testArr2, uint256 u1, uint256 u2) external {
+        // Arguments in this context (external) should be resolved from calldata, not memory)
+        for(uint i=0; i< testArr1.length; i+=1) {
+            assert(false);
+        }
+    }
+
+    function throwExternalCallDataArgs3(uint256 u1, address[] testArr1, address[] testArr2, uint256 u2) external {
+        // Arguments in this context (external) should be resolved from calldata, not memory)
+        for(uint i=0; i< testArr1.length; i+=1) {
             assert(false);
         }
     }
