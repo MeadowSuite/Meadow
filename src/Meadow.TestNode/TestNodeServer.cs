@@ -171,12 +171,12 @@ namespace Meadow.TestNode
         }
 
         // Chain
-        public Task IncreaseTime(ulong seconds)
+        public Task<ulong> IncreaseTime(ulong seconds)
         {
             // We offset our time by the given amount of seconds.
             TestChain.Chain.Configuration.CurrentTimestampOffset += TimeSpan.FromSeconds(seconds);
 
-            return Task.CompletedTask;
+            return Task.FromResult(seconds);
         }
 
         public Task<UInt256> GasPrice()

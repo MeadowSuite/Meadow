@@ -74,7 +74,7 @@ namespace Meadow.JsonRpc
         /// <see href="https://github.com/trufflesuite/ganache-cli#implemented-methods"/>
         /// </summary>
         [RpcApiMethod(RpcApiMethod.evm_increaseTime)]
-        Task IncreaseTime(ulong seconds);
+        Task<ulong> IncreaseTime(ulong seconds);
 
         /// <summary>
         /// eth_getBalance - Returns the balance of the account of given address.
