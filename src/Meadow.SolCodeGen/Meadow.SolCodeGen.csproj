@@ -23,7 +23,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.10.0" />
     <PackageReference Include="Microsoft.CSharp" Version="4.5.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="2.1.0" />
-    <PackageReference Include="SolcLib.Native" Version="0.4.25.32" PrivateAssets="All" />
+    <PackageReference Include="SolcLib.Native" Version="0.5.0.33-beta" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(Configuration)' == 'Release'">
