@@ -8,6 +8,7 @@ namespace Meadow.CoverageReport.AstTypes.Enums
     {
         Default,
         Memory,
-        Storage
+        Storage,
+        CallData
     }
 }

@@ -57,14 +57,12 @@ contract ArrayEncodingTests {
         return (input1, input2);
     }
     function getUIntArrayDynamic() public returns (uint[] memory result1, uint[] memory result2) {
-        uint[] memory arr1;
-        arr1.length = 3;
+        uint[] memory arr1 = new uint[](3);
         arr1[0] = 1;
         arr1[1] = 2;
         arr1[2] = 3;
 
-        uint[] memory arr2;
-        arr2.length = 3;
+        uint[] memory arr2 = new uint[](3);
         arr2[0] = 4;
         arr2[1] = 5;
         arr2[2] = 6;
@@ -115,14 +113,12 @@ contract ArrayEncodingTests {
     }    
     
     function getBytes32ArrayDynamic() public returns (bytes32[] memory result1, bytes32[] memory result2) {
-        bytes32[] memory arr1;
-        arr1.length = 3;
+        bytes32[] memory arr1 = new bytes32[](3);
         arr1[0] = "item1";
         arr1[1] = "2";
         arr1[2] = "arrggg";
 
-        bytes32[] memory arr2;
-        arr2.length = 3;
+        bytes32[] memory arr2 = new bytes32[](3);
         arr2[0] = "1st";
         arr2[1] = "second";
         arr2[2] = "last";
@@ -140,8 +136,7 @@ contract ArrayEncodingTests {
 	}
 
 	function getArrayDynamic() public returns (int16[] memory) {
-		int16[] memory arr;
-        arr.length = 4;
+		int16[] memory arr = new int16[](4);
 		arr[0] = 1;
 		arr[1] = -2;
 		arr[2] = 29;

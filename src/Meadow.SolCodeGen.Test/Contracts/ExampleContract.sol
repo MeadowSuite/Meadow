@@ -32,8 +32,7 @@ contract ExampleContract {
 	}
 
 	function getArrayDynamic() public returns (int16[] memory) {
-		int16[] memory arr;
-        arr.length = 4;
+		int16[] memory arr = new int16[](4);
 		arr[0] = 1;
 		arr[1] = -2;
 		arr[2] = 29;

@@ -1086,13 +1086,13 @@ namespace Meadow.CoverageReport.Debugging
 
                 // Determine the if our variable is in call data or not, then parse it accordingly.
                 object value = null;
-                if (variable.IsFunctionInputParameter && currentScope.FunctionDefinition.Visibility == AstTypes.Enums.AstDeclarationVisibility.External)
+                if (variable.VariableLocation == Variables.Enums.VarLocation.CallData || (variable.IsFunctionInputParameter && currentScope.FunctionDefinition.Visibility == AstTypes.Enums.AstDeclarationVisibility.External))
                 {
                     // If this is an external call, data leading to the value is parsed from call data.
                     // value = variable.ValueParser.ParseFromCallData(ref callData);
 
                     // TODO: Implement the call which is commented out above, and remove this code.
-                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
+                    continue;
                 }
                 else
                 {

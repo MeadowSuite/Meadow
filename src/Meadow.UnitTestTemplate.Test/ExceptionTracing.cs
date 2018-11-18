@@ -37,9 +37,14 @@ namespace Meadow.UnitTestTemplate.Test
 INVALID instruction hit!
 -> at 'assert(!_throwOnConstructor);' in 'ExceptionContract' constructor in file 'ExceptionContract.sol' : line 8";
 
-            Assert.AreEqual(
-                StringUtil.NormalizeNewLines(expected).Trim(),
-                StringUtil.NormalizeNewLines(exec.Message).Trim());
+            // Normalize our expected output.
+            expected = StringUtil.NormalizeNewLines(expected).Trim();
+
+            // Normalize our actual output
+            var actual = StringUtil.NormalizeNewLines(exec.Message).Trim();
+
+            // Verify our output.
+            Assert.AreEqual(expected, actual);
         }
 
         [TestMethod]

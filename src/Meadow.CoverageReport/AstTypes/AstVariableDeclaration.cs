@@ -50,6 +50,9 @@ namespace Meadow.CoverageReport.AstTypes
                 case "storage":
                     StorageLocation = AstVariableStorageLocation.Storage;
                     break;
+                case "calldata":
+                    StorageLocation = AstVariableStorageLocation.CallData;
+                    break;
 
                 default:
                     throw new ArgumentException($"Invalid {nameof(AstVariableStorageLocation)} values when parsing {nameof(AstVariableDeclaration)}");

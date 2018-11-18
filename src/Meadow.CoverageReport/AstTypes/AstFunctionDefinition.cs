@@ -38,7 +38,8 @@ namespace Meadow.CoverageReport.AstTypes
             // Set our properties
             Name = node.SelectToken("name")?.Value<string>();
             Visibility = GetVisibilityFromString(node.SelectToken("visibility")?.Value<string>());
-            IsConstructor = node.SelectToken("isConstructor")?.Value<bool?>() == true;
+            IsConstructor = node.SelectToken("isConstructor")?.Value<bool?>() == true; // Solidity <= 0.4.x
+            IsConstructor |= node.SelectToken("kind")?.Value<string>() == "constructor"; // Solidity 0.5.x
             Parameters = node.SelectTokens("parameters.parameters[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();
             ReturnParameters = node.SelectTokens("returnParameters.parameters[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();
         }
