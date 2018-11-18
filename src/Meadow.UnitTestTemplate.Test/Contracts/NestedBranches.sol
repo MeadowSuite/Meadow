@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 contract NestedBranches {
 
@@ -17,7 +17,7 @@ contract NestedBranches {
 	}
 
 
-	function NestedBranches() public {
+	constructor() public {
 		structArray.length++;
 		StructA storage myStructA = structArray[0];
 		myStructA.structs.length++;
@@ -26,7 +26,7 @@ contract NestedBranches {
 		test2 = 0;
 	}
 
-	function checkStructTree(uint _num) returns(bool) {
+	function checkStructTree(uint _num) public returns(bool) {
 		uint[] memory a = new uint[](2);
 		a[0] = 1;
 		a[1] = 0;
@@ -49,7 +49,7 @@ contract NestedBranches {
 		}
 	}
 
-	function simpleIfStatement(bool _val) returns(bool){
+	function simpleIfStatement(bool _val) public returns (bool){
 		// This should cover both
 		for(int i = 0; i < 2; i++)
 			test2 = test2 == 1 ? 0 : 1;

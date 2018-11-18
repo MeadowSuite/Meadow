@@ -1,21 +1,22 @@
-﻿
+
 import "./MultifileInheritableContract.sol";
 
-pragma solidity ^0.4.11;
+pragma solidity ^0.5.0;
 
 
 contract MultifileInheritedContract is MultifileInheritableContract {
  
-  function MultifileInheritedContract() payable { } 
+  constructor() public payable { } 
  
   /**
    * @dev Transfers the current balance to the owner and terminates the contract. 
    */
-  function destroy() onlyOwner {
-    selfdestruct(owner);
+  function destroy() public onlyOwner {
+    address payable ownerPayable = address(uint160(owner));
+    selfdestruct(ownerPayable);
   }
  
-  function destroyAndSend(address _recipient) onlyOwner {
+  function destroyAndSend(address payable _recipient) public onlyOwner {
     selfdestruct(_recipient);
   }
 
@@ -29,7 +30,7 @@ contract MultifileInheritedContract is MultifileInheritableContract {
 		test = 3;
   }
 
-  function testFunctionWithInheritedModifier() onlyOwner {
+  function testFunctionWithInheritedModifier() public onlyOwner {
 	uint test = 7;
 	if(test == 8)
 		test = 1;
@@ -39,7 +40,7 @@ contract MultifileInheritedContract is MultifileInheritableContract {
 		test = 3;
   }
 
-  function testInheritedAssertThrow()
+  function testInheritedAssertThrow() public
   {
 	testAssertIndirect();
   }

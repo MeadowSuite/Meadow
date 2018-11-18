@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.4.11;
+pragma solidity ^0.5.0;
 
 /**
  * @title InheritableContract
@@ -15,7 +15,7 @@ contract InheritableContract {
    * @dev The Ownable constructor sets the original `owner` of the contract to the sender
    * account.
    */
-  function InheritableContract() {
+  constructor() public {
     owner = msg.sender;
   }
 
@@ -33,7 +33,7 @@ contract InheritableContract {
    * @dev Allows the current owner to transfer control of the contract to a newOwner.
    * @param newOwner The address to transfer ownership to.
    */
-  function transferOwnership(address newOwner) onlyOwner {
+  function transferOwnership(address newOwner) public onlyOwner {
     require(newOwner != address(0));      
     owner = newOwner;
   }
@@ -42,16 +42,17 @@ contract InheritableContract {
 
 contract InheritedContract is InheritableContract {
  
-  function InheritedContract() payable { } 
+  constructor() public payable { } 
  
   /**
    * @dev Transfers the current balance to the owner and terminates the contract. 
    */
-  function destroy() onlyOwner {
-    selfdestruct(owner);
+  function destroy() public onlyOwner {
+    address payable ownerPayable = address(uint160(owner));
+    selfdestruct(ownerPayable);
   }
  
-  function destroyAndSend(address _recipient) onlyOwner {
+  function destroyAndSend(address payable _recipient) public onlyOwner {
     selfdestruct(_recipient);
   }
 
@@ -65,7 +66,7 @@ contract InheritedContract is InheritableContract {
 		test = 3;
   }
 
-  function testFunctionWithInheritedModifier() onlyOwner {
+  function testFunctionWithInheritedModifier() public onlyOwner {
 	uint test = 7;
 	if(test == 8)
 		test = 1;

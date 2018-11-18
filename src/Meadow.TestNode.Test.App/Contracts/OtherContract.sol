@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 
 contract OtherContract {
@@ -14,7 +14,7 @@ contract OtherContract {
 			addrs[i] = address(i);
 		}
 		bytes memory b = new bytes(9);
-		b[3] = byte(3);
+		b[3] = bytes1(uint8(3));
 
 		emit DataEvent(_int1, _int2, _int3, 
 		"All non-indexed arguments will be stored in the data part of the log. All non-indexed arguments will be stored in the data part of the log. All non-indexed arguments will be stored in the data part of the log. All non-indexed arguments will be stored in the data part of the log. All non-indexed arguments will be stored in the data part of the log.",

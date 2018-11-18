@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 contract ExceptionContract {
 
@@ -8,42 +8,42 @@ contract ExceptionContract {
 		assert(!_throwOnConstructor);
 	}
 
-	function outOfBoundArrayAccess() returns(bool) {
+	function outOfBoundArrayAccess() public returns(bool) {
 		address someAddr = addressArray[4];
 		return true;
 	}
 
-	function doRevert() {
+	function doRevert() public {
 		revert("do revert hit");
 	}
 
-	function doRequire() {
+	function doRequire() public {
 		bool thingDidWork = false;
 		require(thingDidWork, "thing did not work");
 	}
 
-	function doAssert() {
+	function doAssert() public {
 		bool thingDidWork = false;
 		assert(thingDidWork);
 	}
 
-	function doThrow() {
-		throw;
+	function doThrow() public {
+		revert();
 	}
 
-	function entryFunction() {
+	function entryFunction() public {
 		nextFunction();
 	}
 
-	function nextFunction() {
+	function nextFunction() public {
 		anotherFunc();
 	}
 
-	function anotherFunc() {
+	function anotherFunc() public {
 		lastFunc();
 	}
 
-	function lastFunc() {
+	function lastFunc() public {
 		doAssert();
 	}
 

@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 import './InheritanceParent.sol';
 
@@ -7,7 +7,7 @@ contract InheritanceChild is InheritanceParent{
 	string[] public someStrings;
 
 
-	function InheritanceChild() public {
+	constructor() public {
 		someStrings.push("str1");
 	}
 

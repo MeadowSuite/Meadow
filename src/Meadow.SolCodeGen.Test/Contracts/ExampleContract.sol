@@ -1,9 +1,5 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
-/// @title An example contract title
-/// @author Matthew Little
-/// @notice This is a test contract
-/// @dev Hello dev
 contract ExampleContract {
 
     /// @notice Fake balances variable
@@ -20,14 +16,14 @@ contract ExampleContract {
 	uint256 public last;
 
     /// @notice The constructor
-    constructor(string _name, bool _enableThing, uint256 _last) public {
+    constructor(string memory _name, bool _enableThing, uint256 _last) public {
 		givenName = _name;
 		enabledThing = _enableThing;
 		last = _last;
     }
 
-	function getArrayStatic() public returns (int16[4]) {
-		int16[4] arr;
+	function getArrayStatic() public returns (int16[4] memory) {
+		int16[4] memory arr;
 		arr[0] = 1;
 		arr[1] = -2;
 		arr[2] = 29;
@@ -35,8 +31,8 @@ contract ExampleContract {
 		return arr;
 	}
 
-	function getArrayDynamic() public returns (int16[]) {
-		int16[] arr;
+	function getArrayDynamic() public returns (int16[] memory) {
+		int16[] memory arr;
         arr.length = 4;
 		arr[0] = 1;
 		arr[1] = -2;
@@ -45,11 +41,11 @@ contract ExampleContract {
 		return arr;
 	}
 
-    function echoArrayDynamic(uint24[] input) returns (uint24[] result) {
+    function echoArrayDynamic(uint24[] memory input) public returns (uint24[] memory result) {
         return input;
     }
 
-    function echoArrayStatic(uint24[5] input) returns (uint24[5] result) {
+    function echoArrayStatic(uint24[5] memory input) public returns (uint24[5] memory result) {
         return input;
     }
 
@@ -57,12 +53,12 @@ contract ExampleContract {
         return (p1, p2, p3);
     }
 
-    function echoMultipleDynamic(string p1, string p2, string p3) public returns (string r1, string r2, string r3) {
+    function echoMultipleDynamic(string memory p1, string memory p2, string memory p3) public returns (string memory r1, string memory r2, string memory r3) {
         return (p1, p2, p3);
     }
     
-    function boat(bool p1, string p2, int56 p3, address[] p4, uint8 p5, uint64[3] p6) public
-        returns (bool r1, string r2, int56 r3, address[] r4, uint8 r5, uint64[3] r6) {
+    function boat(bool p1, string memory p2, int56 p3, address[] memory p4, uint8 p5, uint64[3] memory p6) public
+        returns (bool r1, string memory r2, int56 r3, address[] memory r4, uint8 r5, uint64[3] memory r6) {
             return (p1, p2, p3, p4, p5, p6);
     }
 
@@ -75,7 +71,7 @@ contract ExampleContract {
         return _num == 9;
     }
 
-	function echoString(string val) public returns (string) {
+	function echoString(string memory val) public returns (string memory) {
 		return val;
 	}
 
@@ -83,7 +79,7 @@ contract ExampleContract {
 		return val;
 	}
 
-	function echoMany(address addr, uint256 num, string str) public returns (address, uint256, string) {
+	function echoMany(address addr, uint256 num, string memory str) public returns (address, uint256, string memory) {
 		return (addr, num, str);
 	}
 
@@ -95,12 +91,12 @@ contract ExampleContract {
         
     }
     
-    function sha256str(string str) public returns (bytes32 result) {
-        return sha256(str);
+    function sha256str(string memory str) public returns (bytes32 result) {
+        return sha256(bytes(str));
     }
 
     /// @notice The fallback function
-    function() public {
+    function() external {
 
     }
 

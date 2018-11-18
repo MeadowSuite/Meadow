@@ -1,9 +1,5 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
-/// @title Error Generating Contract (Testing)
-/// @author David Pokora
-/// @notice This is a contract used to generate errors to test EVM exception tracing, etc.
-/// @dev 
 contract ErrorContract 
 {
     /// @notice Our default contructor
@@ -13,34 +9,35 @@ contract ErrorContract
     }
 
 	/// @notice Raises a simple error directly in this call.
-	function testSimpleError()
+	function testSimpleError() public 
 	{
 		assert(false);
 	}
 
-	function doAssert()
+	function doAssert() public 
 	{
 		assert(false);
 	}
 
-	function doRevert()
+	function doRevert() public 
 	{
 		require(false, "some require message");
 	}
 
-	function doThrow(){
-		throw;
+	function doThrow() public 
+    {
+		revert();
 	}
 
 	/// @notice Raises an error indirectly through another call.
-	function testIndirectError()
+	function testIndirectError() public 
 	{
 		// Call another function to generate the error.
 		testSimpleError();
 	}
 
     /// @notice The fallback function
-    function() public 
+    function() external 
 	{
 
     }

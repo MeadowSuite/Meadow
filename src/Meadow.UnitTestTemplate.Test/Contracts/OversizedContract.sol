@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 contract OversizedContract {
 
@@ -7,7 +7,7 @@ contract OversizedContract {
 	}
 
 	 function someMethod0(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -33,7 +33,7 @@ contract OversizedContract {
 
 
  function someMethod1(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -59,7 +59,7 @@ contract OversizedContract {
 
 
  function someMethod2(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -85,7 +85,7 @@ contract OversizedContract {
 
 
  function someMethod3(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -111,7 +111,7 @@ contract OversizedContract {
 
 
  function someMethod4(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -137,7 +137,7 @@ contract OversizedContract {
 
 
  function someMethod5(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -163,7 +163,7 @@ contract OversizedContract {
 
 
  function someMethod6(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -189,7 +189,7 @@ contract OversizedContract {
 
 
  function someMethod7(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -215,7 +215,7 @@ contract OversizedContract {
 
 
  function someMethod8(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -241,7 +241,7 @@ contract OversizedContract {
 
 
  function someMethod9(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -267,7 +267,7 @@ contract OversizedContract {
 
 
  function someMethod10(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -293,7 +293,7 @@ contract OversizedContract {
 
 
  function someMethod11(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -319,7 +319,7 @@ contract OversizedContract {
 
 
  function someMethod12(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -345,7 +345,7 @@ contract OversizedContract {
 
 
  function someMethod13(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -371,7 +371,7 @@ contract OversizedContract {
 
 
  function someMethod14(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -397,7 +397,7 @@ contract OversizedContract {
 
 
  function someMethod15(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -423,7 +423,7 @@ contract OversizedContract {
 
 
  function someMethod16(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -449,7 +449,7 @@ contract OversizedContract {
 
 
  function someMethod17(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -475,7 +475,7 @@ contract OversizedContract {
 
 
  function someMethod18(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -501,7 +501,7 @@ contract OversizedContract {
 
 
  function someMethod19(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -527,7 +527,7 @@ contract OversizedContract {
 
 
  function someMethod20(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -553,7 +553,7 @@ contract OversizedContract {
 
 
  function someMethod21(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -579,7 +579,7 @@ contract OversizedContract {
 
 
  function someMethod22(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -605,7 +605,7 @@ contract OversizedContract {
 
 
  function someMethod23(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -631,7 +631,7 @@ contract OversizedContract {
 
 
  function someMethod24(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -657,7 +657,7 @@ contract OversizedContract {
 
 
  function someMethod25(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -683,7 +683,7 @@ contract OversizedContract {
 
 
  function someMethod26(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -709,7 +709,7 @@ contract OversizedContract {
 
 
  function someMethod27(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -735,7 +735,7 @@ contract OversizedContract {
 
 
  function someMethod28(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -761,7 +761,7 @@ contract OversizedContract {
 
 
  function someMethod29(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -787,7 +787,7 @@ contract OversizedContract {
 
 
  function someMethod30(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -813,7 +813,7 @@ contract OversizedContract {
 
 
  function someMethod31(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -839,7 +839,7 @@ contract OversizedContract {
 
 
  function someMethod32(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -865,7 +865,7 @@ contract OversizedContract {
 
 
  function someMethod33(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -891,7 +891,7 @@ contract OversizedContract {
 
 
  function someMethod34(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -917,7 +917,7 @@ contract OversizedContract {
 
 
  function someMethod35(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -943,7 +943,7 @@ contract OversizedContract {
 
 
  function someMethod36(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -969,7 +969,7 @@ contract OversizedContract {
 
 
  function someMethod37(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -995,7 +995,7 @@ contract OversizedContract {
 
 
  function someMethod38(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1021,7 +1021,7 @@ contract OversizedContract {
 
 
  function someMethod39(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1047,7 +1047,7 @@ contract OversizedContract {
 
 
  function someMethod40(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1073,7 +1073,7 @@ contract OversizedContract {
 
 
  function someMethod41(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1099,7 +1099,7 @@ contract OversizedContract {
 
 
  function someMethod42(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1125,7 +1125,7 @@ contract OversizedContract {
 
 
  function someMethod43(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1151,7 +1151,7 @@ contract OversizedContract {
 
 
  function someMethod44(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1177,7 +1177,7 @@ contract OversizedContract {
 
 
  function someMethod45(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1203,7 +1203,7 @@ contract OversizedContract {
 
 
  function someMethod46(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1229,7 +1229,7 @@ contract OversizedContract {
 
 
  function someMethod47(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1255,7 +1255,7 @@ contract OversizedContract {
 
 
  function someMethod48(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1281,7 +1281,7 @@ contract OversizedContract {
 
 
  function someMethod49(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
@@ -1307,7 +1307,7 @@ contract OversizedContract {
 
 
  function someMethod50(uint256 testValue) public returns (uint256) {
-		int16[] arr;
+		int16[] memory arr;
 		arr.length = 4;
 		for (uint i = 0; i < 1000; i++) {
 			for (uint j = 0; j < 1000; j++) {
