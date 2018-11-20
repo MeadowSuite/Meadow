@@ -17,6 +17,16 @@
     <IncludeBuildOutput>false</IncludeBuildOutput>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' " />
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Internal|AnyCPU' ">
+    <IntermediateOutputPath>obj\Internal\$(TargetFramework)</IntermediateOutputPath>
+    <OutputPath>bin\Internal</OutputPath>
+    <DebugSymbols>true</DebugSymbols>
+    <Optimize>false</Optimize>
+    <DefineConstants>;LANG_7_3;TRACE;DEBUG;NETCOREAPP;NETCOREAPP2_1</DefineConstants>
+    <DocumentationFile>obj\Internal\$(TargetFramework)\Meadow.SolCodeGen.xml</DocumentationFile>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.10.0" />
