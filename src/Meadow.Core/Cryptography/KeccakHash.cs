@@ -444,9 +444,10 @@ namespace Meadow.Core.Cryptography
 
             var remainingInputLength = input.Length;
             int i;
-            var input64 = MemoryMarshal.Cast<byte, ulong>(input);
             for (; remainingInputLength >= ROUND_SIZE; remainingInputLength -= ROUND_SIZE, input = input.Slice(ROUND_SIZE))
             {
+                var input64 = MemoryMarshal.Cast<byte, ulong>(input);
+                
                 for (i = 0; i < ROUND_SIZE_U64; i++)
                 {
                     state[i] ^= input64[i];
