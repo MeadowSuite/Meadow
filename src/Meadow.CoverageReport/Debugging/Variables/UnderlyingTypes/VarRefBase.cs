@@ -16,7 +16,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #endregion
 
         #region Constructors
-        public VarRefBase(AstElementaryTypeName type) : base(type)
+        public VarRefBase(string typeString) : base(typeString)
         {
 
         }

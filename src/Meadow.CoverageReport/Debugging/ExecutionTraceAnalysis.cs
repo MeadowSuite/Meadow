@@ -1086,28 +1086,18 @@ namespace Meadow.CoverageReport.Debugging
 
                 // Determine the if our variable is in call data or not, then parse it accordingly.
                 object value = null;
-
-                // If our variable is not a strictly defined one, we skip to the next.
-                // TODO: Implement generic "var" support.
-                if (!variable.IsStrictlyDefinedType)
-                {
-                    break;
-                }
-
                 if (variable.IsFunctionInputParameter && currentScope.FunctionDefinition.Visibility == AstTypes.Enums.AstDeclarationVisibility.External)
                 {
                     // If this is an external call, data leading to the value is parsed from call data.
                     // value = variable.ValueParser.ParseFromCallData(ref callData);
 
                     // TODO: Implement the call which is commented out above, and remove this code.
-                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory,
-                        StorageManager, rpcClient);
+                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
                 }
                 else
                 {
                     // If this is not an external call, data leading to the value is parsed beginning from stack, and moving onto memory/storage.
-                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory,
-                        StorageManager, rpcClient);
+                    value = variable.ValueParser.ParseFromStack(tracePoint.Stack, variable.StackIndex, memory, StorageManager, rpcClient);
                 }
 
                 // Add our local variable to our results

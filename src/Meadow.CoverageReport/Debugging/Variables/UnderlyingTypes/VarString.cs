@@ -14,7 +14,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarString : VarDynamicBytes
     {
         #region Constructors
-        public VarString(AstElementaryTypeName type, VarLocation location) : base(type, location)
+        public VarString(string typeString, VarLocation location) : base(typeString, location)
         {
         }
         #endregion

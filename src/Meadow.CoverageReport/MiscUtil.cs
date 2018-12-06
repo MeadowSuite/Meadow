@@ -14,8 +14,9 @@ namespace Meadow.CoverageReport
         public static string GetFileUrl(string filePath)
         {
             filePath = Path.GetFullPath(filePath);
-            var uri = "file:///" + filePath;
-            return uri;
+            var uri = new Uri("file:///" + filePath);
+            var str = uri.AbsoluteUri;
+            return str;
         }
 
         public static void OpenBrowser(string filePath)

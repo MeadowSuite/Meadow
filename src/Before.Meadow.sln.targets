@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <SolCodeGenFileExe>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/Meadow.SolCodeGen/bin/Internal/netcoreapp2.1/Meadow.SolCodeGen.dll'))</SolCodeGenFileExe>
+    <SolCodeGenBuild>dotnet build "$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/Meadow.SolCodeGen'))" -f netcoreapp2.1 -c Internal</SolCodeGenBuild>
+  </PropertyGroup>
+    <Target Name="PrepareSolCodeGen" BeforeTargets="Build">
+      <Message Importance="High" Text="Running: $(SolCodeGenBuild)" Condition="!Exists('$(SolCodeGenFileExe)')" />
+      <Exec Command="$(SolCodeGenBuild)" Condition="!Exists('$(SolCodeGenFileExe)')" />
+    </Target>
+</Project>

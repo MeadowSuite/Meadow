@@ -95,7 +95,7 @@ namespace Meadow.EVM.Test
         [Theory]
         [InlineData(true)]
         [InlineData(false)]
-        public void SignAndVerify(bool useBouncyCastle)
+        public void GenerateSignRecoverVerify(bool useBouncyCastle)
         {
             // Generate ECDSA keypair, compute a hash, sign it, then recover the public key from the signature and verify it matches.
             EthereumEcdsa provider;
@@ -108,10 +108,39 @@ namespace Meadow.EVM.Test
                 provider = EthereumEcdsaNative.Generate(new SystemRandomAccountDerivation());
             }
 
+            // Sign a hash.
             byte[] hash = KeccakHash.ComputeHashBytes(new byte[] { 11, 22, 33, 44 });
             (byte RecoveryID, BigInteger r, BigInteger s) signature = provider.SignData(hash);
-            EthereumEcdsa recovered = EthereumEcdsa.Recover(hash, signature.RecoveryID, signature.r, signature.s);
+
+            // Recover the public key for the signature we just made and verify it.
+            EthereumEcdsa recovered = null;
+            if (useBouncyCastle)
+            {
+                recovered = EthereumEcdsaBouncyCastle.Recover(hash, signature.RecoveryID, signature.r, signature.s);
+            }
+            else
+            {
+                recovered = EthereumEcdsaNative.Recover(hash, signature.RecoveryID, signature.r, signature.s);
+            }
+
             Assert.True(provider.GetPublicKeyHash().ValuesEqual(recovered.GetPublicKeyHash()));
+
+            // Verify the signature we just made.
+            Assert.True(recovered.VerifyData(hash, signature.r, signature.s));
+
+            // Generate a new ECDSA keypair (to verify other keypairs can't pass verification for signatures they didn't create).
+            EthereumEcdsa provider2;
+            if (useBouncyCastle)
+            {
+                provider2 = EthereumEcdsaBouncyCastle.Generate(new SystemRandomAccountDerivation());
+            }
+            else
+            {
+                provider2 = EthereumEcdsaNative.Generate(new SystemRandomAccountDerivation());
+            }
+
+            // Verify the prior signature cannot be verified with this new keypair.
+            Assert.False(provider2.VerifyData(hash, signature.r, signature.s));
         }
 
         [Theory]

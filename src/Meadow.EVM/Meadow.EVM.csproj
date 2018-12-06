@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Portable.BouncyCastle" Version="1.8.3" />
-    <PackageReference Include="Secp256k1.Net" Version="0.1.51" />
+    <PackageReference Include="Portable.BouncyCastle" Version="1.8.4" />
+    <PackageReference Include="Secp256k1.Net" Version="0.1.52" />
   </ItemGroup>
 
   <ItemGroup>

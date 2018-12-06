@@ -15,17 +15,18 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarMapping : VarRefBase
     {
         #region Properties
-        public AstMappingTypeName MappingTypeName { get; }
+        public string KeyTypeString { get; }
+        public string ValueTypeString { get; }
         #endregion
 
         #region Constructors
-        public VarMapping(AstMappingTypeName type) : base(type)
+        public VarMapping(string typeString) : base(typeString)
         {
-            // Set our type name
-            MappingTypeName = type;
-
             // Initialize our bounds. (Mappings are Storage-only objects).
             InitializeBounds(1, UInt256.SIZE, VarLocation.Storage);
+
+            // Parse the key/value type strings.
+            (KeyTypeString, ValueTypeString) = VarParser.GetMappingKeyValueTypeStrings(typeString);
         }
         #endregion
 
@@ -60,8 +61,8 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
                             byte[] originalStorageKeyData = storageKeyPreimage.Slice(0, UInt256.SIZE);
 
                             // Obtain our key and value's variable-value-pair.
-                            StateVariable storageKeyVariable = new StateVariable($"K[{results.Count}]", MappingTypeName.KeyType);
-                            StateVariable storageValueVariable = new StateVariable($"V[{results.Count}]", MappingTypeName.ValueType);
+                            StateVariable storageKeyVariable = new StateVariable($"K[{results.Count}]", KeyTypeString);
+                            StateVariable storageValueVariable = new StateVariable($"V[{results.Count}]", ValueTypeString);
 
                             // Obtain our resulting key-value pair.
                             var keyValuePair = new MappingKeyValuePair(

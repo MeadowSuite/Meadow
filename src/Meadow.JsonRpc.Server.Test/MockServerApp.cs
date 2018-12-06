@@ -92,7 +92,7 @@ namespace Meadow.JsonRpc.Server.Test
             throw new NotImplementedException();
         }
 
-        public Task IncreaseTime(ulong seconds)
+        public Task<ulong> IncreaseTime(ulong seconds)
         {
             throw new NotImplementedException();
         }

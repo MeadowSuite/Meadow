@@ -29,6 +29,9 @@ namespace Meadow.CoverageReport.AstTypes
             Name = node.SelectToken("name")?.Value<string>();
             CanonicalName = node.SelectToken("canonicalName")?.Value<string>();
             Members = node.SelectTokens("members[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();
+
+            // Set our struct in our lookup
+            AstParser._structsByCanonicalName[CanonicalName] = this;
         }
 
         public AstStructDefinition(AstNode node) : this(node.Node) { }

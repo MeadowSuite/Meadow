@@ -147,7 +147,7 @@ namespace Meadow.JsonRpc.Server.Proxy
             return _proxyClient.GetTransactionReceipt(transactionHash);
         }
 
-        public virtual Task IncreaseTime(ulong seconds)
+        public virtual Task<ulong> IncreaseTime(ulong seconds)
         {
             return _proxyClient.IncreaseTime(seconds);
         }
@@ -290,15 +290,16 @@ namespace Meadow.JsonRpc.Server.Proxy
             return _proxyClient.ChainID();
         }
 
+        public virtual Task<ulong> NewBlockFilter()
+        {
+            return _proxyClient.NewBlockFilter();
+        }
+
         public void Dispose()
         {
             _proxyClient.Dispose();
             _httpServer.Dispose();
         }
 
-        public Task<ulong> NewBlockFilter()
-        {
-            return _proxyClient.NewBlockFilter();
-        }
     }
 }

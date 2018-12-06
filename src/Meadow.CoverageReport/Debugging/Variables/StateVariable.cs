@@ -59,6 +59,12 @@ namespace Meadow.CoverageReport.Debugging.Variables
             // Initialize by name and type
             Initialize(name, astTypeName);
         }
+
+        public StateVariable(string name, string typeString)
+        {
+            // Initialize by name and type
+            Initialize(name, typeString);
+        }
         #endregion
     }
 }

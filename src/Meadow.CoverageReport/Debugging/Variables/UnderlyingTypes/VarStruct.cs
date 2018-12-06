@@ -22,10 +22,17 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
         #endregion
 
         #region Constructors
-        public VarStruct(AstUserDefinedTypeName type, VarLocation location) : base(type)
+        public VarStruct(string typeString, VarLocation location) : base(typeString)
         {
             // Set our struct definition
-            StructDefinition = AstParser.GetNode<AstStructDefinition>(type.ReferencedDeclaration);
+            string canonicalName = VarParser.GetEnumOrStructCanonicalName(typeString);
+            if (!AstParser._structsByCanonicalName.TryGetValue(canonicalName, out var structDefinition))
+            {
+                throw new ArgumentException("Could not find struct definition for parsed canonical name.");
+            }
+
+            // Set our obtained struct definition.
+            StructDefinition = structDefinition;
 
             // Obtain our struct members.
             Members = StructDefinition.Members.Select(x => new StateVariable(x)).ToArray();

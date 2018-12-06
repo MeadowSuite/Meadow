@@ -10,7 +10,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarAddress : VarBase
     {
         #region Constructors
-        public VarAddress(AstElementaryTypeName type) : base(type)
+        public VarAddress(string typeString) : base(typeString)
         {
             // Initialize our bounds
             InitializeBounds(1, Address.SIZE);

@@ -8,8 +8,8 @@
   <Target Name="GenerateFromSol" BeforeTargets="BeforeBuild">
 
     <PropertyGroup>
-      <SolCodeGenFileExe>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/Meadow.SolCodeGen/bin/$(Configuration)/netcoreapp2.1/Meadow.SolCodeGen.dll'))</SolCodeGenFileExe>
-      <SolCodeGenBuild>dotnet build "$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/Meadow.SolCodeGen'))" -f netcoreapp2.1 -c Debug</SolCodeGenBuild>
+      <SolCodeGenFileExe>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/Meadow.SolCodeGen/bin/Internal/netcoreapp2.1/Meadow.SolCodeGen.dll'))</SolCodeGenFileExe>
+      <SolCodeGenBuild>dotnet build "$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)/Meadow.SolCodeGen'))" -f netcoreapp2.1 -c Internal</SolCodeGenBuild>
       <SolSourceDir>"$(MSBuildProjectDirectory)/Contracts"</SolSourceDir>
       <NamespaceFilter>$(RootNamespace).Contracts</NamespaceFilter>
       <GenerateArgs>--source $(SolSourceDir) --namespace $(RootNamespace) --generate source</GenerateArgs>

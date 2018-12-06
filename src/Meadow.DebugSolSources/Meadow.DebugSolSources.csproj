@@ -10,7 +10,7 @@
   
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
-    <PackageReference Include="Secp256k1.Native" Version="0.1.18" ExcludeAssets="native" />
+    <PackageReference Include="Secp256k1.Native" Version="0.1.20" ExcludeAssets="native" />
   </ItemGroup>
   
   <ItemGroup>

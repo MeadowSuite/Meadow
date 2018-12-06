@@ -9,7 +9,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.UnderlyingTypes
     public class VarBoolean : VarBase
     {
         #region Constructors
-        public VarBoolean(AstElementaryTypeName type) : base(type)
+        public VarBoolean(string typeString) : base(typeString)
         {
             // Initialize our bounds
             InitializeBounds(1, 1);

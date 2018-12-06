@@ -16,6 +16,10 @@ namespace Meadow.CoverageReport.Debugging.Variables
     /// </summary>
     public class LocalVariable : BaseVariable
     {
+        #region Constants
+        private const string MEMORY_IDENTIFIER = "memory_ptr";
+        #endregion
+
         #region Properties
         /// <summary>
         /// Indicates if this local variable is either an input or output parameter to a function.
@@ -68,6 +72,12 @@ namespace Meadow.CoverageReport.Debugging.Variables
                         return VarLocation.Storage;
                     case AstVariableStorageLocation.Default:
                     default:
+                        // Check if this is a generic variable.
+                        if (_isUndefinedType)
+                        {
+                            return TypeDescriptions.TypeIdentifier.Contains(MEMORY_IDENTIFIER, StringComparison.InvariantCultureIgnoreCase) ? VarLocation.Memory : VarLocation.Storage;
+                        }
+
                         return IsFunctionParameter ? VarLocation.Memory : VarLocation.Storage;
                 }
             }
