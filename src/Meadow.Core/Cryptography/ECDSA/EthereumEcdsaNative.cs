@@ -200,10 +200,46 @@ namespace Meadow.Core.Cryptography.Ecdsa
         /// <returns>Returns a boolean indicating whether the data was properly signed.</returns>
         public override bool VerifyData(Span<byte> hash, BigInteger r, BigInteger s)
         {
-            // Determine how to handle our verification.
+            // Obtain our secp256k1 instance.
+            using (AutoObjectPool<Secp256k1>.Get(out var secp256k1))
+            {
+                // Allocate memory for the signature and call our sign function.
+                Span<byte> signature = BigIntegerConverter.GetBytes(r).Concat(BigIntegerConverter.GetBytes(s));
+                Span<byte> signatureParsed = new byte[SIGNATURE_RSV_SIZE];
 
-            // TODO: Implement
-            throw new NotImplementedException();
+                // The verify method requires a parsed signature. The serialized signature we provide 
+                // should have recovery ID, but we can provide anything, since verifying signature 
+                // ignores the recovery ID, and only focuses on r + s components.
+                if (!secp256k1.RecoverableSignatureParseCompact(signatureParsed, signature, 0))
+                {
+                    var errMsg = "Unmanaged EC library failed to parse the signature when verifying signature. ";
+                    if (IncludeKeyDataInExceptions)
+                    {
+                        errMsg += $"MessageHash: {hash.ToHexString()}, Key: {UnmanagedKey.Span.ToHexString()}";
+                    }
+
+                    throw new Exception(errMsg);
+                }
+
+                // Define the parsed public key array
+                Span<byte> parsedPublicKeyData = new byte[PUBLIC_KEY_SIZE];
+
+                // Get a serialized public key, then parse it.
+                byte[] serializedPublicKey = ToPublicKeyArray(false, false);
+                if (!secp256k1.PublicKeyParse(parsedPublicKeyData, serializedPublicKey))
+                {
+                    var errMsg = "Unmanaged EC library failed to parse public key when verifying signature. ";
+                    if (IncludeKeyDataInExceptions)
+                    {
+                        errMsg += $"MessageHash: {hash.ToHexString()}, Key: {UnmanagedKey.Span.ToHexString()}";
+                    }
+
+                    throw new Exception(errMsg);
+                }
+
+                // Verify the signature using the parsed public key.
+                return secp256k1.Verify(signatureParsed, hash, parsedPublicKeyData);
+            }
         }
 
         /// <summary>

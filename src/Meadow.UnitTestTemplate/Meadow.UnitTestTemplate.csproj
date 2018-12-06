@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="ExposedObject" Version="1.3.0" />
     <PackageReference Include="Microsoft.UnitTestFramework.Extensions" Version="2.0.0" />
-    <PackageReference Include="MSTest.TestFramework" Version="1.3.2" />
+    <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
     <PackageReference Include="Microsoft.TestPlatform.TestHost" Version="15.9.0" />
     <PackageReference Include="System.ComponentModel.Primitives" Version="4.3.0" />
     <PackageReference Include="System.Configuration.ConfigurationManager" Version="4.5.0" />
@@ -53,5 +53,8 @@
       </Content>
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <PackageReference Update="MSTest.TestAdapter" Version="1.4.0" />
+  </ItemGroup>
     
 </Project>
