@@ -59,7 +59,7 @@ namespace Meadow.Core.Utils
         /// Performs an ECDSA sign on the given 32-byte message hash.
         /// Returns the signature in r,s,v format. Use <see cref="SignatureToRpcFormat(byte[], byte[], byte)"/> to convert into the serialized byte array format.
         /// </summary>       
-        /// <param name="messageHash">The 32 byte message hash. Usually the output from <see cref="HashPersonalMessage(string)"/> or <see cref="KeccakHash.ComputeHash(Span{byte})"/></param>
+        /// <param name="messageHash">The 32 byte message hash. Usually the output from <see cref="HashPersonalMessage(string)"/> or <see cref="KeccakHash.ComputeHash(Span{byte}, int)"/></param>
         /// <param name="signerPrivateKeyHex">Hex encoded private key to sign with.</param>
         public static (byte[] R, byte[] S, byte V) ECSign(byte[] messageHash, string signerPrivateKeyHex)
         {
@@ -70,7 +70,7 @@ namespace Meadow.Core.Utils
         /// Performs an ECDSA sign on the given 32-byte message hash.
         /// Returns the signature in r,s,v format. Use <see cref="SignatureToRpcFormat(byte[], byte[], byte)"/> to convert into the serialized byte array format.
         /// </summary>       
-        /// <param name="messageHash">The 32 byte message hash. Usually the output from <see cref="HashPersonalMessage(string)"/> or <see cref="KeccakHash.ComputeHash(Span{byte})"/></param>
+        /// <param name="messageHash">The 32 byte message hash. Usually the output from <see cref="HashPersonalMessage(string)"/> or <see cref="KeccakHash.ComputeHash(Span{byte}, int)"/></param>
         /// <param name="signerPrivateKey">The private key to sign with.</param>
         public static (byte[] R, byte[] S, byte V) ECSign(byte[] messageHash, byte[] signerPrivateKey)
         {
