@@ -24,7 +24,7 @@ namespace Meadow.EVM.EVM.Instructions.Arithmetic
             BigInteger a = Stack.Pop();
             BigInteger b = Stack.Pop();
             BigInteger c = Stack.Pop();
-            BigInteger result = c == 0 ? 0 : (a + b).CapOverflow() % c;
+            BigInteger result = c == 0 ? 0 : ((a + b) % c).CapOverflow();
 
             // Push the result onto the stack.
             Stack.Push(result);
