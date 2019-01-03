@@ -4,7 +4,7 @@ An Ethereum implementation and tool suite designed for Solidity testing and deve
 
 Written completely in cross-platform C# with .NET Core. Meadow can be used in [VS Code](https://code.visualstudio.com/), [Visual Studio](https://visualstudio.microsoft.com/vs/), and [JetBrains Rider](https://www.jetbrains.com/rider/).
 
-[![Coverage; Report Generator; TeamCity](https://teamcity.meadowsuite.com/repository/download/Meadow_MeadowSuiteTest/lastSuccessful/coverage.zip%21/badge_combined.svg?guest=1)](https://teamcity.meadowsuite.com/viewLog.html?buildId=lastSuccessful&buildTypeId=Meadow_MeadowSuiteTest&tab=report_project2_Code_Coverage&guest=1)
+[![Coverage; Report Generator; TeamCity](http://192.241.156.100:8111/repository/download/Meadow_MeadowSuiteTest/lastSuccessful/coverage.zip%21/badge_combined.svg?guest=1)](http://192.241.156.100:8111/viewLog.html?buildId=lastSuccessful&buildTypeId=Meadow_MeadowSuiteTest&tab=report_project2_Code_Coverage&guest=1)
 [![Coveralls](https://img.shields.io/coveralls/github/MeadowSuite/Meadow/master.svg?label=Coveralls.io)](https://coveralls.io/github/MeadowSuite/Meadow?branch=master) 
 [![codecov](https://img.shields.io/codecov/c/github/MeadowSuite/Meadow/master.svg?label=Codecov.io)](https://codecov.io/gh/MeadowSuite/Meadow) 
 [![AppVeyor Tests](https://img.shields.io/appveyor/tests/Meadow/Meadow/master.svg?label=AppVeyor%20Tests)](https://ci.appveyor.com/project/Meadow/meadow/branch/master) 
@@ -15,12 +15,10 @@ Written completely in cross-platform C# with .NET Core. Meadow can be used in [V
   <tr>
     <td rowspan="2">Builds</td>
     <td>Windows Status</td>
-    <td>Linux Status</td>
     <td>MacOS Status</td>
   </tr>
   <tr>
     <td><a href="https://ci.appveyor.com/project/Meadow/meadow/branch/master"><img src="https://ci.appveyor.com/api/projects/status/nauu7pmvu9q2b2xd/branch/master?svg=true"></a></td>
-    <td><a href="https://teamcity.meadowsuite.com/viewType.html?buildTypeId=Meadow_MeadowSuiteTest&guest=1"><img src="https://img.shields.io/teamcity/https/teamcity.meadowsuite.com/e/Meadow_MeadowSuiteTest.svg"></a></td>
     <td><a href="https://travis-ci.com/MeadowSuite/Meadow"><img src="https://travis-ci.com/MeadowSuite/Meadow.svg?branch=master"></a></td>
   </tr>
 </table>
