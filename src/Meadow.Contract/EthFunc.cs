@@ -192,7 +192,7 @@ namespace Meadow.Contract
         }
 
         /// <summary>
-        /// Eventlog helper for get a tuple eventlogs,which could contains 2-8 different type of evens, in one transaction in one time
+        /// Eventlog helper to get a tuple eventlog,which could contain 2-8 different type of events, in one transaction at a time.
         /// Creates new message call transaction on the block chain, gets the transaction 
         /// receipt.
         /// </summary>
@@ -721,6 +721,84 @@ namespace Meadow.Contract
             }
 
             return new EthFunc<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12)>(contract, callData, Parse);
+        }
+
+        public static EthFunc<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)> Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13>(
+            BaseContract contract, byte[] callData,
+            AbiTypeInfo s1, DecodeDelegate<T1> d1,
+            AbiTypeInfo s2, DecodeDelegate<T2> d2,
+            AbiTypeInfo s3, DecodeDelegate<T3> d3,
+            AbiTypeInfo s4, DecodeDelegate<T4> d4,
+            AbiTypeInfo s5, DecodeDelegate<T5> d5,
+            AbiTypeInfo s6, DecodeDelegate<T6> d6,
+            AbiTypeInfo s7, DecodeDelegate<T7> d7,
+            AbiTypeInfo s8, DecodeDelegate<T8> d8,
+            AbiTypeInfo s9, DecodeDelegate<T9> d9,
+            AbiTypeInfo s10, DecodeDelegate<T10> d10,
+            AbiTypeInfo s11, DecodeDelegate<T11> d11,
+            AbiTypeInfo s12, DecodeDelegate<T12> d12,
+            AbiTypeInfo s13, DecodeDelegate<T13> d13)
+        {
+            (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13) Parse(ReadOnlyMemory<byte> mem)
+            {
+                var buff = new AbiDecodeBuffer(mem, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13);
+                d1(s1, ref buff, out var i1);
+                d2(s2, ref buff, out var i2);
+                d3(s3, ref buff, out var i3);
+                d4(s4, ref buff, out var i4);
+                d5(s5, ref buff, out var i5);
+                d6(s6, ref buff, out var i6);
+                d7(s7, ref buff, out var i7);
+                d8(s8, ref buff, out var i8);
+                d9(s9, ref buff, out var i9);
+                d10(s10, ref buff, out var i10);
+                d11(s11, ref buff, out var i11);
+                d12(s12, ref buff, out var i12);
+                d13(s13, ref buff, out var i13);
+                return (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13);
+            }
+
+            return new EthFunc<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13)>(contract, callData, Parse);
+        }
+
+        public static EthFunc<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)> Create<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14>(
+            BaseContract contract, byte[] callData,
+            AbiTypeInfo s1, DecodeDelegate<T1> d1,
+            AbiTypeInfo s2, DecodeDelegate<T2> d2,
+            AbiTypeInfo s3, DecodeDelegate<T3> d3,
+            AbiTypeInfo s4, DecodeDelegate<T4> d4,
+            AbiTypeInfo s5, DecodeDelegate<T5> d5,
+            AbiTypeInfo s6, DecodeDelegate<T6> d6,
+            AbiTypeInfo s7, DecodeDelegate<T7> d7,
+            AbiTypeInfo s8, DecodeDelegate<T8> d8,
+            AbiTypeInfo s9, DecodeDelegate<T9> d9,
+            AbiTypeInfo s10, DecodeDelegate<T10> d10,
+            AbiTypeInfo s11, DecodeDelegate<T11> d11,
+            AbiTypeInfo s12, DecodeDelegate<T12> d12,
+            AbiTypeInfo s13, DecodeDelegate<T13> d13,
+            AbiTypeInfo s14, DecodeDelegate<T14> d14)
+        {
+            (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14) Parse(ReadOnlyMemory<byte> mem)
+            {
+                var buff = new AbiDecodeBuffer(mem, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14);
+                d1(s1, ref buff, out var i1);
+                d2(s2, ref buff, out var i2);
+                d3(s3, ref buff, out var i3);
+                d4(s4, ref buff, out var i4);
+                d5(s5, ref buff, out var i5);
+                d6(s6, ref buff, out var i6);
+                d7(s7, ref buff, out var i7);
+                d8(s8, ref buff, out var i8);
+                d9(s9, ref buff, out var i9);
+                d10(s10, ref buff, out var i10);
+                d11(s11, ref buff, out var i11);
+                d12(s12, ref buff, out var i12);
+                d13(s13, ref buff, out var i13);
+                d14(s14, ref buff, out var i14);
+                return (i1, i2, i3, i4, i5, i6, i7, i8, i9, i10, i11, i12, i13, i14);
+            }
+
+            return new EthFunc<(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14)>(contract, callData, Parse);
         }
     }
 
