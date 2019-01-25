@@ -22,6 +22,15 @@ contract PrecompilesContract {
 	function testECRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public returns (address from) {
 		return ecrecover(hash, v, r, s);
 	}
+
+    function testAddMod(uint x, uint y, uint z) public pure returns (uint) {
+        return addmod(x, y, z);
+    }
+
+    function testMulMod(uint x, uint y, uint z) public pure returns (uint) {
+        return mulmod(x, y, z);
+    }
+
     function testIdentity(bytes memory input) public returns(bytes memory)
     {
         // Initialize our output array

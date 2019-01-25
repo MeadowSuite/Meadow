@@ -1,4 +1,5 @@
 ﻿using Meadow.Contract;
+using Meadow.Core.EthTypes;
 using Meadow.Core.Utils;
 using Meadow.EVM.Data_Types;
 using Meadow.JsonRpc.Types;
@@ -58,7 +59,7 @@ namespace Meadow.UnitTestTemplate.Test
                 "okayTestTest!",
                 "okayTest\x85TEST\x00TEST"
             };
-            
+
             // Loop for each input to test echoing
             foreach (string inputString in inputStrings)
             {
@@ -86,6 +87,51 @@ namespace Meadow.UnitTestTemplate.Test
             // Convert the result into an integer.
             var modExpTest = BigIntegerConverter.GetBigInteger(modExpTestBytes, false, modExpTestBytes.Length);
             Assert.AreEqual("856753145937825219130387866259147", modExpTest.ToString(CultureInfo.InvariantCulture));
+        }
+
+        [TestMethod]
+        public async Task MulModTest()
+        {
+            // Test cases of the form (x, y, z, res) such that mulmod(x, y, z) = res
+            // Importantly, some are constructed to require the non-truncation behaviour of mulmod
+            (BigInteger, BigInteger, BigInteger, BigInteger)[] testData =
+            {
+                (2, 7, 3, 2),
+                (4, 8, 11, 10),
+                (2, 1000, 10, 0),
+                (BigInteger.Pow(2, 10), BigInteger.Pow(2, 15), BigInteger.Pow(2, 32), BigInteger.Pow(2, 25)),
+                (BigInteger.Pow(2, 255), 2, 1, 0),
+                (BigInteger.Pow(2, 255), 2, 150, 136),
+                (BigInteger.Pow(2, 255), 3, 5, 4),
+                (BigInteger.Pow(2, 256) - 1, BigInteger.Pow(2, 256) - 1, 2019, 1254)
+            };
+            foreach (var (x, y, z, res) in testData)
+            {
+                UInt256 obs = await _contract.testMulMod((UInt256)x, (UInt256)y, (UInt256)z).Call();
+                Assert.AreEqual((UInt256)res, obs);
+            }
+        }
+
+        [TestMethod]
+        public async Task AddModTest()
+        {
+            // Test cases of the form (x, y, z, res) such that addmod(x, y, z) = res
+            // Importantly, some are constructed to require the non-truncation behaviour of addmod
+            (BigInteger, BigInteger, BigInteger, BigInteger)[] testData =
+            {
+                (10, 5, 10, 5),
+                (50, 29, 7, 2),
+                (10000, 25000, 7, 0),
+                (BigInteger.Pow(2, 255), BigInteger.Pow(2, 255), 1, 0),
+                (BigInteger.Pow(2, 255), BigInteger.Pow(2, 255), 150, 136),
+                (BigInteger.Pow(2, 256) - 1, BigInteger.Pow(2, 10), 2019, 1951),
+                (BigInteger.Pow(2, 256) - 1, BigInteger.Pow(2, 256) - 1, 2019, 1854),
+            };
+            foreach (var (x, y, z, res) in testData)
+            {
+                UInt256 obs = await _contract.testAddMod((UInt256)x, (UInt256)y, (UInt256)z).Call();
+                Assert.AreEqual((UInt256)res, obs);
+            }
         }
 
         [TestMethod]
