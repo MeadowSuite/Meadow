@@ -65,7 +65,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
 
             UInt256[] resultGasUsages =
             {
-                23109, 24413, 24770
+                23109, 24457, 24814
             };
 
             // Loop for each input to test echoing
