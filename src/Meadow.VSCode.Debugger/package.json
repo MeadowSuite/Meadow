@@ -88,6 +88,14 @@
       {
         "type": "solidity",
         "label": "Solidity Debug",
+<<<<<<< HEAD
+=======
+        "program": "./out/meadowDebugAdapter.js",
+        "runtime": "node",
+        "variables": {
+          "AskForProgramName": "solidity-debugger.getProgramName"
+        },				
+>>>>>>> 6d54b9e... Fixed whitespace issues
         "languages": [
           "solidity"
         ],
@@ -102,7 +110,19 @@
             }
           },
           "launch": {
+<<<<<<< HEAD
             "properties": {
+=======
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Workspace relative path to a text file.",
+                "default": "${workspaceRoot}/${command.AskForProgramName}"
+              },
+>>>>>>> 6d54b9e... Fixed whitespace issues
               "entryPoint": {
                 "type": "string",
                 "description": "The contract and function to be deployed and called in the format of 'ContractName.FunctionName'. The contract constructor and given function should not contain any input parameters.",
@@ -133,6 +153,14 @@
       {
         "type": "solidityMeadow",
         "label": "Solidity Debugging w/ Unit Tests",
+<<<<<<< HEAD
+=======
+        "program": "./out/meadowDebugAdapter.js",
+        "runtime": "node",
+        "variables": {
+          "AskForProgramName": "solidity-debugger.getProgramName"
+        },
+>>>>>>> 6d54b9e... Fixed whitespace issues
         "configurationAttributes": {
           "attach": {
             "properties": {
@@ -144,7 +172,19 @@
             }
           },
           "launch": {
+<<<<<<< HEAD
             "properties": {
+=======
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to a text file.",
+                "default": "${workspaceRoot}/${command.AskForProgramName}"
+              },
+>>>>>>> 6d54b9e... Fixed whitespace issues
               "stopOnEntry": {
                 "type": "boolean",
                 "description": "Automatically stop after launch.",
@@ -190,6 +230,10 @@
               "type": "solidity",
               "request": "launch",
               "name": "Debug Solidity (via contract entry point)"
+<<<<<<< HEAD
+=======
+              "program": "^\"\\${workspaceRoot}/${1:Program}\""
+>>>>>>> 6d54b9e... Fixed whitespace issues
             }
           },
           {
@@ -199,6 +243,10 @@
               "type": "solidityMeadow",
               "request": "launch",
               "name": "Debug Solidity (via unit test run)"
+<<<<<<< HEAD
+=======
+              "program": "^\"\\${workspaceRoot}/${1:Program}\""
+>>>>>>> 6d54b9e... Fixed whitespace issues
             }
           }
         ]
