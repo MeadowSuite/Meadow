@@ -1,7 +1,6 @@
-﻿pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 /// @title Error Generating Contract (Testing)
-/// @author David Pokora
 /// @notice This is a contract used to generate errors to test EVM exception tracing, etc.
 /// @dev 
 contract VarAnalysisContract 
@@ -23,7 +22,7 @@ contract VarAnalysisContract
 
 	function throwWithLocals()
 	{
-		address addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
+		address addr1 = 0x345cA3e014Aaf5dcA488057592ee47305D9B3e10;
 		address addr2 = 0x7070707070707070707070707070707070707070;
 		int x = -1;
 		uint y = 0x1080;

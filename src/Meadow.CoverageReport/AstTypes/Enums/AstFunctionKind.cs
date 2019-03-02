@@ -4,11 +4,10 @@ using System.Text;
 
 namespace Meadow.CoverageReport.AstTypes.Enums
 {
-    public enum AstVariableStorageLocation
+    public enum AstFunctionKind
     {
-        Default,
-        Memory,
-        Storage,
-        CallData
+        Constructor,
+        Fallback,
+        Function
     }
 }

@@ -1,7 +1,6 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 /// @title An example contract title
-/// @author Matthew Little
 /// @notice This is a test contract
 /// @dev Hello dev
 contract PrecompilesContract {
@@ -11,12 +10,12 @@ contract PrecompilesContract {
 
     }
 
-	function testSha256(string str) public returns (bytes32 result) {
-		return sha256(str);
+	function testSha256(string memory str) public returns (bytes32 result) {
+		return sha256(bytes(str));
 	}
 
-	function testRipemd160(string str) public returns (bytes20 result) {
-		return ripemd160(str);
+	function testRipemd160(string memory str) public returns (bytes20 result) {
+		return ripemd160(bytes(str));
 	}
 
 	function testECRecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) public returns (address from) {
@@ -94,7 +93,7 @@ contract PrecompilesContract {
 	// -----------------------------------------------------------------------------------------------------
 
     /// @notice The fallback function
-    function() public {
+    function() external {
 
     }
 

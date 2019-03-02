@@ -1,10 +1,10 @@
-﻿import "./MissingConstructorParent.sol";
+import "./MissingConstructorParent.sol";
 
-pragma solidity ^0.4.11;
+pragma solidity ^0.5.0;
 
 
 contract MissingConstructorChild is MissingConstructorParent {
  
-  function MissingConstructorChild() { } 
+  constructor() public { } 
 
 }

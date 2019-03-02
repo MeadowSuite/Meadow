@@ -2,6 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -23,6 +24,10 @@ namespace Meadow.CoverageReport.AstTypes
         /// </summary>
         public bool IsConstructor { get; }
         /// <summary>
+        /// Indicates the kind of function this is. (Added as of Solidity 0.5.x).
+        /// </summary>
+        public AstFunctionKind Kind { get; }
+        /// <summary>
         /// The variable declarations which represent the function input parameters.
         /// </summary>
         public AstVariableDeclaration[] Parameters { get; }
@@ -38,7 +43,27 @@ namespace Meadow.CoverageReport.AstTypes
             // Set our properties
             Name = node.SelectToken("name")?.Value<string>();
             Visibility = GetVisibilityFromString(node.SelectToken("visibility")?.Value<string>());
-            IsConstructor = node.SelectToken("isConstructor")?.Value<bool?>() == true;
+            IsConstructor = node.SelectToken("isConstructor")?.Value<bool?>() == true; // (removed as of Solidity 0.5.x)
+
+            // Determine our function kind (new as of Solidity 0.5.x)
+            string kindStr = node.SelectToken("kind")?.Value<string>()?.ToLower(CultureInfo.InvariantCulture);
+            switch (kindStr)
+            {
+                case "constructor":
+                    Kind = AstFunctionKind.Constructor;
+                    break;
+                case "fallback":
+                    Kind = AstFunctionKind.Fallback;
+                    break;
+                case "function":
+                    Kind = AstFunctionKind.Function;
+                    break;
+                default:
+                    Kind = IsConstructor ? AstFunctionKind.Constructor : AstFunctionKind.Function; // TODO: Fallback detection for Solidity 0.4.x or older.
+                    break;
+            }
+
+            IsConstructor |= Kind == AstFunctionKind.Constructor; // Compatibility for Solidity 0.5.x (as it rids of the "isConstructor" ast token in favor of "kind")
             Parameters = node.SelectTokens("parameters.parameters[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();
             ReturnParameters = node.SelectTokens("returnParameters.parameters[*]").Select(x => Create<AstVariableDeclaration>((JObject)x)).ToArray();
         }

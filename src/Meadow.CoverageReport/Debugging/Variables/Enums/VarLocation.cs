@@ -11,6 +11,7 @@ namespace Meadow.CoverageReport.Debugging.Variables.Enums
     {
         None,
         Memory,
-        Storage
+        Storage,
+        CallData
     }
 }

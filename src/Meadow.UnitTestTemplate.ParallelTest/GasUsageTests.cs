@@ -35,21 +35,21 @@ namespace Meadow.UnitTestTemplate.ParallelTest
                 BigIntegerConverter.GetBytes(BigInteger.Parse("47416572686988136438359045243120473513988610648720291068939984598262749281683", CultureInfo.InvariantCulture)))
                 .EstimateGas();
 
-            Assert.AreEqual(32437, gas);
+            Assert.AreEqual(32379, gas);
         }
 
         [TestMethod]
         public async Task Sha256Test()
         {
             var gas = await _precompiles.testSha256("hello world").EstimateGas();
-            Assert.AreEqual(24063, gas);
+            Assert.AreEqual(24227, gas);
         }
 
         [TestMethod]
         public async Task Ripemd160Test()
         {
             var gas = await _precompiles.testRipemd160("hello world").EstimateGas();
-            Assert.AreEqual(24671, gas);
+            Assert.AreEqual(24853, gas);
         }
 
         [DataTestMethod]
@@ -65,7 +65,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
 
             UInt256[] resultGasUsages =
             {
-                23065, 24413, 24770
+                23250, 24535, 24855
             };
 
             // Loop for each input to test echoing
@@ -89,7 +89,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
                 BigIntegerConverter.GetBytes(BigInteger.Parse("4345328123928357434573234217343477", CultureInfo.InvariantCulture)))
                 .EstimateGas();
 
-            Assert.AreEqual(29900, gas);
+            Assert.AreEqual(30403, gas);
         }
 
 
@@ -97,7 +97,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
         public async Task VerifyInt()
         {
             var gas = await _basicContract.verifyInt(778899).EstimateGas();
-            Assert.AreEqual(22280, gas);
+            Assert.AreEqual(22306, gas);
         }
 
         [TestMethod]
@@ -123,7 +123,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
             // The amount of gas used will deviate depending on leading zeros, so we test without any.
             Address address = new Address("0x7777777777777777777777777777777777777777");
             var gas = await _basicContract.echoAddress(address).EstimateGas();
-            Assert.AreEqual(23269, gas);
+            Assert.AreEqual(23295, gas);
         }
 
         [TestMethod]
@@ -141,19 +141,19 @@ namespace Meadow.UnitTestTemplate.ParallelTest
 
             // Test adding/multiplying
             var testAddResult = await snarkTest.f().EstimateGas();
-            Assert.AreEqual(65114, testAddResult);
+            Assert.AreEqual(65036, testAddResult);
 
             // Test simple negation + add == zero.
             var testNegAddResult = await snarkTest.g().EstimateGas();
-            Assert.AreEqual(24219, testNegAddResult);
+            Assert.AreEqual(24180, testNegAddResult);
 
             // Test simple pairing example
             var testSimplePair = await snarkTest.pair().EstimateGas();
-            Assert.AreEqual(595435, testSimplePair);
+            Assert.AreEqual(595318, testSimplePair);
 
             // Test pairing
             var testPairingResult = await snarkTest.verifyTx().EstimateGas();
-            Assert.AreEqual(1927502, testPairingResult);
+            Assert.AreEqual(1926449, testPairingResult);
         }
     }
 }

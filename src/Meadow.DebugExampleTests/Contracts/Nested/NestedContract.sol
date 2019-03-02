@@ -1,4 +1,4 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 
 contract NestedContract {
@@ -10,7 +10,7 @@ contract NestedContract {
 		number = 12;
     }
 
-    function incrementNumber(uint x) returns (uint)
+    function incrementNumber(uint x) public returns (uint)
     {
         number += x;
         return number;

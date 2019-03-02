@@ -1,7 +1,6 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.5.0;
 
 /// @title Variable Analysis Contract (Testing)
-/// @author David Pokora
 /// @notice This is a contract used to test state/local variable parsing from execution traces.
 /// @dev 
 contract VarAnalysisContract 
@@ -38,14 +37,14 @@ contract VarAnalysisContract
 	}
 
     /// @notice Our default contructor
-    function VarAnalysisContract(uint test) public 
+    constructor(uint test) public 
 	{
         assert(test == 0);
 	}
 
 	enum TestEnum {FIRST,SECOND,THIRD}
     
-	function updateStateValues()
+	function updateStateValues() public
 	{
         uint x = 777;
         globalVal++;
@@ -59,7 +58,7 @@ contract VarAnalysisContract
         globalBool1 = true;
         globalBool2 = false;
         globalAddrBytes = bytes20(globalAddr);
-        globalDynamicBytes.push(byte(globalDynamicBytes.length));
+        globalDynamicBytes.push(bytes1(uint8(globalDynamicBytes.length)));
         globalString = string(globalDynamicBytes);
         globalString2 = "testTestOkayOkay!";
         globalArray1.push(globalArray1.length);
@@ -82,7 +81,7 @@ contract VarAnalysisContract
 	function throwWithLocals(uint param1, uint param2) public returns (address addr1, address addr2)
 	{
         assert(param1 == 778899);
-        addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
+        addr1 = 0x345cA3e014Aaf5dcA488057592ee47305D9B3e10;
         addr2 = 0x8080808080808080808080808080808080808080;
         int x = -1;
         x *= 2;
@@ -105,40 +104,59 @@ contract VarAnalysisContract
         x = 7;
 	}
 
+    function storagePointerGenericVar1(uint[2] memory storageArray) internal
+    {
+        // THIS FUNCTION NO LONGER HAS GENERIC VARIABLES, AS THEY ARE REMOVED IN SOLIDITY 0.5.x
+
+        uint[2] memory testArray = storageArray;
+        testArray[0]++;
+        testArray[0]++;
+    }
+    function storagePointerGenericVar2(uint[2] storage storageArray) internal
+    {
+        // THIS FUNCTION NO LONGER HAS GENERIC VARIABLES, AS THEY ARE REMOVED IN SOLIDITY 0.5.x
+
+        uint[2] storage testArray = storageArray;
+        testArray[0]++;
+        testArray[0]++;
+    }
+
     function throwWithGenericVars(uint param1, uint param2) public returns (address addr1, address addr2)
 	{
+        // THIS FUNCTION NO LONGER HAS GENERIC VARIABLES, AS THEY ARE REMOVED IN SOLIDITY 0.5.x
+
         assert(param1 == 778899);
-        addr1 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10;
+        addr1 = 0x345cA3e014Aaf5dcA488057592ee47305D9B3e10;
         addr2 = 0x8080808080808080808080808080808080808080;
 
-        var gAddr = addr1; // generic address
+        address gAddr = addr1; // generic address
         gAddr = 0x8080808080808080808080808080808080808080;
-        var gUint16 = 0x111; // generic uint16
-        var gUint160 = 0x345ca3e014aaf5dca488057592ee47305d9b3e10; // generic uint160
-        var gBytes = new bytes(4); // generic dynamic bytes
+        uint16 gUint16 = 0x111; // generic uint16
+        uint160 gUint160 = 0x00345ca3e014aaf5dca488057592ee47305d9b3e10; // generic uint160
+        bytes memory gBytes = new bytes(4); // generic dynamic bytes
         gBytes[0] = 0x77;
         gBytes[1] = 0x88;
         gBytes[2] = 0x99;
         gBytes[3] = 0xAA;
 
-        var gTestEnum = TestEnum.FIRST; // generic enum
+        TestEnum gTestEnum = TestEnum.FIRST; // generic enum
         gTestEnum = TestEnum.SECOND;
 
         TestEnum[] memory arr3 = new TestEnum[](3);
         arr3[0] = TestEnum.FIRST;
         arr3[1] = TestEnum.SECOND;
         arr3[2] = TestEnum.THIRD;
-        var gTestEnumArray = arr3; // generic enum array
+        TestEnum[] memory gTestEnumArray = arr3; // generic enum array
         gTestEnumArray[0] = TestEnum.THIRD;
         gTestEnumArray[1] = TestEnum.THIRD;
 
-        var gBool = true;
+        bool gBool = true;
         gBool = false;
         gBool = true;
 
-        var gBool2 = gBool;
+        bool gBool2 = gBool;
 
-        var gBytes20 = bytes20(gAddr);
+        bytes20 gBytes20 = bytes20(gAddr);
 
         assert(false);
 	}
@@ -153,7 +171,7 @@ contract VarAnalysisContract
         }
         for(; i < result.length; i++)
         {
-            result[i] = byte(i - param1.length);
+            result[i] = bytes1(uint8(i - param1.length));
         }
 
         assert(false);
@@ -204,21 +222,21 @@ contract VarAnalysisContract
         nestedMapping[key1][key2] = enumValue;
     }
 
-    function throwExternalCallDataArgs(address[] testArr, uint256 u1, uint256 u2) external {
+    function throwExternalCallDataArgs(address[] calldata testArr, uint256 u1, uint256 u2) external {
         // Arguments in this context (external) should be resolved from calldata, not memory)
         for(uint i=0; i< testArr.length; i+=1) {
             assert(false);
         }
     }
 
-    function throwExternalCallDataArgs2(address[] testArr1, address[] testArr2, uint256 u1, uint256 u2) external {
+    function throwExternalCallDataArgs2(address[] calldata testArr1, address[] calldata testArr2, uint256 u1, uint256 u2) external {
         // Arguments in this context (external) should be resolved from calldata, not memory)
         for(uint i=0; i< testArr1.length; i+=1) {
             assert(false);
         }
     }
 
-    function throwExternalCallDataArgs3(uint256 u1, address[] testArr1, address[] testArr2, uint256 u2) external {
+    function throwExternalCallDataArgs3(uint256 u1, address[] calldata testArr1, address[] calldata testArr2, uint256 u2) external {
         // Arguments in this context (external) should be resolved from calldata, not memory)
         for(uint i=0; i< testArr1.length; i+=1) {
             assert(false);

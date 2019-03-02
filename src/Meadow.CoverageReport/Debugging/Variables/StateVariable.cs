@@ -39,6 +39,8 @@ namespace Meadow.CoverageReport.Debugging.Variables
                         return VarLocation.Memory;
                     case AstVariableStorageLocation.Storage:
                         return VarLocation.Storage;
+                    case AstVariableStorageLocation.CallData:
+                        return VarLocation.CallData;
                     case AstVariableStorageLocation.Default:
                     default:
                         return VarLocation.Storage;

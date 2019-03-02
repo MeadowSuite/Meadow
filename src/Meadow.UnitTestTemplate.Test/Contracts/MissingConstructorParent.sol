@@ -1,10 +1,10 @@
-﻿pragma solidity ^0.4.11;
+pragma solidity ^0.5.0;
 
 contract MissingConstructorParent {
 
   uint public someNum;
 
-  function MissingConstructorParent(uint _someNum) {
+  constructor(uint _someNum) public {
     someNum = _someNum;
   }
   
