@@ -535,7 +535,6 @@ namespace Meadow.UnitTestTemplate
 
             // Find the generated class field that contains the solc source data
             var sourcesData = GeneratedSolcData.Default.GetSolcData();
-            var solidityCompilerVersion = GeneratedSolcData.Default.SolidityCompilerVersion;
 
             var flattenedCoverageMaps = CoverageMaps.SelectMany(c => c).ToArray();
 
@@ -582,7 +581,7 @@ namespace Meadow.UnitTestTemplate
 
             // Generate report from coverage data
             ReportGenerator.CreateReport(
-                solidityCompilerVersion,
+                GeneratedSolcData.Default.SolidityCompilerVersion,
                 flattenedCoverageMaps,
                 solcSourceInfos.ToArray(),
                 sourcesData.SolcBytecodeInfo,

@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace Meadow.CoverageReport
@@ -252,22 +253,46 @@ namespace Meadow.CoverageReport
                 sourceFileMap.SourceFileDirectory = Path.GetDirectoryName(solSource.FileName);
                 sourceFileMap.SourceHashSha256 = HashSha256(solSource.SourceCode);
 
-                int charCount = 0;
-                var lines = solSource.SourceCode.Split('\n');
-                sourceFileMap.SourceFileLines = new SourceFileLine[lines.Length];
-                for (var lineNum = 0; lineNum < lines.Length; lineNum++)
+                // We must handle CR LF, CR, and LF line endings. So we split on CRLF, then split on CR/LF.
+                List<SourceFileLine> lines = new List<SourceFileLine>();
+                int currentOffset = 0;
+                int lineNumber = 0;
+                var crlfLines = solSource.SourceCode.Split("\r\n");
+                for (int i = 0; i < crlfLines.Length; i++)
                 {
-                    var sourceFileLine = sourceFileMap.SourceFileLines[lineNum] = new SourceFileLine();
-                    sourceFileLine.SourceFileMapParent = sourceFileMap;
-                    sourceFileLine.LiteralSourceCodeLine = lines[lineNum];
-                    sourceFileLine.LineNumber = lineNum + 1;
-                    sourceFileLine.Offset = charCount;
-                    sourceFileLine.Length = UTF8.GetByteCount(sourceFileLine.LiteralSourceCodeLine);
+                    string[] crOrLfLines = crlfLines[i].Split(new[] { '\r', '\n' });
+                    for (int x = 0; x < crOrLfLines.Length; x++)
+                    {
+                        // Create a representation for this line.
+                        var sourceFileLine = new SourceFileLine();
+                        sourceFileLine.SourceFileMapParent = sourceFileMap;
+                        sourceFileLine.LiteralSourceCodeLine = crOrLfLines[x];
+                        sourceFileLine.LineNumber = ++lineNumber;
+                        sourceFileLine.Offset = currentOffset;
+                        sourceFileLine.Length = UTF8.GetByteCount(sourceFileLine.LiteralSourceCodeLine);
+                        currentOffset += sourceFileLine.Length;
 
-                    sourceFileLine.CorrelatedAstNodes = SourceLineMatching.MatchAstNodesToSourceFileLine(analysis, sourceFileLine).ToArray();
+                        sourceFileLine.CorrelatedAstNodes = SourceLineMatching.MatchAstNodesToSourceFileLine(analysis, sourceFileLine).ToArray();
 
-                    charCount += sourceFileLine.Length + 1;
+                        // Add the line to the list.
+                        lines.Add(sourceFileLine);
+
+                        // Add CR or LF line ending length.
+                        if (x < crOrLfLines.Length - 1)
+                        {
+                            currentOffset += 1;
+                        }
+                    }
+
+                    // Add CR LF line ending length.
+                    if (i < crlfLines.Length - 1)
+                    {
+                        currentOffset += 2;
+                    }
                 }
+
+                // Set our resulting lines.
+                sourceFileMap.SourceFileLines = lines.ToArray();
             }
 
             return sourceIndexes;

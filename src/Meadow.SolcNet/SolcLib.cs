@@ -113,7 +113,6 @@ namespace SolcNet
                     {
                         lastSourceDirectory = Path.GetDirectoryName(sourceFilePath);
                         string contents = File.ReadAllText(sourceFilePath, Encoding.UTF8);
-                        contents = contents.Replace("\r\n", "\n");
                         soliditySourceFileContent.Add(sourceFilePath, contents);
                     }
                     else
