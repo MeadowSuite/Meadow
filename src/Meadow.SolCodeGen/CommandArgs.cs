@@ -26,10 +26,6 @@ namespace Meadow.SolCodeGen
 
         public GenerateOutputType Generate { get; set; }
 
-        public string LegacySolcPath { get; set; }
-
-        public Version SolcVersion { get; set; }
-
         public int SolcOptimizer { get; set; }
 
         public string OutputDirectory { get; set; }
@@ -112,45 +108,6 @@ namespace Meadow.SolCodeGen
                         return ValidationResult.Success;
                     })
                     .Accepts().Values("source", "assembly");
-
-                var legacySolcOption = app
-                    .Option("--legacysolc", "Path to .NET legacy solc native resolver lib, required if solcversion options is set", CommandOptionType.SingleValue)
-                    .OnValidate(ctc =>
-                    {
-                        var opt = (ctc.ObjectInstance as CommandOption).Value();
-                        if (!string.IsNullOrWhiteSpace(opt))
-                        {
-                            opt = Path.GetFullPath(opt);
-                            if (!File.Exists(opt))
-                            {
-                                return new ValidationResult($"Legacy solc lib path is set but file does not exist: {opt}");
-                            }
-
-                            result.LegacySolcPath = opt;
-                            logger($"Legacy solc lib set: {opt}");
-                        }
-
-                        return ValidationResult.Success;
-                    });
-
-                var solcVersionOption = app
-                    .Option("--solcversion", "Version of the libsolc compiler to use, requires the legacysolc option to be set", CommandOptionType.SingleValue)
-                    .OnValidate(ctc =>
-                    {
-                        var opt = (ctc.ObjectInstance as CommandOption).Value();
-                        if (!string.IsNullOrWhiteSpace(opt))
-                        {
-                            if (!Version.TryParse(opt, out var solcVersionParsed))
-                            {
-                                return new ValidationResult($"Could not parse specified solc version: {opt}");
-                            }
-
-                            result.SolcVersion = solcVersionParsed;
-                            logger($"Solc version specified: {solcVersionParsed}");
-                        }
-
-                        return ValidationResult.Success;
-                    });
 
                 var solcOptimizerOption = app
                     .Option("--solcoptimizer", "Enables the solc optimizer with the given run number", CommandOptionType.SingleValue)

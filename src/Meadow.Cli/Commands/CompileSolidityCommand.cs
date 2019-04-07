@@ -28,22 +28,6 @@ namespace Meadow.Cli.Commands
             var config = Config.Read(sessionState.Path.CurrentLocation.Path);
             string solSourceDir = Util.GetSolSourcePath(config, sessionState);
 
-            Version solcVersion = null;
-
-            if (!string.IsNullOrWhiteSpace(config.SolcVersion) && !config.SolcVersion.Trim().Equals("latest", StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    solcVersion = Version.Parse(config.SolcVersion);
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"Could not parse solc version value '{config.SolcVersion}'");
-                    Console.Error.WriteLine(ex);
-                    return;
-                }
-            }
-
             var solCodeGenResults = CodebaseGenerator.Generate(new CommandArgs
             {
                 Generate = GenerateOutputType.Source | GenerateOutputType.Assembly,
@@ -52,7 +36,6 @@ namespace Meadow.Cli.Commands
                 AssemblyOutputDirectory = assemblyOutputDir,
                 SolSourceDirectory = solSourceDir,
                 SolcOptimizer = (int)config.SolcOptimizer,
-                SolcVersion = solcVersion
             });
 
             var assemblyBytes = File.ReadAllBytes(solCodeGenResults.CompilationResults.AssemblyFilePath);

@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <LangVersion>7.2</LangVersion>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+    <Company>Hosho</Company>
+    <PackageTags>solidity solc libsolc ethereum</PackageTags>
+    <Description>.NET wrapper for native solc library</Description>
+    <PackageProjectUrl>https://github.com/hosho/SolcNet/</PackageProjectUrl>
+    <NoWarn>1591,1573</NoWarn>
+    <PackageLicenseUrl>https://github.com/hosho/SolcNet/blob/master/LICENSE</PackageLicenseUrl>
+    <Authors>Matthew Litte</Authors>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Version Condition="'$(VersionSuffix)' != ''">1.1.$(VersionSuffix)-beta</Version>
+    <Version Condition="'$(VersionSuffix)' == ''">1.1.0-beta</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="System.Memory" Version="4.5.1" />
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(Configuration)' == 'Release'">
+    <PackageReference Include="SourceLink.Embed.AllSourceFiles" Version="2.8.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <Import Project="SolcNet.targets" />
+
+  <Target Name="PackTaskDependencies" BeforeTargets="GenerateNuspec">
+    <ItemGroup>
+      <_PackageFiles Include="$(OutputPath)/native/**/*">
+        <BuildAction>Content</BuildAction>
+        <PackagePath>content/native/</PackagePath>
+      </_PackageFiles>
+    </ItemGroup>
+  </Target>
+
+</Project>

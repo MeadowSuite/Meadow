@@ -1,0 +1,28 @@
+﻿{
+  "language": "Solidity",
+  "sources": {
+    "TokenVesting.sol": {
+      "urls": [
+        "TokenVesting.sol"
+      ]
+    }
+  },
+  "settings": {
+    "evmVersion": "byzantium",
+    "metadata": {
+      "useLiteralContent": false
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "ast",
+          "metadata",
+          "evm",
+          "evm.bytecode",
+          "evm.bytecode.sourceMap"
+        ]
+      }
+    }
+  }
+}

@@ -7,7 +7,7 @@ This Cmdlet builds a configuration for the test server to use during startup.
 
 ### Update Config Parameters (Default)
 ```
-Update-Config -Workspace <String> [-SolcVersion <String>] [-SolcOptimizer [<Uint32>]] [-DefaultGasLimit [<Long>]] [-DefaultGasPrice [<Long>]] [-AccountCount [<Int>]] [-AccountBalance [<Long>]] -NetworkHost <String> -NetworkPort <Uint32> [-SourceDirectory [<String>]] [-UseLocalAccounts] [-ChainID [<Uint32>]] [<CommonParameters>]
+Update-Config -Workspace <String> [-SolcOptimizer [<Uint32>]] [-DefaultGasLimit [<Long>]] [-DefaultGasPrice [<Long>]] [-AccountCount [<Int>]] [-AccountBalance [<Long>]] -NetworkHost <String> -NetworkPort <Uint32> [-SourceDirectory [<String>]] [-UseLocalAccounts] [-ChainID [<Uint32>]] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -23,8 +23,7 @@ C:\PS> Update-Config -Workspace Development -NetworkHost '127.0.0.1' -NetworkPor
 
 In this example, the least amount of parameters is specified for a default configuration.  The only required parameters are Workspace, NetworkHost, and NetworkPort.  You will need to decide what workspace type you would like to use and give the server an IP address and port to communicate over.  If you run the Cmdlet like this, the resulting configuration would look liek this:
 
-SolcVersion      : latest
-						SolcOptimizer    : 0
+SolcOptimizer    : 0
 						DefaultGasLimit  : 6000000
 						DefaultGasPrice  : 100000000000
 						AccountCount     : 100
@@ -38,13 +37,12 @@ SolcVersion      : latest
 ### EXAMPLE 2
 Advanced use
 ```powershell
-C:\PS> Update-Config -Workspace development -SolcVersion '0.4.24' -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0
+C:\PS> Update-Config -Workspace development -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0
 ```
 
 This example shows a complete custom configuration for the RPC test server.  The resulting configuration from this example would look like this:
 
-SolcVersion      : 0.4.24
-						SolcOptimizer    : 0
+SolcOptimizer    : 0
 						DefaultGasLimit  : 500000
 						DefaultGasPrice  : 100000000
 						AccountCount     : 25
@@ -68,22 +66,6 @@ Aliases: None
 Required: true
 Position: named
 Default Value: Console
-Accepted Values: String
-Pipeline Input: False
-Dynamic: true
-```
-
-### SolcVersion
-This parameter allows you to specify a version of the Solc compiler to use during your testing session.  The default for this parameter is 'Latest', and will use the most recent version of the Solc compiler included in the Meadow suite package.
-
-```yaml
-Type: String
-Parameter Sets: Update Config Parameters
-Aliases: None
-
-Required: false
-Position: named
-Default Value: Latest
 Accepted Values: String
 Pipeline Input: False
 Dynamic: true

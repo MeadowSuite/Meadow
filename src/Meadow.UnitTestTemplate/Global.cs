@@ -102,10 +102,6 @@ namespace Meadow.UnitTestTemplate
         [System.ComponentModel.Description("TODO")]
         public static bool? OnlyUseExternalNode { get; set; }
 
-        [DefaultValue(null), DisplayName("SolcVersion")]
-        [System.ComponentModel.Description("Currently only used in MSBuild script")]
-        static string SolcVersion { get; set; }
-
         [DefaultValue(0), DisplayName("SolcOptimizer")]
         [System.ComponentModel.Description("Currently only used in MSBuild script")]
         static int? SolcOptimizer { get; set; }
@@ -246,11 +242,6 @@ namespace Meadow.UnitTestTemplate
             SetupConfigValue(
                 configValueList,
                 () => AccountMnemonic,
-                str => str);
-
-            SetupConfigValue(
-                configValueList,
-                () => SolcVersion,
                 str => str);
 
             SetupConfigValue(

@@ -1051,21 +1051,6 @@
 					<dev:defaultValue>Console</dev:defaultValue>
 				</command:parameter>
 				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None" dynamic="true">
-					<maml:name>SolcVersion</maml:name>
-					<maml:description>
-						<maml:para>This parameter allows you to specify a version of the Solc compiler to use during your testing session.  The default for this parameter is 'Latest', and will use the most recent version of the Solc compiler included in the Meadow suite package.</maml:para>
-					</maml:description>
-					<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
-					<command:parameterValueGroup>
-						<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
-					</command:parameterValueGroup>
-					<dev:type>
-						<maml:name>String</maml:name>
-						<maml:uri />
-					</dev:type>
-					<dev:defaultValue>Latest</dev:defaultValue>
-				</command:parameter>
-				<command:parameter required="false" globbing="false" pipelineInput="false" variableLength="false" position="named" aliases="None" dynamic="true">
 					<maml:name>SolcOptimizer</maml:name>
 					<maml:description>
 						<maml:para>This parameter allows you to specify the use of the Solc compiler optimizer.  The parameter expects a Uint32 as the value.</maml:para>
@@ -1234,21 +1219,6 @@
 					<maml:uri />
 				</dev:type>
 				<dev:defaultValue>Console</dev:defaultValue>
-			</command:parameter>
-			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None" dynamic="true">
-				<maml:name>SolcVersion</maml:name>
-				<maml:description>
-					<maml:para>This parameter allows you to specify a version of the Solc compiler to use during your testing session.  The default for this parameter is 'Latest', and will use the most recent version of the Solc compiler included in the Meadow suite package.</maml:para>
-				</maml:description>
-				<command:parameterValue required="true" variableLength="false">String</command:parameterValue>
-				<command:parameterValueGroup>
-					<command:parameterValue required="false" variableLength="false">String</command:parameterValue>
-				</command:parameterValueGroup>
-				<dev:type>
-					<maml:name>String</maml:name>
-					<maml:uri />
-				</dev:type>
-				<dev:defaultValue>Latest</dev:defaultValue>
 			</command:parameter>
 			<command:parameter required="false" globbing="false" pipelineInput="False" variableLength="false" position="named" aliases="None" dynamic="true">
 				<maml:name>SolcOptimizer</maml:name>
@@ -1443,8 +1413,7 @@
 				<dev:code>C:\PS&gt; Update-Config -Workspace Development -NetworkHost '127.0.0.1' -NetworkPort 8080 </dev:code>
 				<dev:remarks>
 					<maml:para>In this example, the least amount of parameters is specified for a default configuration.  The only required parameters are Workspace, NetworkHost, and NetworkPort.  You will need to decide what workspace type you would like to use and give the server an IP address and port to communicate over.  If you run the Cmdlet like this, the resulting configuration would look liek this:</maml:para>
-					<maml:para>SolcVersion      : latest
-						SolcOptimizer    : 0
+					<maml:para>SolcOptimizer    : 0
 						DefaultGasLimit  : 6000000
 						DefaultGasPrice  : 100000000000
 						AccountCount     : 100
@@ -1461,11 +1430,10 @@
 				<maml:introduction>
 					<maml:para>Advanced use</maml:para>
 				</maml:introduction>
-				<dev:code>C:\PS&gt; Update-Config -Workspace development -SolcVersion '0.4.24' -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0</dev:code>
+				<dev:code>C:\PS&gt; Update-Config -Workspace development -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0</dev:code>
 				<dev:remarks>
 					<maml:para>This example shows a complete custom configuration for the RPC test server.  The resulting configuration from this example would look like this:</maml:para>
-					<maml:para>SolcVersion      : 0.4.24
-						SolcOptimizer    : 0
+					<maml:para>SolcOptimizer    : 0
 						DefaultGasLimit  : 500000
 						DefaultGasPrice  : 100000000
 						AccountCount     : 25

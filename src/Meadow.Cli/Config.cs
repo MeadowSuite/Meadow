@@ -26,11 +26,6 @@ namespace Meadow.Cli
     {
         public const string CONFIG_FILE_NAME = "meadow.config.xml";
 
-        [DefaultValue("latest")]
-        [DisplayName("SolcVersion")]
-        [Description("Version of the libsolc compiler to use when compiling solidity. Uses the typical three digit versioning scheme. Use 'latest' for the latest stable version that is currently supported.")]
-        public string SolcVersion { get; set; }
-
         [DefaultValue(0)]
         [DisplayName("SolcOptimizer")]
         [Description("Enables the solc optimizer setting with the given run number. If set to 0 the optimizier is disabled. By default, the optimizer will optimize the contract for 200 runs. If you want to optimize for initial contract deployment and get the smallest output, set it to 1. If you expect many transactions and don’t care for higher deployment cost and output size, set to a high number.")]

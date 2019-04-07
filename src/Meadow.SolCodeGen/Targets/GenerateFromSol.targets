@@ -14,16 +14,12 @@
 
   <Target Name="GenerateFromSol" BeforeTargets="BeforeBuild">
 
-    <XmlPeek Condition="Exists('app.config')" XmlInputPath="app.config" Query="configuration/appSettings/add[@key='SolcVersion']/@value">
-      <Output TaskParameter="Result" ItemName="AppConfigSolcVersion" />
-    </XmlPeek>
-
     <XmlPeek Condition="Exists('app.config')" XmlInputPath="app.config" Query="configuration/appSettings/add[@key='SolcOptimizer']/@value">
       <Output TaskParameter="Result" ItemName="AppConfigSolcOptimizer" />
     </XmlPeek>
 
     <PropertyGroup>
-      <GenerateArgs>--source $(SolSourceDir) --namespace $(RootNamespace) --generate source --legacysolc "$(SolcNetLegacyDirectory)" --solcversion "@(AppConfigSolcVersion)" --solcoptimizer "@(AppConfigSolcOptimizer)"</GenerateArgs>
+      <GenerateArgs>--source $(SolSourceDir) --namespace $(RootNamespace) --generate source --solcoptimizer "@(AppConfigSolcOptimizer)"</GenerateArgs>
       <CompileIncludes>@(Compile)</CompileIncludes>
       <EmbeddedResourceIncludes>@(EmbeddedResource)</EmbeddedResourceIncludes>
     </PropertyGroup>

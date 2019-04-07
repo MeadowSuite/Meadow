@@ -25,7 +25,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\..\SolcNet\SolcNet\Meadow.SolcNet.csproj" />
+    <ProjectReference Include="..\Meadow.SolcNet\Meadow.SolcNet.csproj" />
   </ItemGroup>
   
   <ItemGroup>

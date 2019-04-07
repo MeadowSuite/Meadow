@@ -45,8 +45,6 @@ namespace Meadow.SolCodeGen
         readonly string _generatedContractsDirectory;
         readonly string _generatedAssemblyDirectory;
         readonly string _namespace;
-        readonly string _legacySolcPath;
-        readonly Version _solcVersion;
         readonly string _solidityCompilerVersion;
         readonly SolcLib _solcLib;
         readonly int _solcOptimzer;
@@ -121,13 +119,7 @@ namespace Meadow.SolCodeGen
                 _solSourceDirectory = string.Empty;
             }
 
-            if (!string.IsNullOrEmpty(appArgs.LegacySolcPath))
-            {
-                _legacySolcPath = Path.GetFullPath(appArgs.LegacySolcPath);
-            }
-
             _namespace = appArgs.Namespace;
-            _solcVersion = appArgs.SolcVersion;
             _solcOptimzer = appArgs.SolcOptimizer;
             _solcLib = SetupSolcLib();
             _solidityCompilerVersion = _solcLib.Version.ToString(3);
@@ -139,21 +131,12 @@ namespace Meadow.SolCodeGen
             INativeSolcLib solcNativeLibProvider = null;
             try
             {
-                // See if there is a system provided solc.
                 solcNativeLibProvider = new SolcLibSystemProvider(_solSourceDirectory);
                 solcNativeLibProvider.GetVersion();
             }
             catch
             {
-                // Use the default provider as a fallback.
-                if (_legacySolcPath == null)
-                {
-                    solcNativeLibProvider = new SolcLibDefaultProvider();
-                }
-                else
-                {
-                    solcNativeLibProvider = new SolcLibDefaultProvider(_legacySolcPath);
-                }
+                _logger("Exception loading system provided 'solc'.");
             }
 
             SolcLib solcLib;

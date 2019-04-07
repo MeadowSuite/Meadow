@@ -14,7 +14,7 @@
 <p class="subheading">Update Config Parameters (Default)</p>
 <div class="codeSnippetContainerCodeContainer">
 <div class="codeSnippetContainerCode">
-Update-Config -Workspace &lt;String&gt; [-SolcVersion &lt;String&gt;] [-SolcOptimizer [&lt;Uint32&gt;]] [-DefaultGasLimit [&lt;Long&gt;]] [-DefaultGasPrice [&lt;Long&gt;]] [-AccountCount [&lt;Int&gt;]] [-AccountBalance [&lt;Long&gt;]] -NetworkHost &lt;String&gt; -NetworkPort &lt;Uint32&gt; [-SourceDirectory [&lt;String&gt;]] [-UseLocalAccounts] [-ChainID [&lt;Uint32&gt;]] [&lt;CommonParameters&gt;]
+Update-Config -Workspace &lt;String&gt; [-SolcOptimizer [&lt;Uint32&gt;]] [-DefaultGasLimit [&lt;Long&gt;]] [-DefaultGasPrice [&lt;Long&gt;]] [-AccountCount [&lt;Int&gt;]] [-AccountBalance [&lt;Long&gt;]] -NetworkHost &lt;String&gt; -NetworkPort &lt;Uint32&gt; [-SourceDirectory [&lt;String&gt;]] [-UseLocalAccounts] [-ChainID [&lt;Uint32&gt;]] [&lt;CommonParameters&gt;]
 </div>
 </div>
 <h4 id="DetailedDescription"><a name="DetailedDescription"></a>DESCRIPTION</h4>
@@ -29,17 +29,17 @@ C:\PS> Update-Config -Workspace Development -NetworkHost '127.0.0.1' -NetworkPor
 </pre>
 </div>
 </div>
-<p>In this example, the least amount of parameters is specified for a default configuration.  The only required parameters are Workspace, NetworkHost, and NetworkPort.  You will need to decide what workspace type you would like to use and give the server an IP address and port to communicate over.  If you run the Cmdlet like this, the resulting configuration would look liek this:<BR/><BR/>SolcVersion      : latest<BR/>						SolcOptimizer    : 0<BR/>						DefaultGasLimit  : 6000000<BR/>						DefaultGasPrice  : 100000000000<BR/>						AccountCount     : 100<BR/>						AccountBalance   : 2000<BR/>						NetworkHost      : 127.0.0.1<BR/>						NetworkPort      : 90090<BR/>						SourceDirectory  : Contracts<BR/>						UseLocalAccounts : True<BR/>						ChainID          : 0</p>
+<p>In this example, the least amount of parameters is specified for a default configuration.  The only required parameters are Workspace, NetworkHost, and NetworkPort.  You will need to decide what workspace type you would like to use and give the server an IP address and port to communicate over.  If you run the Cmdlet like this, the resulting configuration would look like this:<BR/><BR/>SolcOptimizer    : 0<BR/>						DefaultGasLimit  : 6000000<BR/>						DefaultGasPrice  : 100000000000<BR/>						AccountCount     : 100<BR/>						AccountBalance   : 2000<BR/>						NetworkHost      : 127.0.0.1<BR/>						NetworkPort      : 90090<BR/>						SourceDirectory  : Contracts<BR/>						UseLocalAccounts : True<BR/>						ChainID          : 0</p>
 <p class="subheading">EXAMPLE 2</p>
 <p>Advanced use</p>
 <div class="codeSnippetContainerCodeContainer">
 <div class="codeSnippetContainerCode">
 <pre>
-C:\PS> Update-Config -Workspace development -SolcVersion '0.4.24' -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0
+C:\PS> Update-Config -Workspace development -SolcOptimizer 0 -DefaultGasLimit 500000 -DefaultGasPrice 100000000 -AccountCount 25 -AccountBalance 1500 -NetworkHost '10.0.0.25' -NetworkPort 90000 -SourceDirectory "$env:USERPROFILE\Documents\Meadow.Cli\TestServer" -UseLocalAccounts $true -ChainID 0
 </pre>
 </div>
 </div>
-<p>This example shows a complete custom configuration for the RPC test server.  The resulting configuration from this example would look like this:<BR/><BR/>SolcVersion      : 0.4.24<BR/>						SolcOptimizer    : 0<BR/>						DefaultGasLimit  : 500000<BR/>						DefaultGasPrice  : 100000000<BR/>						AccountCount     : 25<BR/>						AccountBalance   : 1500<BR/>						NetworkHost      : 10.0.0.25<BR/>						NetworkPort      : 90000<BR/>						SourceDirectory  : C:\Users\mmiller\Documents\Meadow.Cli\TestServer<BR/>						UseLocalAccounts : True<BR/>						ChainID          : 0</p>
+<p>This example shows a complete custom configuration for the RPC test server.  The resulting configuration from this example would look like this:<BR/><BR/>SolcOptimizer    : 0<BR/>						DefaultGasLimit  : 500000<BR/>						DefaultGasPrice  : 100000000<BR/>						AccountCount     : 25<BR/>						AccountBalance   : 1500<BR/>						NetworkHost      : 10.0.0.25<BR/>						NetworkPort      : 90000<BR/>						SourceDirectory  : C:\Users\mmiller\Documents\Meadow.Cli\TestServer<BR/>						UseLocalAccounts : True<BR/>						ChainID          : 0</p>
 <h4 id="Parameters"><a name="Parameters"></a>PARAMETERS</h4>
 <p class="subheading" id="parameter:Workspace">-Workspace &lt;String&gt;
 </p><p>This parameter allows you to specify Console or Development as the intilization workspace for the RPC test server.</p>
@@ -49,20 +49,6 @@ C:\PS> Update-Config -Workspace development -SolcVersion '0.4.24' -SolcOptimizer
 <tr><td><p>Required:</p></td><td><p>true</p></td></tr>
 <tr><td><p>Position:</p></td><td><p>named</p></td></tr>
 <tr><td><p>Default Value:</p></td><td><p>Console</p></td></tr>
-<tr><td><p>Accepted Values:</p></td><td><p>String<br/>
-</p></td></tr>
-<tr><td><p>Pipeline Input:</p></td><td><p>False</p></td></tr>
-<tr><td><p>Dynamic:</p></td><td><p>true</p></td></tr>
-</table>
-<br/>
-<p class="subheading" id="parameter:SolcVersion">-SolcVersion &lt;String&gt;
-</p><p>This parameter allows you to specify a version of the Solc compiler to use during your testing session.  The default for this parameter is &#39;Latest&#39;, and will use the most recent version of the Solc compiler included in the Meadow suite package.</p>
-<table>
-<tr><td><p>Parameter Sets:</p></td><td><p>Update Config Parameters</p></td></tr>
-<tr><td><p>Aliases:</p></td><td><p>None</p></td></tr>
-<tr><td><p>Required:</p></td><td><p>false</p></td></tr>
-<tr><td><p>Position:</p></td><td><p>named</p></td></tr>
-<tr><td><p>Default Value:</p></td><td><p>Latest</p></td></tr>
 <tr><td><p>Accepted Values:</p></td><td><p>String<br/>
 </p></td></tr>
 <tr><td><p>Pipeline Input:</p></td><td><p>False</p></td></tr>

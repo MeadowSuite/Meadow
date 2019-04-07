@@ -20,7 +20,6 @@ namespace Meadow.SolCodeGen.Test
         readonly string _assemblyOutputDir;
         readonly string _sourceDir;
         readonly string _sourceEmptyDir;
-        readonly string _legacySolcDir;
         readonly string _namespace;
 
         public CommandArgParsing()
@@ -34,8 +33,6 @@ namespace Meadow.SolCodeGen.Test
             _sourceEmptyDir = Path.Combine(Directory.GetCurrentDirectory(), "ContractsEmpty");
 
             _namespace = "Gen" + Guid.NewGuid().ToString().Replace("-", "", StringComparison.Ordinal) + ".Contracts";
-
-            _legacySolcDir = typeof(SolcNet.Legacy.LibPath).Assembly.Location;
         }
 
         public void Dispose()
@@ -52,8 +49,6 @@ namespace Meadow.SolCodeGen.Test
                 "--source", _sourceDir,
                 "--generate", "source",
                 "--output", _outputDir,
-                "--solcversion", "0.4.24",
-                "--legacysolc", _legacySolcDir,
                 "--solcoptimizer", "0"
             };
 
@@ -78,8 +73,6 @@ namespace Meadow.SolCodeGen.Test
                 "--source", "/bad source diretory/not exists/1235",
                 "--generate", "source",
                 "--output", _outputDir,
-                "--solcversion", "0.4.24",
-                "--legacysolc", _legacySolcDir,
                 "--solcoptimizer", "0"
             };
 
@@ -104,8 +97,6 @@ namespace Meadow.SolCodeGen.Test
                 "--source", _sourceDir,
                 "--generate", "invalid generation type asdf1234",
                 "--output", _outputDir,
-                "--solcversion", "0.4.24",
-                "--legacysolc", _legacySolcDir,
                 "--solcoptimizer", "0"
             };
 
@@ -122,58 +113,6 @@ namespace Meadow.SolCodeGen.Test
         }
 
         [Fact]
-        public void InvalidSolcVersion()
-        {
-            var processArgs = new string[]
-            {
-                "--namespace", _namespace,
-                "--source", _sourceDir,
-                "--generate", "source",
-                "--output", _outputDir,
-                "--solcversion", "string that is not a parsable version",
-                "--legacysolc", _legacySolcDir,
-                "--solcoptimizer", "0"
-            };
-
-            try
-            {
-                Meadow.SolCodeGen.Program.Run(processArgs);
-            }
-            catch (Exception ex) when (ex.Message.Contains("Could not parse specified solc version", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            throw new Exception("Should have failed test");
-        }
-
-        [Fact]
-        public void MissingSolcVersion()
-        {
-            var processArgs = new string[]
-            {
-                "--namespace", _namespace,
-                "--source", _sourceDir,
-                "--generate", "source",
-                "--output", _outputDir,
-                "--solcversion", "0.4.19",
-                "--legacysolc", _legacySolcDir,
-                "--solcoptimizer", "0"
-            };
-
-            try
-            {
-                Meadow.SolCodeGen.Program.Run(processArgs);
-            }
-            catch (Exception ex) when (ex.Message.Contains("Version 0.4.19 not found", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            throw new Exception("Should have failed test");
-        }
-
-        [Fact]
         public void InvalidSolcOptimizer()
         {
             var processArgs = new string[]
@@ -182,8 +121,6 @@ namespace Meadow.SolCodeGen.Test
                 "--source", _sourceDir,
                 "--generate", "source",
                 "--output", _outputDir,
-                "--solcversion", "0.4.24",
-                "--legacysolc", _legacySolcDir,
                 "--solcoptimizer", "unparsable int"
             };
 
@@ -208,8 +145,6 @@ namespace Meadow.SolCodeGen.Test
                 "--source", _sourceEmptyDir,
                 "--generate", "source",
                 "--output", _outputDir,
-                "--solcversion", "0.4.24",
-                "--legacysolc", _legacySolcDir,
                 "--solcoptimizer", "0"
             };
 
@@ -218,32 +153,6 @@ namespace Meadow.SolCodeGen.Test
                 Meadow.SolCodeGen.Program.Run(processArgs);
             }
             catch (Exception ex) when (ex.Message.Contains("directory does not contain any .sol files", StringComparison.OrdinalIgnoreCase))
-            {
-                return;
-            }
-
-            throw new Exception("Should have failed test");
-        }
-
-        [Fact]
-        public void InvalidLegacySolcPath()
-        {
-            var processArgs = new string[]
-            {
-                "--namespace", _namespace,
-                "--source", _sourceDir,
-                "--generate", "source",
-                "--output", _outputDir,
-                "--solcversion", "0.4.19",
-                "--legacysolc", "invalid directory to legacy solc",
-                "--solcoptimizer", "0"
-            };
-
-            try
-            {
-                Meadow.SolCodeGen.Program.Run(processArgs);
-            }
-            catch (Exception ex) when (ex.Message.Contains("Legacy solc lib path is set but file", StringComparison.OrdinalIgnoreCase))
             {
                 return;
             }
@@ -268,8 +177,6 @@ namespace Meadow.SolCodeGen.Test
                 "--generate", "assembly",
                 "--output", _outputDir,
                 "--assembly-output", _assemblyOutputDir,
-                "--solcversion", "0.4.24",
-                "--legacysolc", _legacySolcDir,
                 "--solcoptimizer", "0"
             };
 
