@@ -135,44 +135,24 @@ namespace Meadow.SolCodeGen
 
         SolcLib SetupSolcLib()
         {
-            SolcLibDefaultProvider solcNativeLibProvider = null;
-
-            if (_solcVersion != null)
+            // See if the system has a version of solc we can use.
+            INativeSolcLib solcNativeLibProvider = null;
+            try
             {
-                if (!string.IsNullOrEmpty(_legacySolcPath))
+                // See if there is a system provided solc.
+                solcNativeLibProvider = new SolcLibSystemProvider(_solSourceDirectory);
+                solcNativeLibProvider.GetVersion();
+            }
+            catch
+            {
+                // Use the default provider as a fallback.
+                if (_legacySolcPath == null)
                 {
-                    try
-                    {
-                        var legacyNativeLibPath = LegacySolcNet.ResolveNativeLibPath(_legacySolcPath, _solcVersion);
-                        solcNativeLibProvider = new SolcLibDefaultProvider(legacyNativeLibPath);
-                        var resultSolcVersion = SolcLib.ParseVersionString(solcNativeLibProvider.GetVersion());
-                        if (_solcVersion != resultSolcVersion)
-                        {
-                            throw new Exception($"A legacy solc version ({_solcVersion}) is specified but resolver returned a different version ({resultSolcVersion})");
-                        }
-                    }
-                    catch
-                    {
-                        // There was an error trying to use the specific solcversion with the legacy package,
-                        // for giving up lets check if the specified solcversion is valid in the latest solcnet
-                        // lib.
-                        solcNativeLibProvider = new SolcLibDefaultProvider();
-                        var defaultSolcVersion = SolcLib.ParseVersionString(solcNativeLibProvider.GetVersion());
-                        if (_solcVersion != defaultSolcVersion)
-                        {
-                            // Latest version is not valid, so throw the original exception.
-                            throw;
-                        }
-                    }
+                    solcNativeLibProvider = new SolcLibDefaultProvider();
                 }
                 else
                 {
-                    solcNativeLibProvider = new SolcLibDefaultProvider();
-                    var defaultSolcVersion = SolcLib.ParseVersionString(solcNativeLibProvider.GetVersion());
-                    if (_solcVersion != defaultSolcVersion)
-                    {
-                        throw new Exception("A legacy solc version is specified but resolver lib path is not specified. Is the SolcNet.Legacy package not installed?");
-                    }
+                    solcNativeLibProvider = new SolcLibDefaultProvider(_legacySolcPath);
                 }
             }
 
@@ -187,7 +167,7 @@ namespace Meadow.SolCodeGen
                 solcLib = SolcLib.Create(sourceDir);
             }
 
-            _logger($"Using native libsolc version {solcLib.VersionDescription} at {solcLib.NativeLibFilePath}");
+            _logger($"Using solc version {solcLib.VersionDescription}");
             return solcLib;
         }
 

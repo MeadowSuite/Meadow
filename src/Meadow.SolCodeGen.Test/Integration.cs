@@ -90,7 +90,7 @@ namespace Meadow.SolCodeGen.Test
 
                 // var compiledAsm = AssemblyLoadContext.Default.LoadFromAssemblyPath(compiledAssemblyPath);
 
-                var exampleContractType = compiledAsm.GetType("Meadow.SolCodeGen.TestApp.ExampleContract", throwOnError: true);
+                var exampleContractType = compiledAsm.GetType("Meadow.SolCodeGen.TestApp.BasicContract", throwOnError: true);
 
                 Type addressType = GetTypeByName("Meadow.Core", "Meadow.Core.EthTypes.Address");
                 Type jsonRpcClientType = GetTypeByName("Meadow.JsonRpc.Client", "Meadow.JsonRpc.Client.JsonRpcClient");
