@@ -57,8 +57,12 @@ namespace Meadow.UnitTestTemplate
         /// Virtual method which is run before every test is executed. Can be overriden to
         /// deploy contracts before a test automatically, or etc.
         /// </summary>
-        /// <returns></returns>
         protected virtual Task BeforeEach() => Task.CompletedTask;
+        /// <summary>
+        /// Virtual method which is run after every test is executed. Can be overriden to
+        /// check generic post-execution state.
+        /// </summary>
+        protected virtual Task AfterEach() => Task.CompletedTask;
 
         [TestInitialize]
         public async Task OnTestInitialize()
@@ -137,6 +141,9 @@ namespace Meadow.UnitTestTemplate
             {
                 // Obtain our end time.
                 InternalTestState.EndTime = DateTime.Now;
+
+                // Execute our post-test method
+                AfterEach();
 
                 // If we're testing a built in node, we'll want to be collecting relevant coverage information.
                 if (!InternalTestState.InExternalNodeContext)

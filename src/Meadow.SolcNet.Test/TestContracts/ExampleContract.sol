@@ -1,4 +1,4 @@
-﻿pragma solidity ^0.5.0;
+pragma solidity ^0.5.0;
 
 /// @title An example contract title
 /// @author Matthew Little

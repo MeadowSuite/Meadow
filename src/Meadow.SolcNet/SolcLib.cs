@@ -84,6 +84,9 @@ namespace SolcNet
             CompileErrorHandling errorHandling = CompileErrorHandling.ThrowOnError,
             Dictionary<string, string> soliditySourceFileContent = null)
         {
+            // If we have a null source lookup, initialize a new one
+            soliditySourceFileContent = soliditySourceFileContent ?? new Dictionary<string, string>();
+
             // Parse the input
             InputDescription inputDescription = InputDescription.FromJsonString(jsonInput);
 
@@ -247,8 +250,15 @@ namespace SolcNet
                     }
                 };
 
-                // Invoke the underlying process.
-                Process.Start();
+                try
+                {
+                    // Invoke the underlying process.
+                    Process.Start();
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Solc invocation error: {ex.Message}", ex);
+                }
 
                 // Start the asynchronous reading operations.
                 Process.BeginOutputReadLine();
@@ -275,7 +285,7 @@ namespace SolcNet
                 }
                 else
                 {
-                    throw new TimeoutException($"Invocation failed for command: {Process.StartInfo.FileName} {Process.StartInfo.Arguments}");
+                    throw new TimeoutException($"Solc invocation timeout error: {Process.StartInfo.FileName} {Process.StartInfo.Arguments}");
                 }
             }
         }
