@@ -1,5 +1,4 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SolcNet.NativeLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;

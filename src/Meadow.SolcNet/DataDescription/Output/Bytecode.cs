@@ -17,7 +17,7 @@ namespace SolcNet.DataDescription.Output
         byte[] _objectBytes;
 
         [JsonIgnore]
-        public byte[] ObjectBytes => _objectBytes ?? (_objectBytes = HexUtil.HexToBytes(Object));
+        public byte[] ObjectBytes => _objectBytes ?? (_objectBytes = EncodingUtils.HexToBytes(Object));
 
         /// <summary>
         /// Opcodes list (string)

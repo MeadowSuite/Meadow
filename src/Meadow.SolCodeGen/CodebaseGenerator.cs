@@ -6,7 +6,6 @@ using Newtonsoft.Json.Linq;
 using SolcNet;
 using SolcNet.DataDescription.Input;
 using SolcNet.DataDescription.Output;
-using SolcNet.NativeLib;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -126,30 +125,10 @@ namespace Meadow.SolCodeGen
         }
 
         SolcLib SetupSolcLib()
-        {
-            // See if the system has a version of solc we can use.
-            INativeSolcLib solcNativeLibProvider = null;
-            try
-            {
-                solcNativeLibProvider = new SolcLibSystemProvider(_solSourceDirectory);
-                solcNativeLibProvider.GetVersion();
-            }
-            catch
-            {
-                _logger("Exception loading system provided 'solc'.");
-            }
-
-            SolcLib solcLib;
+        { 
+            
             string sourceDir = string.IsNullOrEmpty(_solSourceSingleFile) ? _solSourceDirectory : null;
-            if (solcNativeLibProvider != null)
-            {
-                solcLib = new SolcLib(solcNativeLibProvider, sourceDir);
-            }
-            else
-            {
-                solcLib = SolcLib.Create(sourceDir);
-            }
-
+            SolcLib solcLib = new SolcLib(sourceDir);
             _logger($"Using solc version {solcLib.VersionDescription}");
             return solcLib;
         }

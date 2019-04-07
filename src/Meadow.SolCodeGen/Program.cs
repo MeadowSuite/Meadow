@@ -14,7 +14,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Meadow.Core.Utils;
-using SolcNet.NativeLib;
 using SolcNet.CompileErrors;
 
 namespace Meadow.SolCodeGen
