@@ -143,7 +143,7 @@ namespace Meadow.UnitTestTemplate
                 InternalTestState.EndTime = DateTime.Now;
 
                 // Execute our post-test method
-                AfterEach();
+                await AfterEach();
 
                 // If we're testing a built in node, we'll want to be collecting relevant coverage information.
                 if (!InternalTestState.InExternalNodeContext)

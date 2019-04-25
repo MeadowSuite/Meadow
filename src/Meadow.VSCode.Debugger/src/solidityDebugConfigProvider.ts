@@ -5,11 +5,65 @@ import * as path from 'path';
 import * as uuid from 'uuid/v1';
 import * as child_process from "child_process";
 import { Logger } from './logger';
-import { ISolidityMeadowDebugConfig, IDebugAdapterExecutable, DEBUG_SESSION_ID } from './constants';
+import { ISolidityMeadowDebugConfig, DEBUG_SESSION_ID } from './constants';
 import * as debugSolSourcesTool from './debugSolSourcesTool';
 import * as common from './common';
 import { debug } from 'util';
 
+export class SolidityDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+	private _context: vscode.ExtensionContext;
+
+	constructor(context: vscode.ExtensionContext) {
+		this._context = context;
+	}
+
+	createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+
+	return (async () => {
+
+			let config : ISolidityMeadowDebugConfig;
+			if (executable) {
+				config = executable;
+			} else {
+				let executableOptions : vscode.DebugAdapterExecutableOptions = {env: {}, cwd: undefined};
+				let executablePath = session.configuration.debugAdapterFile ? "dotnet" : await debugSolSourcesTool.getDebugToolPath();
+				config = new vscode.DebugAdapterExecutable(executablePath, [], executableOptions);
+			}
+
+			// Copy configuration variables over.
+			if (session.configuration) {
+				Object.assign(config, session.configuration);
+			}
+			
+			if (session.configuration.workspaceDirectory) {
+				config.args.push("--directory", session.configuration.workspaceDirectory);
+			}
+
+			if (config.entryPoint) {
+				config.args.push("--entry", config.entryPoint);
+			}
+
+			if (config.singleFile) {
+				config.args.push("--singleFile", config.singleFile)
+			}
+
+			if (config.breakDebugAdapter && config.options) {
+				config.options.env = { ["DEBUG_STOP_ON_ENTRY"]: "true" }
+			}
+
+			if (config.debugAdapterFile) {
+				config.args.unshift(config.debugAdapterFile);
+			}
+		
+			Logger.log(`Launching debug adapter with: ${JSON.stringify(config)}`);
+		
+			return config;
+		})();
+	}
+	dispose() {
+
+	}
+}
 
 export class SolidityDebugConfigProvider implements vscode.DebugConfigurationProvider {
 
@@ -74,63 +128,9 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 		}));
 	}
 
-	// Notice: this is working in latest stable vscode but is preview.
-	provideDebugAdapter?(session: vscode.DebugSession, folder: vscode.WorkspaceFolder | undefined, executable: IDebugAdapterExecutable | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<IDebugAdapterExecutable> {
-	
-		return (async () => {
-			
-			let debugConfig = <ISolidityMeadowDebugConfig>config;
-
-			let args : string[] = [ ];
-
-			if (debugConfig.workspaceDirectory) {
-				args.push("--directory", debugConfig.workspaceDirectory);
-			}
-
-			if (debugConfig.entryPoint) {
-				args.push("--entry", debugConfig.entryPoint);
-			}
-
-			if (debugConfig.singleFile) {
-				args.push("--singleFile", debugConfig.singleFile)
-			}
-
-			let env : { [key: string]: string } = { };
-
-			if (debugConfig.breakDebugAdapter) {
-				env["DEBUG_STOP_ON_ENTRY"] = "true";
-			}
-
-			let launchInfo : IDebugAdapterExecutable;
-
-			if (debugConfig.debugAdapterFile) {
-				args.unshift(debugConfig.debugAdapterFile);
-				launchInfo = {
-					type: "executable",
-					command: "dotnet",
-					args: args,
-					env: env
-				};
-			}
-			else {
-				let debugAdapterFile = await debugSolSourcesTool.getDebugToolPath();
-				launchInfo = {
-					type: "executable",
-					command: debugAdapterFile,
-					args: args,
-					env: env
-				};
-			}
-		
-			Logger.log(`Launching debug adapter with: ${JSON.stringify(launchInfo)}`);
-		
-			return launchInfo;
-		})();
-	}
-
 	provideDebugConfigurations?(folder: vscode.WorkspaceFolder | undefined, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration[]> {
 
-		let configs: ISolidityMeadowDebugConfig[] = [
+		let configs: vscode.DebugConfiguration[] = [
 			{
 				type: "solidity",
 				request: "launch",
@@ -152,7 +152,7 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 
 			common.validateDotnetVersion();
 
-			let debugConfig = <ISolidityMeadowDebugConfig>config;
+			let debugConfig = config;
 			
 			if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
 				debugConfig.workspaceDirectory = vscode.workspace.workspaceFolders[0].uri.fsPath;
@@ -194,7 +194,7 @@ export class SolidityDebugConfigProvider implements vscode.DebugConfigurationPro
 		
 			Logger.log(`Using debug configuration: ${JSON.stringify(debugConfig)}`);
 
-			return debugConfig;
+			return <vscode.DebugConfiguration><any>debugConfig;
 		})();
 	}
 
