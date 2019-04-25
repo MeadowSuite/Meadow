@@ -76,10 +76,6 @@
 		</command:examples>
 		<maml:relatedLinks>
 			<!-- Links-->
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group</maml:linkText>
-				<maml:uri>https://www.hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
@@ -349,10 +345,6 @@
 		</command:examples>
 		<maml:relatedLinks>
 			<!-- Links-->
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group</maml:linkText>
-				<maml:uri>https://www.hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<!-- Edited with: SAPIEN PowerShell HelpWriter 2018 v2.2.40-->
@@ -420,10 +412,6 @@
 			</command:example>
 		</command:examples>
 		<maml:relatedLinks>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group</maml:linkText>
-				<maml:uri>https://www.hosho.io</maml:uri>
-			</maml:navigationLink>
 			<!-- Links-->
 		</maml:relatedLinks>
 	</command:command>

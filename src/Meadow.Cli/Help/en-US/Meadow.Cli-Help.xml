@@ -79,10 +79,6 @@
 				<maml:linkText>Meadow Suite site link:</maml:linkText>
 				<maml:uri>http://meadowsuite.com</maml:uri>
 			</maml:navigationLink>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -355,10 +351,6 @@
 				<maml:linkText>Meadow Suite site link:</maml:linkText>
 				<maml:uri>https://meadowsuite.com</maml:uri>
 			</maml:navigationLink>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -440,10 +432,6 @@
 				<maml:uri>https://meadowsuite.com</maml:uri>
 			</maml:navigationLink>
 			<!-- Links-->
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -513,10 +501,6 @@
 			<maml:navigationLink>
 				<maml:linkText>Meadow Suite site link:</maml:linkText>
 				<maml:uri>https://meadowsuite.com</maml:uri>
-			</maml:navigationLink>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
 			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
@@ -666,10 +650,6 @@
 				<maml:uri>https://www.meadowsuite.com</maml:uri>
 			</maml:navigationLink>
 			<!--Links-->
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -821,10 +801,6 @@
 				<maml:uri>https://meadowsuite.com</maml:uri>
 			</maml:navigationLink>
 			<!--Links-->
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -1005,10 +981,6 @@
 				<maml:uri>https://meadowsuite.com</maml:uri>
 			</maml:navigationLink>
 			<!--Links-->
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -1452,10 +1424,6 @@
 				<maml:linkText>Meadow Suite site link:</maml:linkText>
 				<maml:uri>https://meadowsuite.com</maml:uri>
 			</maml:navigationLink>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>
 	<command:command xmlns:maml="http://schemas.microsoft.com/maml/2004/10" xmlns:command="http://schemas.microsoft.com/maml/dev/command/2004/10" xmlns:dev="http://schemas.microsoft.com/maml/dev/2004/10">
@@ -1563,10 +1531,6 @@
 			</command:example>
 		</command:examples>
 		<maml:relatedLinks>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
-			</maml:navigationLink>
 			<!--Links-->
 			<maml:navigationLink>
 				<maml:linkText>Meadow Suite site link:</maml:linkText>
@@ -1648,10 +1612,6 @@
 			<maml:navigationLink>
 				<maml:linkText>Meadow Suite site link:</maml:linkText>
 				<maml:uri>https://meadowsuite.com</maml:uri>
-			</maml:navigationLink>
-			<maml:navigationLink>
-				<maml:linkText>Hosho Group site link:</maml:linkText>
-				<maml:uri>https://hosho.io</maml:uri>
 			</maml:navigationLink>
 		</maml:relatedLinks>
 	</command:command>

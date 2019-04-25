@@ -62,8 +62,6 @@ This Cmdlet is designed to be the first Cmdlet run when starting out with Meadow
 
 ## RELATED LINKS
 
-[Hosho Group site link:](https://hosho.io)
-
 [Meadow Suite site link:](https://meadowsuite.com)
 
 

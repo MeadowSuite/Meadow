@@ -54,7 +54,6 @@
 ## SEE ALSO
 ```
 	Get-Help for further information or visit the website -> https://www.meadowsuite.com
-	Meadow Suite is brought to you by the Hosho Group -> https://hosho.io
 ```
 
 
