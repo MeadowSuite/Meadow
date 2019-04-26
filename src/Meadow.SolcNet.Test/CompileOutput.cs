@@ -29,7 +29,6 @@ namespace SolcNet.Test
             var exampleContract = "TestContracts/ExampleContract.sol";
             var output = _lib.Compile(exampleContract/*, OutputType.Ast | OutputType.LegacyAst*/);
             var originalOutput = JObject.Parse(output.RawJsonOutput).ToString(Formatting.Indented);
-            //var expectedOutput = JObject.Parse(File.ReadAllText("TestOutput/ExampleContract.json"));
             var serializedOutput = JsonConvert.SerializeObject(output, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
             var jdp = new JsonDiffPatch();
             var diffStr = jdp.Diff(originalOutput, serializedOutput);

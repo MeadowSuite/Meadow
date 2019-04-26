@@ -29,9 +29,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <None Remove="EthPMContracts\deepdir\AcmeCoinDeep.sol" />
-    <Content Include="TestOutput\ExampleContract.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

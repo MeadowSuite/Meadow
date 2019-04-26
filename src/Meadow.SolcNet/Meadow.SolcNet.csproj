@@ -6,13 +6,13 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <LangVersion>7.2</LangVersion>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <Company>Hosho</Company>
+    <Company>MeadowSuite</Company>
     <PackageTags>solidity solc libsolc ethereum</PackageTags>
     <Description>.NET wrapper for native solc library</Description>
-    <PackageProjectUrl>https://github.com/hosho/SolcNet/</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/MeadowSuite/SolcNet/</PackageProjectUrl>
     <NoWarn>1591,1573</NoWarn>
-    <PackageLicenseUrl>https://github.com/hosho/SolcNet/blob/master/LICENSE</PackageLicenseUrl>
-    <Authors>Matthew Litte</Authors>
+    <PackageLicenseUrl>https://github.com/MeadowSuite/SolcNet/blob/master/LICENSE</PackageLicenseUrl>
+    <Authors>MeadowSuite</Authors>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
