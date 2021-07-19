@@ -35,21 +35,21 @@ namespace Meadow.UnitTestTemplate.ParallelTest
                 BigIntegerConverter.GetBytes(BigInteger.Parse("47416572686988136438359045243120473513988610648720291068939984598262749281683", CultureInfo.InvariantCulture)))
                 .EstimateGas();
 
-            Assert.AreEqual(32437, gas);
+            Assert.AreEqual(32481, gas);
         }
 
         [TestMethod]
         public async Task Sha256Test()
         {
             var gas = await _precompiles.testSha256("hello world").EstimateGas();
-            Assert.AreEqual(24063, gas);
+            Assert.AreEqual(24085, gas);
         }
 
         [TestMethod]
         public async Task Ripemd160Test()
         {
             var gas = await _precompiles.testRipemd160("hello world").EstimateGas();
-            Assert.AreEqual(24671, gas);
+            Assert.AreEqual(24715, gas);
         }
 
         [DataTestMethod]
@@ -65,7 +65,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
 
             UInt256[] resultGasUsages =
             {
-                23065, 24413, 24770
+                23109, 24457, 24814
             };
 
             // Loop for each input to test echoing
@@ -89,7 +89,7 @@ namespace Meadow.UnitTestTemplate.ParallelTest
                 BigIntegerConverter.GetBytes(BigInteger.Parse("4345328123928357434573234217343477", CultureInfo.InvariantCulture)))
                 .EstimateGas();
 
-            Assert.AreEqual(29900, gas);
+            Assert.AreEqual(29944, gas);
         }
 
 
